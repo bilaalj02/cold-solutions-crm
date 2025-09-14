@@ -47,12 +47,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Demo authentication - replace with actual API call
-      if (email === 'admin@coldsolutions.com' && password === 'admin123') {
+      // Check stored users or default admin
+      const storedUsers = JSON.parse(localStorage.getItem('cold_solutions_users') || '[]');
+      const defaultUser = { email: 'admin@coldsolutions.com', password: 'admin123', name: 'Admin User', role: 'Admin' };
+
+      // Add default admin if not exists
+      if (!storedUsers.find((u: any) => u.email === defaultUser.email)) {
+        storedUsers.push(defaultUser);
+        localStorage.setItem('cold_solutions_users', JSON.stringify(storedUsers));
+      }
+
+      // Find matching user
+      const matchedUser = storedUsers.find((u: any) => u.email === email && u.password === password);
+
+      if (matchedUser) {
         const userData = {
-          email: email,
-          name: 'Admin User',
-          role: 'Admin'
+          email: matchedUser.email,
+          name: matchedUser.name,
+          role: matchedUser.role
         };
 
         localStorage.setItem('cold_solutions_auth', 'true');

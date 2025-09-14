@@ -16,20 +16,38 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // Demo login - replace with actual authentication
-    if (email === 'admin@coldsolutions.com' && password === 'admin123') {
-      localStorage.setItem('cold_solutions_auth', 'true');
-      localStorage.setItem('cold_solutions_user', JSON.stringify({
-        email: email,
-        name: 'Admin User',
-        role: 'Admin'
-      }));
-      router.push('/');
-    } else {
-      setError('Invalid email or password');
-    }
+    try {
+      // Check stored users or default admin
+      const storedUsers = JSON.parse(localStorage.getItem('cold_solutions_users') || '[]');
+      const defaultUser = { email: 'admin@coldsolutions.com', password: 'admin123', name: 'Admin User', role: 'Admin' };
 
-    setIsLoading(false);
+      // Add default admin if not exists
+      if (!storedUsers.find((u: any) => u.email === defaultUser.email)) {
+        storedUsers.push(defaultUser);
+        localStorage.setItem('cold_solutions_users', JSON.stringify(storedUsers));
+      }
+
+      // Find matching user
+      const user = storedUsers.find((u: any) => u.email === email && u.password === password);
+
+      if (user) {
+        localStorage.setItem('cold_solutions_auth', 'true');
+        localStorage.setItem('cold_solutions_user', JSON.stringify({
+          email: user.email,
+          name: user.name,
+          role: user.role
+        }));
+
+        // Success - redirect to dashboard
+        router.push('/');
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

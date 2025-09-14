@@ -87,7 +87,7 @@ function ColdSolutionsDashboard() {
               <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
               <p className="text-xs" style={{color: '#a0a0a0'}}>{user?.email}</p>
             </div>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="#">
+            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/settings">
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
               <p className="text-sm font-medium leading-normal">Settings</p>
             </a>
