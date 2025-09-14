@@ -154,7 +154,7 @@ export default function BusinessIntelligence() {
                     Pain Points Identified
                   </h5>
                   <ul className="space-y-2">
-                    {audit.painPoints.map((point, index) => (
+                    {audit.painPoints.map((point: string, index: number) => (
                       <li key={index} className="flex items-start">
                         <span className="text-red-500 mr-2 mt-1">×</span>
                         <span className="text-sm text-gray-600">{point}</span>
@@ -170,7 +170,7 @@ export default function BusinessIntelligence() {
                     AI Solutions Recommended
                   </h5>
                   <ul className="space-y-2">
-                    {audit.recommendations.map((rec, index) => (
+                    {audit.recommendations.map((rec: string, index: number) => (
                       <li key={index} className="flex items-start">
                         <span className="text-green-500 mr-2 mt-1">✓</span>
                         <span className="text-sm text-gray-600">{rec}</span>
