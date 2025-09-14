@@ -1,43 +1,34 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { login, isAuthenticated, isLoading } = useAuth();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError('');
 
     try {
-      // Check stored users or default admin
-      const storedUsers = JSON.parse(localStorage.getItem('cold_solutions_users') || '[]');
-      const defaultUser = { email: 'admin@coldsolutions.com', password: 'admin123', name: 'Admin User', role: 'Admin' };
+      const success = await login(email, password);
 
-      // Add default admin if not exists
-      if (!storedUsers.find((u: any) => u.email === defaultUser.email)) {
-        storedUsers.push(defaultUser);
-        localStorage.setItem('cold_solutions_users', JSON.stringify(storedUsers));
-      }
-
-      // Find matching user
-      const user = storedUsers.find((u: any) => u.email === email && u.password === password);
-
-      if (user) {
-        localStorage.setItem('cold_solutions_auth', 'true');
-        localStorage.setItem('cold_solutions_user', JSON.stringify({
-          email: user.email,
-          name: user.name,
-          role: user.role
-        }));
-
+      if (success) {
         // Success - redirect to dashboard
         router.push('/');
       } else {
@@ -46,9 +37,21 @@ export default function LoginPage() {
     } catch (error) {
       setError('Login failed. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderColor: '#3dbff2'}}></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
@@ -174,14 +177,14 @@ export default function LoginPage() {
               <div>
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                 >
-                  {isLoading && (
+                  {isSubmitting && (
                     <span className="material-symbols-outlined animate-spin mr-2" style={{fontSize: '20px'}}>refresh</span>
                   )}
-                  {isLoading ? 'Signing in...' : 'Sign in'}
+                  {isSubmitting ? 'Signing in...' : 'Sign in'}
                 </button>
               </div>
 
