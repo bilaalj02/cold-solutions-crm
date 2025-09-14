@@ -10,6 +10,8 @@ export interface NotionProperty {
   rich_text?: any;
   number?: any;
   date?: any;
+  title?: any;
+  multi_select?: any;
 }
 
 export interface NotionPage {
@@ -97,10 +99,10 @@ export class NotionAPI {
       phone: this.extractPhoneProperty(props.Phone || props.phone) || '',
       company: this.extractTextProperty(props.Company || props.company) || '',
       position: this.extractTextProperty(props.Position || props.position) || '',
-      source: this.extractSelectProperty(props.Source || props.source) || 'Notion',
-      status: this.extractSelectProperty(props.Status || props.status) || 'New',
+      source: (this.extractSelectProperty(props.Source || props.source) as any) || 'Other',
+      status: (this.extractSelectProperty(props.Status || props.status) as any) || 'New',
       score: this.extractNumberProperty(props.Score || props.score) || 50,
-      priority: this.extractSelectProperty(props.Priority || props.priority) || 'Medium',
+      priority: (this.extractSelectProperty(props.Priority || props.priority) as any) || 'Medium',
       territory: this.extractSelectProperty(props.Territory || props.territory) || 'Unassigned',
       industry: this.extractSelectProperty(props.Industry || props.industry) || 'Other',
       leadSource: this.extractSelectProperty(props['Lead Source'] || props.lead_source) || 'Notion',
@@ -110,10 +112,14 @@ export class NotionAPI {
       createdAt: new Date(page.created_time).toISOString(),
       updatedAt: new Date(page.last_edited_time).toISOString(),
       nextFollowUp: this.extractDateProperty(props['Next Follow Up'] || props.next_follow_up),
-      lastContactDate: this.extractDateProperty(props['Last Contact'] || props.last_contact),
+      lastInteraction: this.extractDateProperty(props['Last Contact'] || props.last_contact),
       isDuplicate: false,
       duplicateOf: undefined,
-      lifecycleStage: this.extractSelectProperty(props['Lifecycle Stage'] || props.lifecycle_stage) || 'Lead'
+      lifecycle: {
+        stage: this.extractSelectProperty(props['Lifecycle Stage'] || props.lifecycle_stage) || 'New',
+        stageChangedAt: new Date().toISOString(),
+        timeInStage: 0
+      }
     };
   }
 
@@ -135,8 +141,8 @@ export class NotionAPI {
       'Assigned To': { select: { name: lead.assignedTo || '' } },
       Notes: { rich_text: [{ text: { content: lead.notes || '' } }] },
       'Next Follow Up': lead.nextFollowUp ? { date: { start: lead.nextFollowUp } } : null,
-      'Last Contact': lead.lastContactDate ? { date: { start: lead.lastContactDate } } : null,
-      'Lifecycle Stage': { select: { name: lead.lifecycleStage } }
+      'Last Contact': lead.lastInteraction ? { date: { start: lead.lastInteraction } } : null,
+      'Lifecycle Stage': { select: { name: lead.lifecycle.stage } }
     };
   }
 

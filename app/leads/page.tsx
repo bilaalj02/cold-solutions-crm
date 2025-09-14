@@ -301,7 +301,7 @@ export default function LeadsDatabase() {
               <a 
                 href="/leads/management"
                 className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2" 
-                style={{'--tw-ring-color': '#3dbff2'}}
+                style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
               >
                 <span className="material-symbols-outlined text-base">settings</span>
                 Advanced Management
@@ -309,7 +309,7 @@ export default function LeadsDatabase() {
               <button 
                 onClick={() => setShowAddModal(true)}
                 className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" 
-                style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'}}
+                style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'} as React.CSSProperties}
               >
                 <span className="material-symbols-outlined text-base">add</span>
                 Add New Lead
@@ -318,7 +318,7 @@ export default function LeadsDatabase() {
                 onClick={handleSyncFromNotion}
                 disabled={isSyncing}
                 className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{'--tw-ring-color': '#3dbff2'}}
+                style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
               >
                 <span className={`material-symbols-outlined text-base ${isSyncing ? 'animate-spin' : ''}`}>
                   {isSyncing ? 'sync' : 'cloud_sync'}
@@ -328,7 +328,7 @@ export default function LeadsDatabase() {
               <button
                 onClick={handleExportCSV}
                 className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{'--tw-ring-color': '#3dbff2'}}
+                style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
               >
                 <span className="material-symbols-outlined text-base">download</span>
                 Export CSV
@@ -672,7 +672,7 @@ export default function LeadsDatabase() {
                 <button
                   type="button"
                   className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2" 
-                  style={{'--tw-ring-color': '#3dbff2'}}
+                  style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                   onClick={() => setShowAddModal(false)}
                 >
                   Cancel
@@ -680,7 +680,7 @@ export default function LeadsDatabase() {
                 <button
                   type="button"
                   className="inline-flex justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" 
-                  style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'}}
+                  style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                   onClick={handleAddLead}
                 >
                   Add Lead

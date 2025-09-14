@@ -166,8 +166,8 @@ export default function BusinessIntelligence() {
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[audit.status]}`}>
-                        {statusIcons[audit.status]}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[audit.status as keyof typeof statusColors]}`}>
+                        {statusIcons[audit.status as keyof typeof statusIcons]}
                         <span className="ml-1 capitalize">{audit.status.replace('-', ' ')}</span>
                       </span>
                       <span className="text-sm text-gray-500">

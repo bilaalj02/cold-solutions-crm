@@ -37,13 +37,13 @@ export class NotionService {
     try {
       // Check if Notion is properly configured
       if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
-        console.warn(`Notion API not configured for database: ${databaseType}`);
+        console.warn(`Notion API not configured for database: ${String(databaseType)}`);
         return [];
       }
 
       const databaseId = DATABASES[databaseType];
       if (!databaseId) {
-        throw new Error(`Database not found for type: ${databaseType}`);
+        throw new Error(`Database not found for type: ${String(databaseType)}`);
       }
 
       const response = await notion.databases.query({
@@ -64,7 +64,7 @@ export class NotionService {
           name: this.getPropertyValue(properties.Name || properties.name) || 'Unknown',
           email: this.getPropertyValue(properties.Email || properties.email) || '',
           phone: this.getPropertyValue(properties.Phone || properties.phone) || '',
-          source: databaseType,
+          source: String(databaseType),
           status: this.getPropertyValue(properties.Status || properties.status) || 'New',
           created_time: page.created_time,
           service_interest: this.getPropertyValue(properties['Service Interest'] || properties.service_interest) || '',
@@ -73,7 +73,7 @@ export class NotionService {
         };
       });
     } catch (error) {
-      console.error(`Error fetching leads from ${databaseType}:`, error);
+      console.error(`Error fetching leads from ${String(databaseType)}:`, error);
       return [];
     }
   }
