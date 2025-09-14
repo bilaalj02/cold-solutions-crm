@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import { resetApplicationData } from "../../lib/reset-data";
 
 interface User {
   email: string;
@@ -226,6 +227,40 @@ function SettingsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Data Management Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-semibold" style={{color: '#0a2240'}}>Data Management</h2>
+                <p className="text-sm text-gray-600">Manage application data and reset to clean state</p>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Reset Application Data</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Clear all leads, statistics, audits, and activities. This action cannot be undone.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to reset all application data? This action cannot be undone.')) {
+                      resetApplicationData();
+                      alert('✅ Application data has been reset to clean state');
+                      window.location.reload();
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-white text-sm font-medium hover:opacity-90 bg-red-600"
+                >
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>refresh</span>
+                  Reset Data
+                </button>
+              </div>
             </div>
           </div>
         </div>

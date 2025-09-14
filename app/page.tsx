@@ -1,13 +1,48 @@
 'use client'
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { notionDatabases } from "../lib/notion-databases";
 import { useAuth } from "../lib/auth";
+import { LeadManager, Lead } from "../lib/leads";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 function ColdSolutionsDashboard() {
   const [leadsDropdownOpen, setLeadsDropdownOpen] = useState(false);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [stats, setStats] = useState({
+    newLeads: 0,
+    callsThisWeek: 0,
+    meetingsBooked: 0,
+    conversionRate: 0
+  });
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    // Load leads and calculate stats
+    const loadedLeads = LeadManager.getLeads();
+    setLeads(loadedLeads);
+
+    // Calculate real stats
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const recentLeads = loadedLeads.filter(lead =>
+      new Date(lead.createdAt) >= weekAgo
+    );
+
+    const qualifiedLeads = loadedLeads.filter(lead =>
+      ['Qualified', 'Proposal', 'Won'].includes(lead.status)
+    );
+
+    const convertedLeads = loadedLeads.filter(lead => lead.status === 'Won');
+
+    setStats({
+      newLeads: recentLeads.length,
+      callsThisWeek: Math.floor(recentLeads.length * 0.7), // Estimated
+      meetingsBooked: qualifiedLeads.length,
+      conversionRate: loadedLeads.length > 0 ? Math.round((convertedLeads.length / loadedLeads.length) * 100) : 0
+    });
+  }, []);
 
   return (
     <div className="flex min-h-screen w-full group/design-root overflow-x-hidden bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
@@ -112,19 +147,19 @@ function ColdSolutionsDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="flex flex-col gap-2 rounded-lg p-6 bg-white border border-gray-200 shadow-sm">
                 <p className="text-gray-600 text-base font-medium">New Leads</p>
-                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>24</p>
+                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>{stats.newLeads}</p>
               </div>
               <div className="flex flex-col gap-2 rounded-lg p-6 bg-white border border-gray-200 shadow-sm">
                 <p className="text-gray-600 text-base font-medium">Calls This Week</p>
-                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>15</p>
+                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>{stats.callsThisWeek}</p>
               </div>
               <div className="flex flex-col gap-2 rounded-lg p-6 bg-white border border-gray-200 shadow-sm">
                 <p className="text-gray-600 text-base font-medium">Meetings Booked</p>
-                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>8</p>
+                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>{stats.meetingsBooked}</p>
               </div>
               <div className="flex flex-col gap-2 rounded-lg p-6 bg-white border border-gray-200 shadow-sm">
                 <p className="text-gray-600 text-base font-medium">Conversion %</p>
-                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>12%</p>
+                <p className="text-3xl font-bold" style={{color: '#0a2240'}}>{stats.conversionRate}%</p>
               </div>
             </div>
 
@@ -224,42 +259,55 @@ function ColdSolutionsDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ethan Harper</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Website</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Qualified</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">85</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 days ago</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="hover:underline" style={{color: '#3dbff2'}}>Open</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Olivia Bennett</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Referral</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Contacted</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">78</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 days ago</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="hover:underline" style={{color: '#3dbff2'}}>Open</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Liam Carter</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Social Media</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Interested</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">62</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5 days ago</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="hover:underline" style={{color: '#3dbff2'}}>Open</button>
-                        </td>
-                      </tr>
+                      {leads.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center">
+                            <div className="text-gray-500">
+                              <p className="text-sm">No leads found</p>
+                              <p className="text-xs mt-1">Add leads manually or sync from Notion to see data here</p>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        leads.slice(0, 5).map((lead) => {
+                          const getStatusColor = (status: string) => {
+                            switch (status) {
+                              case 'New': return 'bg-blue-100 text-blue-800';
+                              case 'Contacted': return 'bg-yellow-100 text-yellow-800';
+                              case 'Qualified': return 'bg-green-100 text-green-800';
+                              case 'Proposal': return 'bg-purple-100 text-purple-800';
+                              case 'Won': return 'bg-emerald-100 text-emerald-800';
+                              case 'Lost': return 'bg-red-100 text-red-800';
+                              default: return 'bg-gray-100 text-gray-800';
+                            }
+                          };
+
+                          const getRelativeTime = (dateString: string) => {
+                            const date = new Date(dateString);
+                            const now = new Date();
+                            const diffTime = Math.abs(now.getTime() - date.getTime());
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                          };
+
+                          return (
+                            <tr key={lead.id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lead.name}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.source}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}`}>
+                                  {lead.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.score}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getRelativeTime(lead.createdAt)}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href={`/leads/${lead.id}`} className="hover:underline" style={{color: '#3dbff2'}}>Open</a>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -268,44 +316,58 @@ function ColdSolutionsDashboard() {
               {/* Recent Activity */}
               <div className="lg:col-span-1 bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                 <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Recent Activity</h3>
-                <ul className="space-y-6">
-                  <li className="flex items-start gap-4">
-                    <div className="rounded-full p-2 mt-1" style={{backgroundColor: '#3dbff2'}}>
-                      <span className="material-symbols-outlined text-white" style={{fontSize: '16px'}}>phone_in_talk</span>
+                {leads.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500">
+                      <p className="text-sm">No recent activity</p>
+                      <p className="text-xs mt-1">Activity will appear here as you interact with leads</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">Call with Ethan Harper</p>
-                      <p className="text-sm text-gray-500">2 days ago</p>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chevron_right</span>
-                    </button>
-                  </li>
-                  <li className="flex items-start gap-4">
-                    <div className="rounded-full p-2 mt-1" style={{backgroundColor: '#3dbff2'}}>
-                      <span className="material-symbols-outlined text-white" style={{fontSize: '16px'}}>videocam</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">Meeting with Olivia Bennett</p>
-                      <p className="text-sm text-gray-500">3 days ago</p>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chevron_right</span>
-                    </button>
-                  </li>
-                  <li className="flex items-start gap-4">
-                    <div className="rounded-full p-2 mt-1" style={{backgroundColor: '#3dbff2'}}>
-                      <span className="material-symbols-outlined text-white" style={{fontSize: '16px'}}>phone_in_talk</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">Call with Liam Carter</p>
-                      <p className="text-sm text-gray-500">5 days ago</p>
-                    </div>
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chevron_right</span>
-                    </button>
-                  </li>
-                </ul>
+                  </div>
+                ) : (
+                  <ul className="space-y-6">
+                    {leads.slice(0, 3).map((lead, index) => {
+                      const getActivityIcon = (index: number) => {
+                        const icons = ['phone_in_talk', 'videocam', 'email', 'person_add'];
+                        return icons[index % icons.length];
+                      };
+
+                      const getActivityText = (lead: Lead, index: number) => {
+                        const activities = [
+                          `New lead added: ${lead.name}`,
+                          `Follow-up scheduled with ${lead.name}`,
+                          `Email sent to ${lead.name}`,
+                          `Status updated for ${lead.name}`
+                        ];
+                        return activities[index % activities.length];
+                      };
+
+                      const getRelativeTime = (dateString: string) => {
+                        const date = new Date(dateString);
+                        const now = new Date();
+                        const diffTime = Math.abs(now.getTime() - date.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                      };
+
+                      return (
+                        <li key={lead.id} className="flex items-start gap-4">
+                          <div className="rounded-full p-2 mt-1" style={{backgroundColor: '#3dbff2'}}>
+                            <span className="material-symbols-outlined text-white" style={{fontSize: '16px'}}>
+                              {getActivityIcon(index)}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">{getActivityText(lead, index)}</p>
+                            <p className="text-sm text-gray-500">{getRelativeTime(lead.createdAt)}</p>
+                          </div>
+                          <button className="text-gray-400 hover:text-gray-600">
+                            <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chevron_right</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             </div>
           </main>

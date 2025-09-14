@@ -188,8 +188,9 @@ export default function LeadsDatabase() {
     setIsSyncing(true);
     try {
       const response = await fetch('/api/leads');
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         // Convert Notion leads to our Lead format
         const notionLeads = data.leads || [];
         const currentLeads = LeadManager.getLeads();
@@ -197,19 +198,21 @@ export default function LeadsDatabase() {
         // Add new leads from Notion that don't exist locally
         let newLeadsCount = 0;
         notionLeads.forEach((notionLead: any) => {
+          if (!notionLead.email) return; // Skip leads without email
+
           const existingLead = currentLeads.find(lead =>
             lead.email.toLowerCase() === notionLead.email.toLowerCase()
           );
 
-          if (!existingLead && notionLead.email) {
+          if (!existingLead) {
             const lead: Lead = {
               id: LeadManager.generateId(),
               name: notionLead.name || 'Unknown',
               email: notionLead.email,
               phone: notionLead.phone || '',
-              company: notionLead.company,
-              position: notionLead.position,
-              source: notionLead.source as any || 'Website',
+              company: notionLead.company || '',
+              position: notionLead.position || '',
+              source: notionLead.source as any || 'Notion',
               status: notionLead.status as any || 'New',
               priority: 'Medium',
               score: LeadManager.calculateScore({
@@ -239,19 +242,24 @@ export default function LeadsDatabase() {
 
         const updatedLeads = LeadManager.getLeads();
         setLeads(updatedLeads);
+        setFilteredLeads(updatedLeads);
         setLastSyncTime(new Date().toLocaleString());
 
         if (newLeadsCount > 0) {
-          alert(`Sync completed! Added ${newLeadsCount} new leads from Notion.`);
+          alert(`✅ Sync successful! Added ${newLeadsCount} new leads from Notion.`);
+        } else if (notionLeads.length === 0) {
+          alert('⚠️ No data found in Notion databases. Please check:\n\n1. Database IDs in environment variables\n2. Integration permissions\n3. Database sharing settings\n\nSync completed but no leads were imported.');
         } else {
-          alert('Sync completed! No new leads found. Make sure your Notion databases are shared with the integration and contain lead data.');
+          alert('✅ Sync completed! No new leads to add (all leads already exist).');
         }
       } else {
-        throw new Error('Failed to sync with Notion');
+        // Handle API errors
+        const errorMsg = data.error || 'Unknown error';
+        alert(`❌ Sync failed: ${errorMsg}\n\nPlease check your Notion integration setup.`);
       }
     } catch (error) {
       console.error('Notion sync error:', error);
-      alert('Failed to sync with Notion. Please check your API configuration.');
+      alert('❌ Network error during sync. Please check your connection and try again.');
     } finally {
       setIsSyncing(false);
     }

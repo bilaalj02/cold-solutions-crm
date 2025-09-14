@@ -2,59 +2,14 @@
 
 import { Brain, Search, FileText, TrendingUp, Clock, CheckCircle } from 'lucide-react'
 
-const recentAudits = [
-  {
-    id: '1',
-    businessName: 'Premier Real Estate Group',
-    industry: 'Real Estate',
-    status: 'completed',
-    auditDate: new Date('2024-09-12'),
-    estimatedROI: 15000,
-    painPoints: ['Missing 60% of calls', 'Slow lead response', 'Manual scheduling'],
-    recommendations: ['AI Voice Agent', 'Lead Routing Automation', 'Calendar Integration'],
-    assignedTo: 'Sarah Johnson'
-  },
-  {
-    id: '2',
-    businessName: 'City HVAC Services',
-    industry: 'Home Services',
-    status: 'in-progress',
-    auditDate: new Date('2024-09-13'),
-    estimatedROI: 22000,
-    painPoints: ['After-hours emergencies', 'Seasonal demand spikes', 'Manual job dispatch'],
-    recommendations: ['24/7 Voice Agent', 'Emergency Routing', 'Service Scheduling'],
-    assignedTo: 'David Park'
-  },
-  {
-    id: '3',
-    businessName: 'Bright Smile Dental',
-    industry: 'Healthcare',
-    status: 'scheduled',
-    auditDate: new Date('2024-09-15'),
-    estimatedROI: 12000,
-    painPoints: ['Patient no-shows', 'Insurance verification delays', 'Appointment conflicts'],
-    recommendations: ['Appointment Reminders', 'Insurance Bot', 'Smart Scheduling'],
-    assignedTo: 'Emily Rodriguez'
-  },
-  {
-    id: '4',
-    businessName: 'Thompson & Associates Law',
-    industry: 'Legal',
-    status: 'follow-up-needed',
-    auditDate: new Date('2024-09-10'),
-    estimatedROI: 35000,
-    painPoints: ['Complex intake process', 'Client communication gaps', 'Case routing errors'],
-    recommendations: ['Legal Intake Bot', 'Client Portal', 'Practice Area Routing'],
-    assignedTo: 'Mike Chen'
-  }
-]
+const recentAudits: any[] = []
 
 const intelligenceStats = {
-  totalAudits: 28,
-  auditsThisWeek: 4,
-  avgROI: 18500,
-  completionRate: 85.7,
-  followUpNeeded: 6
+  totalAudits: 0,
+  auditsThisWeek: 0,
+  avgROI: 0,
+  completionRate: 0,
+  followUpNeeded: 0
 }
 
 const statusColors = {
@@ -149,7 +104,16 @@ export default function BusinessIntelligence() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent AI Audits</h3>
         <div className="space-y-6">
-          {recentAudits.map((audit) => (
+          {recentAudits.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500">
+                <Brain className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-lg font-medium">No AI audits found</p>
+                <p className="text-sm mt-1">Business intelligence data will appear here as audits are completed</p>
+              </div>
+            </div>
+          ) : (
+            recentAudits.map((audit) => (
             <div key={audit.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start space-x-4">
@@ -238,7 +202,8 @@ export default function BusinessIntelligence() {
                 </div>
               </div>
             </div>
-          ))}
+          )))
+          }
         </div>
       </div>
 
