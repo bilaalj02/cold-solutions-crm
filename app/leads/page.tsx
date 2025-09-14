@@ -241,7 +241,11 @@ export default function LeadsDatabase() {
         setLeads(updatedLeads);
         setLastSyncTime(new Date().toLocaleString());
 
-        alert(`Sync completed! Added ${newLeadsCount} new leads from Notion.`);
+        if (newLeadsCount > 0) {
+          alert(`Sync completed! Added ${newLeadsCount} new leads from Notion.`);
+        } else {
+          alert('Sync completed! No new leads found. Make sure your Notion databases are shared with the integration and contain lead data.');
+        }
       } else {
         throw new Error('Failed to sync with Notion');
       }

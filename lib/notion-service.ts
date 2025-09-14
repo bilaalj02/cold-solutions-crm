@@ -1,9 +1,5 @@
 import { Client } from "@notionhq/client";
 
-const notion = new Client({
-  auth: process.env.NOTION_API_KEY,
-});
-
 const DATABASES = JSON.parse(process.env.NOTION_DATABASES || '{}');
 
 // Check if we're in development and API key is not set
@@ -32,7 +28,14 @@ export interface DatabaseStats {
 }
 
 export class NotionService {
-  
+  private notion: Client;
+
+  constructor() {
+    this.notion = new Client({
+      auth: process.env.NOTION_API_KEY,
+    });
+  }
+
   async getLeadsByDatabase(databaseType: keyof typeof DATABASES): Promise<LeadData[]> {
     try {
       // Check if Notion is properly configured
@@ -46,7 +49,7 @@ export class NotionService {
         throw new Error(`Database not found for type: ${String(databaseType)}`);
       }
 
-      const response = await notion.databases.query({
+      const response = await this.notion.databases.query({
         database_id: databaseId,
         page_size: 100,
         sorts: [
