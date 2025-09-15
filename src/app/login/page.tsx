@@ -139,21 +139,40 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-6 bg-gray-50 rounded-md p-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Default Caller Account:</h3>
-              <div className="text-sm text-gray-600">
-                <p><strong>Email:</strong> caller@coldcaller.com</p>
-                <p><strong>Password:</strong> caller123</p>
+            <div className="mt-6 space-y-4">
+              <div className="bg-gray-50 rounded-md p-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Admin Account (Full Access):</h3>
+                <div className="text-sm text-gray-600">
+                  <p><strong>Email:</strong> admin@coldcaller.com</p>
+                  <p><strong>Password:</strong> admin123</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEmail('admin@coldcaller.com');
+                    setPassword('admin123');
+                  }}
+                  className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Fill Admin Credentials
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setEmail('caller@coldcaller.com');
-                  setPassword('caller123');
-                }}
-                className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
-              >
-                Fill Demo Credentials
-              </button>
+              
+              <div className="bg-gray-50 rounded-md p-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Caller Account:</h3>
+                <div className="text-sm text-gray-600">
+                  <p><strong>Email:</strong> caller@coldcaller.com</p>
+                  <p><strong>Password:</strong> caller123</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEmail('caller@coldcaller.com');
+                    setPassword('caller123');
+                  }}
+                  className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Fill Caller Credentials
+                </button>
+              </div>
             </div>
           </div>
         </div>

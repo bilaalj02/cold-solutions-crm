@@ -167,20 +167,35 @@ export class LeadManager {
     
     const stored = localStorage.getItem(this.USERS_KEY);
     if (!stored) {
-      // Create default cold caller user
-      const defaultUsers = [{
-        id: 'caller-001',
-        name: 'Cold Caller',
-        email: 'caller@coldcaller.com',
-        password: 'caller123',
-        role: 'User' as const,
-        territory: 'All',
-        department: 'Sales',
-        maxLeads: 200,
-        active: true,
-        createdAt: new Date().toISOString().split('T')[0],
-        lastLogin: undefined
-      }];
+      // Create default admin and caller users
+      const defaultUsers = [
+        {
+          id: 'admin-001',
+          name: 'Admin User',
+          email: 'admin@coldcaller.com',
+          password: 'admin123',
+          role: 'Admin' as const,
+          territory: 'All',
+          department: 'Management',
+          maxLeads: 1000,
+          active: true,
+          createdAt: new Date().toISOString().split('T')[0],
+          lastLogin: undefined
+        },
+        {
+          id: 'caller-001',
+          name: 'Cold Caller',
+          email: 'caller@coldcaller.com',
+          password: 'caller123',
+          role: 'Sales Rep' as const,
+          territory: 'All',
+          department: 'Sales',
+          maxLeads: 200,
+          active: true,
+          createdAt: new Date().toISOString().split('T')[0],
+          lastLogin: undefined
+        }
+      ];
       this.saveUsers(defaultUsers);
       return defaultUsers;
     }
