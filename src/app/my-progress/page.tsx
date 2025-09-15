@@ -190,19 +190,23 @@ export default function MyProgressPage() {
           <div className="bg-white rounded-lg border p-6 mb-8">
             <h3 className="text-lg font-semibold mb-6 text-gray-900">Call Outcomes Breakdown</h3>
             <div className="space-y-4">
-              {analyticsData && Object.entries(analyticsData.callsByOutcome).map(([outcome, count]) => (
-                <div key={outcome} className="flex items-center gap-4">
-                  <span className={`inline-block w-3 h-3 rounded-full ${getOutcomeColor(outcome)}`}></span>
-                  <p className="text-sm text-gray-700 w-32">{outcome}</p>
-                  <div className="flex-1 bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className={`h-2.5 rounded-full ${getOutcomeColor(outcome)}`}
-                      style={{ width: `${(Number(count) / totalCalls) * 100 || 0}%` }}
-                    ></div>
+              {analyticsData && Object.entries(analyticsData.callsByOutcome).map(([outcome, count]) => {
+                const countNum = Number(count) || 0;
+                const percentage = totalCalls > 0 ? (countNum / totalCalls) * 100 : 0;
+                return (
+                  <div key={outcome} className="flex items-center gap-4">
+                    <span className={`inline-block w-3 h-3 rounded-full ${getOutcomeColor(outcome)}`}></span>
+                    <p className="text-sm text-gray-700 w-32">{outcome}</p>
+                    <div className="flex-1 bg-gray-200 rounded-full h-2.5">
+                      <div
+                        className={`h-2.5 rounded-full ${getOutcomeColor(outcome)}`}
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">{countNum} ({percentage.toFixed(1)}%)</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">{count} ({((Number(count) / totalCalls) * 100 || 0).toFixed(1)}%)</span>
-                </div>
-              ))}
+                );
+              })}
               {totalCalls === 0 && <p className="text-center text-gray-500">No calls recorded for this period.</p>}
             </div>
           </div>
