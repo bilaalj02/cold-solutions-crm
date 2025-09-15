@@ -242,17 +242,6 @@ export class LeadManager {
     this.setCurrentUser(null);
   }
 
-  static saveUser(user: SalesUser): void {
-    const users = this.getUsers();
-    const existingIndex = users.findIndex(u => u.id === user.id);
-    if (existingIndex >= 0) {
-      users[existingIndex] = user;
-    } else {
-      users.push(user);
-    }
-    this.saveUsers(users);
-  }
-
   static createUser(data: Omit<SalesUser, 'id' | 'createdAt'>): SalesUser {
     const user: SalesUser = {
       ...data,
