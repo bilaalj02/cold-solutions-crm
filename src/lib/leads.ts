@@ -197,9 +197,12 @@ export class LeadManager {
         }
       ];
       this.saveUsers(defaultUsers);
+      console.log('Created default users:', defaultUsers);
       return defaultUsers;
     }
-    return JSON.parse(stored);
+    const users = JSON.parse(stored);
+    console.log('Loaded users from storage:', users);
+    return users;
   }
 
   static saveUser(user: SalesUser): void {
@@ -223,7 +226,9 @@ export class LeadManager {
 
   static authenticateUser(email: string, password: string): SalesUser | null {
     const users = this.getUsers();
+    console.log('Attempting to authenticate:', email, 'with users:', users);
     const user = users.find(u => u.email === email && u.password === password && u.active);
+    console.log('Found user:', user);
     
     if (user) {
       user.lastLogin = new Date().toISOString();
