@@ -143,6 +143,12 @@ export default function CallLogPage() {
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>trending_up</span>
               <p className="text-sm font-medium leading-normal">My Progress</p>
             </a>
+            {currentUser?.role === 'Admin' && (
+              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-700 text-white" href="/users">
+                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>people</span>
+                <p className="text-sm font-medium leading-normal">Users</p>
+              </a>
+            )}
           </nav>
         </div>
         

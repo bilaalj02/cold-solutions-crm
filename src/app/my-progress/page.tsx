@@ -9,6 +9,8 @@ type TimePeriod = 'day' | 'week' | 'month' | 'year';
 export default function MyProgressPage() {
   const [currentUser, setCurrentUser] = useState<SalesUser | null>(null);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('day');
+  const [selectedCallerId, setSelectedCallerId] = useState<string>('all');
+  const [allCallers, setAllCallers] = useState<SalesUser[]>([]);
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const router = useRouter();
 
@@ -21,11 +23,15 @@ export default function MyProgressPage() {
     }
     setCurrentUser(user);
 
+    // Load all callers for admin users
+    const users = LeadManager.getUsers();
+    setAllCallers(users.filter(u => u.role === 'Sales Rep' || u.role === 'Manager' || u.role === 'Admin'));
+
     fetchAnalytics();
-  }, [timePeriod, router]);
+  }, [timePeriod, selectedCallerId, router]);
 
   const fetchAnalytics = () => {
-    const data = LeadManager.getCallAnalytics(timePeriod);
+    const data = LeadManager.getCallAnalytics(timePeriod, selectedCallerId === 'all' ? undefined : selectedCallerId);
     setAnalyticsData(data);
   };
 
@@ -87,6 +93,12 @@ export default function MyProgressPage() {
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>trending_up</span>
               <p className="text-sm font-medium leading-normal">My Progress</p>
             </a>
+            {currentUser?.role === 'Admin' && (
+              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-700 text-white" href="/users">
+                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>people</span>
+                <p className="text-sm font-medium leading-normal">Users</p>
+              </a>
+            )}
           </nav>
         </div>
         
@@ -129,6 +141,16 @@ export default function MyProgressPage() {
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
+              </select>
+              <select
+                value={selectedCallerId}
+                onChange={(e) => setSelectedCallerId(e.target.value)}
+                className="rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+              >
+                <option value="all">All Callers</option>
+                {allCallers.map(caller => (
+                  <option key={caller.id} value={caller.id}>{caller.name}</option>
+                ))}
               </select>
             </div>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { LeadManager, Lead, LeadList, SalesUser } from '@/lib/leads';
 
@@ -11,6 +11,23 @@ export default function DashboardPage() {
   const [filteredLists, setFilteredLists] = useState<LeadList[]>([]);
   const [industryFilter, setIndustryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  
+  // CSV Import states
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importStatus, setImportStatus] = useState<'idle' | 'parsing' | 'validating' | 'importing' | 'completed' | 'error'>('idle');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [newLeadList, setNewLeadList] = useState({
+    name: '',
+    description: '',
+    location: '',
+    industry: '',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High' | 'Critical'
+  });
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -73,6 +90,168 @@ export default function DashboardPage() {
     return Math.round((completed / total) * 100);
   };
 
+  // CSV Import functions
+  const parseCSV = (text: string): any[] => {
+    const lines = text.split('\n').filter(line => line.trim());
+    if (lines.length === 0) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const rows = lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+      const row: any = {};
+      headers.forEach((header, index) => {
+        row[header.toLowerCase()] = values[index] || '';
+      });
+      return row;
+    });
+    
+    return rows;
+  };
+
+  const validateCSVData = (data: any[]): { valid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    if (data.length === 0) {
+      errors.push('No data found in CSV file');
+      return { valid: false, errors };
+    }
+    
+    const requiredFields = ['name', 'email'];
+    const firstRow = data[0];
+    
+    requiredFields.forEach(field => {
+      if (!firstRow[field]) {
+        errors.push(`Missing required field: ${field}`);
+      }
+    });
+    
+    return { valid: errors.length === 0, errors };
+  };
+
+  const convertCSVToLeads = (data: any[], leadListId: string): Lead[] => {
+    return data.map((row, index) => ({
+      id: LeadManager.generateId(),
+      name: row.name || `Lead ${index + 1}`,
+      email: row.email || '',
+      phone: row.phone || row.telephone || '',
+      company: row.company || row.business || '',
+      position: row.position || row.job_title || row.title || '',
+      source: 'CSV Import' as const,
+      status: 'New' as const,
+      priority: 'Medium' as const,
+      score: 7,
+      assignedTo: currentUser?.id,
+      territory: row.territory || row.region || newLeadList.location,
+      industry: row.industry || newLeadList.industry,
+      leadSource: 'CSV Import',
+      originalSource: 'CSV Import',
+      leadListId: leadListId,
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      notes: row.notes || '',
+      tags: [],
+      lifecycle: {
+        stage: 'New',
+        stageChangedAt: new Date().toISOString().split('T')[0],
+        timeInStage: 0
+      },
+      isDuplicate: false
+    }));
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    setCsvFile(file);
+    setImportStatus('parsing');
+    setImportProgress(0);
+    setImportError(null);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const data = parseCSV(text);
+      const validation = validateCSVData(data);
+      
+      if (validation.valid) {
+        setCsvData(data);
+        setImportStatus('idle');
+        setImportProgress(100);
+      } else {
+        setImportError(validation.errors.join(', '));
+        setImportStatus('error');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  const handleImportLeads = async () => {
+    if (!csvData.length || !newLeadList.name.trim()) return;
+    
+    setImportStatus('importing');
+    setImportProgress(0);
+    
+    try {
+      // Create lead list
+      const leadList = LeadManager.createLeadList({
+        name: newLeadList.name,
+        description: newLeadList.description,
+        territory: newLeadList.location,
+        industry: newLeadList.industry,
+        priority: newLeadList.priority,
+        status: 'Active',
+        tags: []
+      });
+      
+      // Convert CSV data to leads
+      const leads = convertCSVToLeads(csvData, leadList.id);
+      
+      // Save leads
+      leads.forEach(lead => {
+        LeadManager.saveLead(lead);
+      });
+      
+      // Update lead list count
+      leadList.leadCount = leads.length;
+      LeadManager.saveLeadList(leadList);
+      
+      setImportStatus('completed');
+      setImportProgress(100);
+      
+      // Refresh data
+      const allLeads = LeadManager.getLeads();
+      const allLeadLists = LeadManager.getLeadLists();
+      setLeads(allLeads);
+      setLeadLists(allLeadLists);
+      setFilteredLists(allLeadLists);
+      
+      // Reset form
+      setTimeout(() => {
+        setShowImportModal(false);
+        setCsvFile(null);
+        setCsvData([]);
+        setImportStatus('idle');
+        setImportProgress(0);
+        setNewLeadList({
+          name: '',
+          description: '',
+          location: '',
+          industry: '',
+          priority: 'Medium'
+        });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }, 2000);
+      
+    } catch (error) {
+      setImportError('Failed to import leads');
+      setImportStatus('error');
+    }
+  };
+
   const industries = Array.from(new Set(leadLists.map(list => list.industry).filter(Boolean)));
 
   if (!currentUser) {
@@ -111,6 +290,12 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>trending_up</span>
               <p className="text-sm font-medium leading-normal">My Progress</p>
             </a>
+            {currentUser?.role === 'Admin' && (
+              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-700 text-white" href="/users">
+                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>people</span>
+                <p className="text-sm font-medium leading-normal">Users</p>
+              </a>
+            )}
           </nav>
         </div>
         
@@ -143,6 +328,14 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold text-gray-900">Lead Lists</h1>
               <p className="text-sm text-gray-600 mt-1">Select a lead list to start making calls</p>
             </div>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
+              style={{backgroundColor: '#3dbff2'}}
+            >
+              <span className="material-symbols-outlined text-sm">upload</span>
+              Import CSV
+            </button>
           </div>
         </header>
 
@@ -247,6 +440,154 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">Import CSV Leads</h2>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                {/* File Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">CSV File</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                  />
+                  {csvFile && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Selected: {csvFile.name} ({csvData.length} leads found)
+                    </p>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
+                {importStatus !== 'idle' && (
+                  <div>
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>Progress</span>
+                      <span>{importProgress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-300 bg-blue-600"
+                        style={{ width: `${importProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Display */}
+                {importError && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                    <p className="text-sm text-red-600">{importError}</p>
+                  </div>
+                )}
+
+                {/* Success Display */}
+                {importStatus === 'completed' && (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                    <p className="text-sm text-green-600">Leads imported successfully!</p>
+                  </div>
+                )}
+
+                {/* Lead List Details Form */}
+                {csvData.length > 0 && importStatus === 'idle' && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Lead List Name *</label>
+                      <input
+                        type="text"
+                        value={newLeadList.name}
+                        onChange={(e) => setNewLeadList({...newLeadList, name: e.target.value})}
+                        className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        placeholder="Enter lead list name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <textarea
+                        value={newLeadList.description}
+                        onChange={(e) => setNewLeadList({...newLeadList, description: e.target.value})}
+                        className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        rows={2}
+                        placeholder="Enter description"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                      <input
+                        type="text"
+                        value={newLeadList.location}
+                        onChange={(e) => setNewLeadList({...newLeadList, location: e.target.value})}
+                        className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        placeholder="Enter location"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                      <input
+                        type="text"
+                        value={newLeadList.industry}
+                        onChange={(e) => setNewLeadList({...newLeadList, industry: e.target.value})}
+                        className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                        placeholder="Enter industry"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                      <select
+                        value={newLeadList.priority}
+                        onChange={(e) => setNewLeadList({...newLeadList, priority: e.target.value as any})}
+                        className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImportLeads}
+                disabled={!csvData.length || !newLeadList.name.trim() || importStatus === 'importing'}
+                className="px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{backgroundColor: '#3dbff2'}}
+              >
+                {importStatus === 'importing' ? 'Importing...' : 'Import Leads'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
