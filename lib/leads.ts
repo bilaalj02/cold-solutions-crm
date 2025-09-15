@@ -55,11 +55,14 @@ export interface SalesUser {
   id: string;
   name: string;
   email: string;
-  role: 'Sales Rep' | 'Sales Manager' | 'Admin';
+  password: string;
+  role: 'Admin' | 'Manager' | 'Sales Rep' | 'User';
   territory?: string;
   department?: string;
   maxLeads?: number;
   active: boolean;
+  createdAt: string;
+  lastLogin?: string;
 }
 
 export interface Territory {
@@ -128,31 +131,37 @@ export const defaultUsers: SalesUser[] = [
     id: '1',
     name: 'John Doe',
     email: 'john.doe@coldsolutions.com',
-    role: 'Sales Manager',
+    password: 'password123',
+    role: 'Manager',
     territory: 'East Coast',
     department: 'Sales',
     maxLeads: 50,
-    active: true
+    active: true,
+    createdAt: new Date().toISOString()
   },
   {
     id: '2',
     name: 'Jane Smith',
     email: 'jane.smith@coldsolutions.com',
+    password: 'password123',
     role: 'Sales Rep',
     territory: 'West Coast',
     department: 'Sales',
     maxLeads: 30,
-    active: true
+    active: true,
+    createdAt: new Date().toISOString()
   },
   {
     id: '3',
     name: 'Mike Johnson',
     email: 'mike.johnson@coldsolutions.com',
+    password: 'password123',
     role: 'Sales Rep',
     territory: 'Midwest',
     department: 'Sales',
     maxLeads: 25,
-    active: true
+    active: true,
+    createdAt: new Date().toISOString()
   }
 ];
 
@@ -485,31 +494,6 @@ export class LeadManager {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
-  // User Management
-  static getUsers(): SalesUser[] {
-    if (typeof window === 'undefined') return defaultUsers;
-    
-    const stored = localStorage.getItem(this.USERS_KEY);
-    if (!stored) {
-      this.saveUsers(defaultUsers);
-      return defaultUsers;
-    }
-    return JSON.parse(stored);
-  }
-
-  static saveUsers(users: SalesUser[]): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
-    }
-  }
-
-  static getUserById(id: string): SalesUser | undefined {
-    return this.getUsers().find(user => user.id === id);
-  }
-
-  static getUserByName(name: string): SalesUser | undefined {
-    return this.getUsers().find(user => user.name === name);
-  }
 
   // Territory Management
   static getTerritories(): Territory[] {
@@ -1165,8 +1149,113 @@ export class LeadManager {
 
   static getAllCallersPerformance() {
     const leads = this.getLeads();
-    const callerIds = [...new Set(leads.map(lead => lead.assignedTo).filter(Boolean))];
-    
+    const callerIds = [...new Set(leads.map(lead => lead.assignedTo).filter((id): id is string => Boolean(id)))];
+
     return callerIds.map(callerId => this.getCallerPerformance(callerId));
+  }
+
+  // User Management
+  static getUsers(): SalesUser[] {
+    if (typeof window === 'undefined') return [];
+    
+    const stored = localStorage.getItem(this.USERS_KEY);
+    
+    if (!stored) {
+      // Create default admin user
+      const defaultUsers = [{
+        id: 'admin-001',
+        name: 'Admin User',
+        email: 'admin@coldsolutions.com',
+        password: 'admin123',
+        role: 'Admin' as const,
+        territory: 'All',
+        department: 'Management',
+        maxLeads: 1000,
+        active: true,
+        createdAt: new Date().toISOString().split('T')[0],
+        lastLogin: undefined
+      }];
+      this.saveUsers(defaultUsers);
+      return defaultUsers;
+    }
+    
+    const users = JSON.parse(stored);
+    return users;
+  }
+
+  static saveUser(user: SalesUser): void {
+    const users = this.getUsers();
+    const existingIndex = users.findIndex(u => u.id === user.id);
+    
+    if (existingIndex >= 0) {
+      users[existingIndex] = user;
+    } else {
+      users.push(user);
+    }
+    
+    this.saveUsers(users);
+  }
+
+  static saveUsers(users: SalesUser[]): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+    }
+  }
+
+  static deleteUser(id: string): void {
+    const users = this.getUsers().filter(u => u.id !== id);
+    this.saveUsers(users);
+  }
+
+  static getUserById(id: string): SalesUser | undefined {
+    return this.getUsers().find(user => user.id === id);
+  }
+
+  static createUser(data: Omit<SalesUser, 'id' | 'createdAt'>): SalesUser {
+    const user: SalesUser = {
+      ...data,
+      id: this.generateId(),
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    
+    this.saveUser(user);
+    return user;
+  }
+
+  static authenticateUser(email: string, password: string): SalesUser | null {
+    const users = this.getUsers();
+    const user = users.find(u => u.email === email && u.password === password && u.active);
+    
+    if (user) {
+      // Update last login
+      user.lastLogin = new Date().toISOString();
+      this.saveUser(user);
+    }
+    
+    return user || null;
+  }
+
+  static getCurrentUser(): SalesUser | null {
+    if (typeof window === 'undefined') return null;
+    
+    const stored = localStorage.getItem('current_user');
+    if (!stored) return null;
+    
+    const userId = JSON.parse(stored);
+    return this.getUserById(userId) || null;
+  }
+
+  static setCurrentUser(user: SalesUser | null): void {
+    if (typeof window === 'undefined') return;
+    
+    if (user) {
+      localStorage.setItem('current_user', JSON.stringify(user.id));
+    } else {
+      localStorage.removeItem('current_user');
+    }
+  }
+
+  static logout(): void {
+    this.setCurrentUser(null);
   }
 }

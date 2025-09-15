@@ -1,14 +1,17 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from "react";
-import { LeadManager, Lead, LeadList } from "../../lib/leads";
+import { useRouter } from 'next/navigation';
+import { LeadManager, Lead, LeadList, SalesUser } from "../../lib/leads";
 
 export default function ColdCallerLeadList() {
+  const [currentUser, setCurrentUser] = useState<SalesUser | null>(null);
   const [leadLists, setLeadLists] = useState<LeadList[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLists, setFilteredLists] = useState<LeadList[]>([]);
   const [industryFilter, setIndustryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const router = useRouter();
 
   // CSV Import states
   const [showImportModal, setShowImportModal] = useState(false);
@@ -38,12 +41,20 @@ export default function ColdCallerLeadList() {
 
 
   useEffect(() => {
+    // Check authentication
+    const user = LeadManager.getCurrentUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setCurrentUser(user);
+
     // Load lead lists from LeadManager
     const loadedLeadLists = LeadManager.getLeadLists();
     setLeadLists(loadedLeadLists);
     setFilteredLists(loadedLeadLists);
     setLeads(LeadManager.getLeads());
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     let filtered = leadLists;
@@ -61,6 +72,11 @@ export default function ColdCallerLeadList() {
 
   const getProgressPercentage = (completed: number, total: number) => {
     return Math.round((completed / total) * 100);
+  };
+
+  const handleLogout = () => {
+    LeadManager.logout();
+    router.push('/login');
   };
 
   const getPriorityColor = (priority: string) => {
@@ -489,15 +505,31 @@ export default function ColdCallerLeadList() {
           </nav>
         </div>
         
+        <div className="p-4 border-t border-gray-600">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="material-symbols-outlined text-white text-sm">person</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">{currentUser?.name || 'User'}</p>
+              <p className="text-xs text-gray-300">{currentUser?.role || 'User'}</p>
+            </div>
+          </div>
         <div className="flex flex-col gap-2">
-          <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="#">
+            {currentUser?.role === 'Admin' && (
+              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/settings">
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
             <p className="text-sm font-medium leading-normal">Settings</p>
           </a>
-          <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="#">
+            )}
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white"
+            >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>logout</span>
             <p className="text-sm font-medium leading-normal">Logout</p>
-          </a>
+            </button>
+          </div>
         </div>
       </aside>
 
