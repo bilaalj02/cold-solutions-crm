@@ -50,8 +50,8 @@ export class WebhookLeadProcessor {
       notes: data.message || '',
       createdAt: webhookData.timestamp ? new Date(webhookData.timestamp).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString().split('T')[0],
-      lastContactedAt: '',
-      nextFollowUpAt: '',
+      lastInteraction: webhookData.timestamp || new Date().toISOString(),
+      nextFollowUp: '',
       tags: [
         'mcp-lead',
         webhookData.database || 'unknown-source',
