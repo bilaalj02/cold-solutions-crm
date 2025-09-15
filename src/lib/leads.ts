@@ -139,6 +139,17 @@ export class LeadManager {
     }
   }
 
+  static createLeadList(data: Omit<LeadList, 'id' | 'createdAt' | 'leadCount'>): LeadList {
+    const leadList: LeadList = {
+      ...data,
+      id: this.generateId(),
+      createdAt: new Date().toISOString().split('T')[0],
+      leadCount: 0,
+    };
+    this.saveLeadList(leadList);
+    return leadList;
+  }
+
   static deleteLeadList(id: string): void {
     const leadLists = this.getLeadLists().filter(l => l.id !== id);
     this.saveLeadLists(leadLists);
@@ -240,6 +251,37 @@ export class LeadManager {
 
   static logout(): void {
     this.setCurrentUser(null);
+  }
+
+  static saveUser(user: SalesUser): void {
+    const users = this.getUsers();
+    const existingIndex = users.findIndex(u => u.id === user.id);
+    if (existingIndex >= 0) {
+      users[existingIndex] = user;
+    } else {
+      users.push(user);
+    }
+    this.saveUsers(users);
+  }
+
+  static createUser(data: Omit<SalesUser, 'id' | 'createdAt'>): SalesUser {
+    const user: SalesUser = {
+      ...data,
+      id: this.generateId(),
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    this.saveUser(user);
+    return user;
+  }
+
+  static deleteUser(id: string): void {
+    const users = this.getUsers();
+    const filteredUsers = users.filter(u => u.id !== id);
+    this.saveUsers(filteredUsers);
+  }
+
+  static getUserById(id: string): SalesUser | undefined {
+    return this.getUsers().find(u => u.id === id);
   }
 
   // Analytics for cold callers
