@@ -81,6 +81,11 @@ export async function POST(request: NextRequest) {
           lastInteraction: webhookData.timestamp || new Date().toISOString(),
           nextFollowUp: '',
           tags: ['mcp-lead', webhookData.database || 'unknown'],
+          lifecycle: {
+            stage: 'New',
+            stageChangedAt: new Date().toISOString(),
+            timeInStage: 0
+          },
           customFields: {
             mcpDatabase: webhookData.database,
             mcpRecordId: webhookData.recordId

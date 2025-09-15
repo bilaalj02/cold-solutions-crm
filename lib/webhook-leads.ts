@@ -57,6 +57,11 @@ export class WebhookLeadProcessor {
         webhookData.database || 'unknown-source',
         data.service ? data.service.toLowerCase().replace(/\s+/g, '-') : ''
       ].filter(Boolean),
+      lifecycle: {
+        stage: 'New',
+        stageChangedAt: new Date().toISOString(),
+        timeInStage: 0
+      },
       customFields: {
         mcpDatabase: webhookData.database,
         mcpRecordId: webhookData.recordId,
