@@ -120,7 +120,7 @@ export default function UsersPage() {
       <aside className="min-h-screen w-72 flex flex-col justify-between text-white p-4 bg-blue-600">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col p-4">
-            <h1 className="text-xl font-bold leading-normal text-white">Cold Caller</h1>
+            <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
             <p className="text-sm font-normal leading-normal text-blue-200">User Management</p>
           </div>
           <nav className="flex flex-col gap-2">
@@ -170,7 +170,7 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage cold callers and their roles</p>
+              <p className="text-sm text-gray-600 mt-1">Manage Cold Solutionss and their roles</p>
             </div>
             <button
               onClick={handleAddUserClick}

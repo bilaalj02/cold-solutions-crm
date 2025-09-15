@@ -127,7 +127,7 @@ export default function CallLogPage() {
       <aside className="min-h-screen w-72 flex flex-col justify-between text-white p-4 bg-blue-600">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col p-4">
-            <h1 className="text-xl font-bold leading-normal text-white">Cold Caller</h1>
+            <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
             <p className="text-sm font-normal leading-normal text-blue-200">Call Log</p>
           </div>
           <nav className="flex flex-col gap-2">
