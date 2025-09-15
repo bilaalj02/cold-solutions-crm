@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 
 // Define the webhook data types
 interface WebhookData {
@@ -58,9 +59,35 @@ export async function POST(request: NextRequest) {
           database: webhookData.database
         })
 
-        // TODO: Add lead to your dashboard database/state
-        // You can integrate with your existing lead management system here
-        // Example: await addLeadToDashboard(webhookData.data)
+        // Store lead data for dashboard pickup
+        const leadForDashboard = {
+          id: webhookData.recordId || `webhook_${Date.now()}`,
+          name: webhookData.data.name || 'Unknown Lead',
+          email: webhookData.data.email || '',
+          phone: webhookData.data.phone || '',
+          company: webhookData.data.businessName || '',
+          source: mapSource(webhookData.data.source || webhookData.database),
+          status: 'New' as const,
+          priority: 'Medium' as const,
+          score: 0,
+          assignedTo: '',
+          territory: '',
+          industry: webhookData.data.service || '',
+          leadSource: webhookData.database || 'MCP Server',
+          originalSource: `${webhookData.database} via MCP`,
+          notes: webhookData.data.message || '',
+          createdAt: webhookData.timestamp ? new Date(webhookData.timestamp).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          updatedAt: new Date().toISOString().split('T')[0],
+          lastContactedAt: '',
+          nextFollowUpAt: '',
+          tags: ['mcp-lead', webhookData.database || 'unknown'],
+          customFields: {
+            mcpDatabase: webhookData.database,
+            mcpRecordId: webhookData.recordId
+          }
+        }
+
+        console.log('📝 Lead ready for dashboard:', leadForDashboard.name)
         break
 
       case 'lead_updated':
@@ -167,4 +194,27 @@ export async function GET() {
       'metrics_updated'
     ]
   })
+}
+
+// Helper function to map MCP sources to CRM sources
+function mapSource(source: string): 'Website' | 'Referral' | 'Social Media' | 'Email Campaign' | 'Cold Call' | 'Event' | 'CSV Import' | 'Other' {
+  if (!source) return 'Other'
+
+  const lowerSource = source.toLowerCase()
+
+  if (lowerSource.includes('website') || lowerSource.includes('web')) {
+    return 'Website'
+  } else if (lowerSource.includes('call') || lowerSource.includes('voice') || lowerSource.includes('inbound')) {
+    return 'Cold Call'
+  } else if (lowerSource.includes('referral')) {
+    return 'Referral'
+  } else if (lowerSource.includes('social')) {
+    return 'Social Media'
+  } else if (lowerSource.includes('email')) {
+    return 'Email Campaign'
+  } else if (lowerSource.includes('event')) {
+    return 'Event'
+  } else {
+    return 'Other'
+  }
 }
