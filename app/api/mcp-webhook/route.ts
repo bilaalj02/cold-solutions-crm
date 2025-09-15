@@ -16,11 +16,21 @@ export async function POST(request: NextRequest) {
 
     // Log webhook receipt
     console.log('📡 Cold Solutions MCP Server webhook received:', {
-      type: webhookData.type,
-      timestamp: webhookData.timestamp,
-      database: webhookData.database,
-      recordId: webhookData.recordId
+      type: webhookData.type || 'undefined',
+      timestamp: webhookData.timestamp || 'undefined',
+      database: webhookData.database || 'undefined',
+      recordId: webhookData.recordId || 'undefined'
     })
+
+    // Handle malformed webhook data
+    if (!webhookData.type) {
+      console.warn('⚠️ Received webhook with missing type field:', webhookData)
+      return NextResponse.json({
+        success: false,
+        error: 'Missing webhook type',
+        received: webhookData
+      }, { status: 400 })
+    }
 
     // Handle different webhook types from MCP server
     switch (webhookData.type) {
