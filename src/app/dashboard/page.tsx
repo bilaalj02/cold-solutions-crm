@@ -73,7 +73,7 @@ export default function DashboardPage() {
     return Math.round((completed / total) * 100);
   };
 
-  const industries = [...new Set(leadLists.map(list => list.industry).filter(Boolean))];
+  const industries = Array.from(new Set(leadLists.map(list => list.industry).filter(Boolean)));
 
   if (!currentUser) {
     return (
