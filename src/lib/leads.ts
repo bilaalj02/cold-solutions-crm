@@ -139,17 +139,6 @@ export class LeadManager {
     }
   }
 
-  static createLeadList(data: Omit<LeadList, 'id' | 'createdAt' | 'leadCount'>): LeadList {
-    const leadList: LeadList = {
-      ...data,
-      id: this.generateId(),
-      createdAt: new Date().toISOString().split('T')[0],
-      leadCount: 0,
-    };
-    this.saveLeadList(leadList);
-    return leadList;
-  }
-
   static deleteLeadList(id: string): void {
     const leadLists = this.getLeadLists().filter(l => l.id !== id);
     this.saveLeadLists(leadLists);
