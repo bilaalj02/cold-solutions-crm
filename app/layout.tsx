@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { AuthProvider } from '../lib/auth'
+import { Providers } from './providers'
 
 export const metadata: Metadata = {
   title: 'Cold Solutions CRM | Lead Management Dashboard',
@@ -39,9 +39,9 @@ export default function RootLayout({
         }} />
       </head>
       <body className="bg-white text-gray-900 antialiased" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-        <AuthProvider>
+        <Providers>
           {children}
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   )

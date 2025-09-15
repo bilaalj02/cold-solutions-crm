@@ -12,7 +12,23 @@ interface WebhookData {
 
 export async function POST(request: NextRequest) {
   try {
-    const webhookData: WebhookData = await request.json()
+    // First, get the raw request body for debugging
+    const rawBody = await request.text()
+    console.log('📡 Raw webhook body received:', rawBody)
+
+    // Try to parse the JSON
+    let webhookData: WebhookData
+    try {
+      webhookData = JSON.parse(rawBody)
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError)
+      console.error('Raw body that failed to parse:', rawBody)
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid JSON in request body',
+        rawBody: rawBody.substring(0, 500) // First 500 chars for debugging
+      }, { status: 400 })
+    }
 
     // Log webhook receipt
     console.log('📡 Cold Solutions MCP Server webhook received:', {

@@ -5,7 +5,7 @@ export interface Lead {
   phone: string;
   company?: string;
   position?: string;
-  source: 'Website' | 'Referral' | 'Social Media' | 'Email Campaign' | 'Cold Call' | 'Event' | 'Other';
+  source: 'Website' | 'Referral' | 'Social Media' | 'Email Campaign' | 'Cold Call' | 'Event' | 'CSV Import' | 'Other';
   status: 'New' | 'Contacted' | 'Qualified' | 'Proposal' | 'Negotiation' | 'Won' | 'Lost';
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   score: number;
@@ -15,11 +15,15 @@ export interface Lead {
   leadSource?: string;
   originalSource?: string;
   campaignId?: string;
+  leadListId?: string;
   createdAt: string;
   updatedAt: string;
   lastInteraction?: string;
   nextFollowUp?: string;
   notes: string;
+  callOutcome?: 'Booked Demo' | 'Interested' | 'Not Interested' | 'Requested More Info' | 'No Answer' | 'Callback Requested';
+  callNotes?: string;
+  lastCallDate?: string;
   tags: string[];
   estimatedValue?: number;
   expectedCloseDate?: string;
@@ -101,6 +105,21 @@ export interface AutoRouting {
   };
   active: boolean;
   priority: number;
+}
+
+export interface LeadList {
+  id: string;
+  name: string;
+  description?: string;
+  industry?: string;
+  territory?: string;
+  priority?: 'Low' | 'Medium' | 'High' | 'Critical';
+  assignedTo?: string;
+  createdAt: string;
+  updatedAt: string;
+  leadCount: number;
+  status: 'Active' | 'Inactive' | 'Completed';
+  tags: string[];
 }
 
 // Default users data
@@ -400,6 +419,7 @@ export class LeadManager {
   private static TERRITORIES_KEY = 'cold_solutions_territories';
   private static SCORING_RULES_KEY = 'cold_solutions_scoring_rules';
   private static AUTO_ROUTING_KEY = 'cold_solutions_auto_routing';
+  private static LEAD_LISTS_KEY = 'cold_solutions_lead_lists';
 
   static getLeads(): Lead[] {
     if (typeof window === 'undefined') return defaultLeads;
@@ -942,6 +962,7 @@ export class LeadManager {
         'Email Campaign': 8,
         'Cold Call': 5,
         'Event': 12,
+        'CSV Import': 7,
         'Other': 5
       };
       score += sourceScores[lead.source as keyof typeof sourceScores] || 0;
@@ -980,5 +1001,172 @@ export class LeadManager {
     }
     
     return Math.min(Math.max(score, 0), 100);
+  }
+
+  // Lead List Management
+  static getLeadLists(): LeadList[] {
+    if (typeof window === 'undefined') return [];
+    
+    const stored = localStorage.getItem(this.LEAD_LISTS_KEY);
+    if (!stored) {
+      return [];
+    }
+    return JSON.parse(stored);
+  }
+
+  static saveLeadList(leadList: LeadList): void {
+    const leadLists = this.getLeadLists();
+    const existingIndex = leadLists.findIndex(l => l.id === leadList.id);
+    
+    if (existingIndex >= 0) {
+      leadLists[existingIndex] = { ...leadList, updatedAt: new Date().toISOString().split('T')[0] };
+    } else {
+      leadLists.push(leadList);
+    }
+    
+    this.saveLeadLists(leadLists);
+  }
+
+  static saveLeadLists(leadLists: LeadList[]): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.LEAD_LISTS_KEY, JSON.stringify(leadLists));
+    }
+  }
+
+  static deleteLeadList(id: string): void {
+    const leadLists = this.getLeadLists().filter(l => l.id !== id);
+    this.saveLeadLists(leadLists);
+  }
+
+  static getLeadListById(id: string): LeadList | undefined {
+    return this.getLeadLists().find(leadList => leadList.id === id);
+  }
+
+  static createLeadList(data: Omit<LeadList, 'id' | 'createdAt' | 'updatedAt' | 'leadCount'>): LeadList {
+    const leadList: LeadList = {
+      ...data,
+      id: this.generateId(),
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      leadCount: 0
+    };
+    
+    this.saveLeadList(leadList);
+    return leadList;
+  }
+
+  // Analytics methods
+  static getCallAnalytics(timePeriod: 'day' | 'week' | 'month' | 'year' = 'day', callerId?: string) {
+    const leads = this.getLeads();
+    const now = new Date();
+    let startDate: Date;
+
+    switch (timePeriod) {
+      case 'day':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'week':
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - now.getDay());
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+
+    const filteredLeads = leads.filter(lead => {
+      if (callerId && lead.assignedTo !== callerId) return false;
+      if (!lead.lastCallDate) return false;
+      const callDate = new Date(lead.lastCallDate);
+      return callDate >= startDate;
+    });
+
+    const totalCalls = filteredLeads.length;
+    const callsByOutcome = filteredLeads.reduce((acc, lead) => {
+      const outcome = lead.callOutcome || 'Unknown';
+      acc[outcome] = (acc[outcome] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const callsByStatus = filteredLeads.reduce((acc, lead) => {
+      acc[lead.status] = (acc[lead.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const callsByDay = filteredLeads.reduce((acc, lead) => {
+      const date = lead.lastCallDate || '';
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalCalls,
+      callsByOutcome,
+      callsByStatus,
+      callsByDay,
+      timePeriod,
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: now.toISOString().split('T')[0]
+    };
+  }
+
+  static getCallerPerformance(callerId: string) {
+    const leads = this.getLeads().filter(lead => lead.assignedTo === callerId);
+    const totalLeads = leads.length;
+    const contactedLeads = leads.filter(lead => lead.status !== 'New').length;
+    const qualifiedLeads = leads.filter(lead => lead.status === 'Qualified').length;
+    const wonLeads = leads.filter(lead => lead.status === 'Won').length;
+    const lostLeads = leads.filter(lead => lead.status === 'Lost').length;
+
+    const callsToday = leads.filter(lead => {
+      if (!lead.lastCallDate) return false;
+      const callDate = new Date(lead.lastCallDate);
+      const today = new Date();
+      return callDate.toDateString() === today.toDateString();
+    }).length;
+
+    const callsThisWeek = leads.filter(lead => {
+      if (!lead.lastCallDate) return false;
+      const callDate = new Date(lead.lastCallDate);
+      const now = new Date();
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      return callDate >= weekStart;
+    }).length;
+
+    const callsThisMonth = leads.filter(lead => {
+      if (!lead.lastCallDate) return false;
+      const callDate = new Date(lead.lastCallDate);
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      return callDate >= monthStart;
+    }).length;
+
+    return {
+      callerId,
+      totalLeads,
+      contactedLeads,
+      qualifiedLeads,
+      wonLeads,
+      lostLeads,
+      callsToday,
+      callsThisWeek,
+      callsThisMonth,
+      contactRate: totalLeads > 0 ? (contactedLeads / totalLeads) * 100 : 0,
+      qualificationRate: contactedLeads > 0 ? (qualifiedLeads / contactedLeads) * 100 : 0,
+      winRate: qualifiedLeads > 0 ? (wonLeads / qualifiedLeads) * 100 : 0
+    };
+  }
+
+  static getAllCallersPerformance() {
+    const leads = this.getLeads();
+    const callerIds = [...new Set(leads.map(lead => lead.assignedTo).filter(Boolean))];
+    
+    return callerIds.map(callerId => this.getCallerPerformance(callerId));
   }
 }

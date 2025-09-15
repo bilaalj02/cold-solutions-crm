@@ -1,0 +1,11 @@
+name,email,phone,company,position,industry,territory,notes,tags,estimated_value
+John Smith,john.smith@techcorp.com,555-123-4567,TechCorp Inc,CEO,Technology,East Coast,Interested in AI solutions,high-priority,25000
+Sarah Johnson,sarah.j@healthplus.com,555-987-6543,Health Plus,CTO,Healthcare,West Coast,Looking for patient management system,healthcare,18000
+Mike Davis,mike.davis@manufacturing.com,555-456-7890,Manufacturing Co,Operations Manager,Manufacturing,Midwest,Needs inventory management,manufacturing,15000
+Lisa Chen,lisa.chen@finance.com,555-321-9876,Finance Group,VP Sales,Finance,Southeast,Interested in CRM integration,finance,22000
+David Wilson,david.w@realestate.com,555-654-3210,Real Estate Pro,Managing Partner,Real Estate,Southwest,Looking for lead generation tools,real-estate,12000
+Emma Brown,emma.brown@retail.com,555-789-0123,Retail Chain,Marketing Director,Retail,Northeast,Needs customer analytics,retail,16000
+Alex Garcia,alex.g@startup.com,555-147-2580,Startup Inc,Founder,Technology,West Coast,Early stage startup,startup,8000
+Maria Rodriguez,maria.r@consulting.com,555-369-1470,Consulting Firm,Partner,Finance,East Coast,Enterprise client,enterprise,30000
+James Taylor,james.t@hospital.com,555-258-3690,City Hospital,IT Director,Healthcare,Midwest,Healthcare IT needs,healthcare-it,20000
+Jennifer Lee,jennifer.l@agency.com,555-741-8520,Marketing Agency,CEO,Technology,West Coast,Digital marketing focus,marketing,14000
