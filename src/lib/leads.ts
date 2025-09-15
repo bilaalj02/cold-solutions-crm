@@ -200,8 +200,40 @@ export class LeadManager {
       console.log('Created default users:', defaultUsers);
       return defaultUsers;
     }
+    
     const users = JSON.parse(stored);
     console.log('Loaded users from storage:', users);
+    
+    // Check if we have the admin user, if not add it
+    const hasAdmin = users.some((u: SalesUser) => u.email === 'admin@coldcaller.com');
+    if (!hasAdmin) {
+      console.log('Admin user not found, adding it...');
+      const adminUser = {
+        id: 'admin-001',
+        name: 'Admin User',
+        email: 'admin@coldcaller.com',
+        password: 'admin123',
+        role: 'Admin' as const,
+        territory: 'All',
+        department: 'Management',
+        maxLeads: 1000,
+        active: true,
+        createdAt: new Date().toISOString().split('T')[0],
+        lastLogin: undefined
+      };
+      users.push(adminUser);
+      this.saveUsers(users);
+      console.log('Added admin user:', adminUser);
+    }
+    
+    // Update existing caller user role if it's 'User'
+    const callerUser = users.find((u: SalesUser) => u.email === 'caller@coldcaller.com');
+    if (callerUser && callerUser.role === 'User') {
+      callerUser.role = 'Sales Rep';
+      this.saveUsers(users);
+      console.log('Updated caller user role to Sales Rep');
+    }
+    
     return users;
   }
 
