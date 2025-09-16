@@ -132,7 +132,7 @@ export default function MyProgressPage() {
               <select
                 value={selectedTimePeriod}
                 onChange={(e) => setSelectedTimePeriod(e.target.value as any)}
-                className="rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
+                className="rounded-md border-gray-300 py-2 pl-3 pr-8 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
               >
                 <option value="day">Today</option>
                 <option value="week">This Week</option>
@@ -143,7 +143,7 @@ export default function MyProgressPage() {
               <select
                 value={selectedCaller}
                 onChange={(e) => setSelectedCaller(e.target.value)}
-                className="rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
+                className="rounded-md border-gray-300 py-2 pl-3 pr-8 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
               >
                 <option value="all">All Callers</option>
                 {availableCallers.filter(c => c !== 'all').map(callerId => (

@@ -254,6 +254,23 @@ export default function LeadListDetail() {
       updatedLead.status = 'Contacted';
     }
 
+    // Create call activity for call log
+    const activity: LeadActivity = {
+      id: LeadManager.generateId(),
+      leadId: callingLead.id,
+      type: 'Call',
+      description: `Call completed - Outcome: ${selectedCallOutcome}`,
+      createdAt: new Date().toISOString(),
+      createdBy: 'Current User',
+      duration: 0, // Default duration since we don't track it in this flow
+      outcome: selectedCallOutcome,
+      metadata: {
+        notes: selectedCallNotes,
+        callType: 'Cold Call'
+      }
+    };
+
+    LeadManager.addActivity(activity);
     LeadManager.saveLead(updatedLead);
 
     // Update local state
