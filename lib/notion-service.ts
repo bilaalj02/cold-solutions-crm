@@ -62,9 +62,22 @@ export class NotionService {
         return [];
       }
 
-      const databaseId = DATABASES[databaseType];
+      // Map frontend slugs to actual database names
+      const slugToNameMap: Record<string, string> = {
+        'inbound': 'inbound-voice-leads',
+        'ai-audit-pre-call': 'ai-audit-pre-call',
+        'ai-audit-post-call': 'ai-audit-post-call',
+        'cold-caller-followup': 'whatsapp-followup-leads',
+        'whatsapp-bot': 'whatsapp-bot-leads',
+        'website-leads': 'website-leads'
+      };
+
+      const actualDatabaseName = slugToNameMap[String(databaseType)] || String(databaseType);
+      const databaseId = DATABASES[actualDatabaseName];
+
       if (!databaseId) {
-        throw new Error(`Database not found for type: ${String(databaseType)}`);
+        console.error(`Available databases:`, Object.keys(DATABASES));
+        throw new Error(`Database not found for type: ${String(databaseType)} (mapped to: ${actualDatabaseName})`);
       }
 
       const response = await this.notion.databases.query({
@@ -153,12 +166,24 @@ export class NotionService {
         throw new Error('Notion API not configured');
       }
 
+      // Map frontend slugs to actual database names
+      const slugToNameMap: Record<string, string> = {
+        'inbound': 'inbound-voice-leads',
+        'ai-audit-pre-call': 'ai-audit-pre-call',
+        'ai-audit-post-call': 'ai-audit-post-call',
+        'cold-caller-followup': 'whatsapp-followup-leads',
+        'whatsapp-bot': 'whatsapp-bot-leads',
+        'website-leads': 'website-leads'
+      };
+
       // Determine which database to use
-      const databaseType = leadData.database || 'website-leads';
-      const databaseId = DATABASES[databaseType];
+      const databaseSlug = leadData.database || 'website-leads';
+      const actualDatabaseName = slugToNameMap[databaseSlug] || databaseSlug;
+      const databaseId = DATABASES[actualDatabaseName];
 
       if (!databaseId) {
-        throw new Error(`Database not found for type: ${databaseType}`);
+        console.error(`Available databases:`, Object.keys(DATABASES));
+        throw new Error(`Database not found for type: ${databaseSlug} (mapped to: ${actualDatabaseName})`);
       }
 
       const response = await this.notion.pages.create({
@@ -190,7 +215,7 @@ export class NotionService {
         name: leadData.name,
         email: leadData.email,
         phone: leadData.phone || '',
-        source: databaseType,
+        source: actualDatabaseName,
         status: leadData.status || 'New',
         created_time: new Date().toISOString(),
         company: leadData.company || '',
