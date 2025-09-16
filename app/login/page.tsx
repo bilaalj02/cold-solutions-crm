@@ -29,14 +29,22 @@ export default function LoginPage() {
 
     try {
       console.log('Login attempt:', { email, password: '***' });
+      console.log('Available users:', LeadManager.getUsers().map(u => ({ email: u.email, active: u.active })));
+      
       const user = LeadManager.authenticateUser(email, password);
+      console.log('Authentication result:', user ? 'SUCCESS' : 'FAILED');
 
       if (user) {
         console.log('Login successful:', user);
         LeadManager.setCurrentUser(user);
+        console.log('Current user set, redirecting...');
+        
         // Use window.location for mobile compatibility
         if (typeof window !== 'undefined') {
-          window.location.href = '/cold-caller';
+          // Add a small delay for mobile devices
+          setTimeout(() => {
+            window.location.href = '/cold-caller';
+          }, 100);
         } else {
           router.push('/cold-caller');
         }
@@ -80,7 +88,7 @@ export default function LoginPage() {
 
       <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md">
         <div className="bg-white py-6 px-4 shadow sm:rounded-lg sm:py-8 sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+          <form className="space-y-6" onSubmit={handleSubmit} noValidate autoComplete="on">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -144,8 +152,12 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3dbff2] disabled:opacity-50 disabled:cursor-not-allowed sm:text-sm sm:py-2"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3dbff2] disabled:opacity-50 disabled:cursor-not-allowed sm:text-sm sm:py-2 touch-manipulation"
                 style={{backgroundColor: '#3dbff2'}}
+                onTouchStart={(e) => {
+                  // Ensure button is properly focused on mobile
+                  e.currentTarget.focus();
+                }}
               >
                 {loading ? (
                   <span className="flex items-center">

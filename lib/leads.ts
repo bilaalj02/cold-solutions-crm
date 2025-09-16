@@ -1158,11 +1158,35 @@ export class LeadManager {
   static getUsers(): SalesUser[] {
     if (typeof window === 'undefined') return [];
     
-    const stored = localStorage.getItem(this.USERS_KEY);
-    
-    if (!stored) {
-      // Create default admin user
-      const defaultUsers = [{
+    try {
+      const stored = localStorage.getItem(this.USERS_KEY);
+      
+      if (!stored) {
+        // Create default admin user
+        const defaultUsers = [{
+          id: 'admin-001',
+          name: 'Admin User',
+          email: 'admin@coldsolutions.com',
+          password: 'admin123',
+          role: 'Admin' as const,
+          territory: 'All',
+          department: 'Management',
+          maxLeads: 1000,
+          active: true,
+          createdAt: new Date().toISOString().split('T')[0],
+          lastLogin: undefined
+        }];
+        this.saveUsers(defaultUsers);
+        return defaultUsers;
+      }
+      
+      const users = JSON.parse(stored);
+      console.log('Loaded users from localStorage:', users.length);
+      return users;
+    } catch (error) {
+      console.error('Error loading users from localStorage:', error);
+      // Return default admin user if localStorage fails
+      return [{
         id: 'admin-001',
         name: 'Admin User',
         email: 'admin@coldsolutions.com',
@@ -1175,12 +1199,7 @@ export class LeadManager {
         createdAt: new Date().toISOString().split('T')[0],
         lastLogin: undefined
       }];
-      this.saveUsers(defaultUsers);
-      return defaultUsers;
     }
-    
-    const users = JSON.parse(stored);
-    return users;
   }
 
   static saveUser(user: SalesUser): void {
@@ -1223,16 +1242,32 @@ export class LeadManager {
   }
 
   static authenticateUser(email: string, password: string): SalesUser | null {
-    const users = this.getUsers();
-    const user = users.find(u => u.email === email && u.password === password && u.active);
-    
-    if (user) {
-      // Update last login
-      user.lastLogin = new Date().toISOString();
-      this.saveUser(user);
+    try {
+      const users = this.getUsers();
+      console.log('Authenticating user:', email, 'Total users:', users.length);
+      
+      const user = users.find(u => {
+        const emailMatch = u.email.toLowerCase() === email.toLowerCase();
+        const passwordMatch = u.password === password;
+        const isActive = u.active;
+        console.log('User check:', { email: u.email, emailMatch, passwordMatch, isActive });
+        return emailMatch && passwordMatch && isActive;
+      });
+      
+      if (user) {
+        console.log('User found:', user.name, user.role);
+        // Update last login
+        user.lastLogin = new Date().toISOString();
+        this.saveUser(user);
+        return user;
+      } else {
+        console.log('No matching user found');
+        return null;
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return null;
     }
-    
-    return user || null;
   }
 
   static getCurrentUser(): SalesUser | null {
@@ -1248,10 +1283,16 @@ export class LeadManager {
   static setCurrentUser(user: SalesUser | null): void {
     if (typeof window === 'undefined') return;
     
-    if (user) {
-      localStorage.setItem('current_user', JSON.stringify(user.id));
-    } else {
-      localStorage.removeItem('current_user');
+    try {
+      if (user) {
+        localStorage.setItem('current_user', JSON.stringify(user.id));
+        console.log('Current user set in localStorage:', user.id);
+      } else {
+        localStorage.removeItem('current_user');
+        console.log('Current user removed from localStorage');
+      }
+    } catch (error) {
+      console.error('Error setting current user in localStorage:', error);
     }
   }
 
