@@ -29,7 +29,7 @@ export default function SettingsPage() {
     }
     
     if (user.role !== 'Admin') {
-      router.push('/cold-caller');
+      router.push('/');
       return;
     }
 
@@ -157,17 +157,9 @@ export default function SettingsPage() {
             <p className="text-sm font-normal leading-normal" style={{color: '#a0a0a0'}}>Settings</p>
           </div>
           <nav className="flex flex-col gap-2">
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/cold-caller">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>list</span>
-              <p className="text-sm font-medium leading-normal">Lead Lists</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/cold-caller/call-log">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>call</span>
-              <p className="text-sm font-medium leading-normal">Call Log</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/cold-caller/my-progress">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>trending_up</span>
-              <p className="text-sm font-medium leading-normal">My Progress</p>
+            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/">
+              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dashboard</span>
+              <p className="text-sm font-medium leading-normal">Dashboard</p>
             </a>
             <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-white" style={{backgroundColor: '#3dbff2'}} href="/settings">
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>

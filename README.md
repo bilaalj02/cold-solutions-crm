@@ -21,7 +21,7 @@ A dedicated cold calling management system for sales teams. This application is 
 
 1. Navigate to the project directory:
    ```bash
-   cd cold-caller-app
+   cd cold-solutions-crm
    ```
 
 2. Install dependencies:

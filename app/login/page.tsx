@@ -15,7 +15,12 @@ export default function LoginPage() {
     // Check if user is already logged in
     const currentUser = LeadManager.getCurrentUser();
     if (currentUser) {
-      router.push('/cold-caller');
+      if (typeof window !== 'undefined') {
+        const baseUrl = window.location.origin;
+        window.location.href = baseUrl + '/';
+      } else {
+        router.push('/');
+      }
     }
   }, [router]);
 
@@ -43,10 +48,12 @@ export default function LoginPage() {
         if (typeof window !== 'undefined') {
           // Add a small delay for mobile devices
           setTimeout(() => {
-            window.location.href = '/cold-caller';
+            // Use absolute URL to ensure correct redirect
+            const baseUrl = window.location.origin;
+            window.location.href = baseUrl + '/';
           }, 100);
         } else {
-          router.push('/cold-caller');
+          router.push('/');
         }
       } else {
         console.log('Login failed: Invalid credentials');
@@ -73,7 +80,7 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold" style={{color: '#0a2240'}}>Cold Solutions</h1>
-          <p className="mt-2 text-sm text-gray-600">Cold Caller Management System</p>
+          <p className="mt-2 text-sm text-gray-600">Cold Solutions CRM</p>
         </div>
         <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
           Sign in to your account
