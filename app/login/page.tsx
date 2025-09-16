@@ -41,13 +41,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-6 px-4 sm:py-12 sm:px-6 lg:px-8" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
+      <div className="mx-auto w-full max-w-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Cold Solutions</h1>
+          {/* Business Logo */}
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <img 
+              src="/logo.png" 
+              alt="Cold Solutions Logo" 
+              className="h-16 w-auto sm:h-20"
+            />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{color: '#0a2240'}}>Cold Solutions</h1>
           <p className="mt-2 text-sm text-gray-600">Cold Caller Management System</p>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
@@ -58,8 +66,8 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md">
+        <div className="bg-white py-6 px-4 shadow sm:rounded-lg sm:py-8 sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -74,7 +82,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#3dbff2] focus:border-[#3dbff2] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#3dbff2] focus:border-[#3dbff2] text-base sm:text-sm"
                   placeholder="Enter your email"
                 />
               </div>
@@ -93,7 +101,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#3dbff2] focus:border-[#3dbff2] sm:text-sm"
+                  className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[#3dbff2] focus:border-[#3dbff2] text-base sm:text-sm"
                   placeholder="Enter your password"
                 />
               </div>
@@ -118,7 +126,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3dbff2] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3dbff2] disabled:opacity-50 disabled:cursor-not-allowed sm:text-sm sm:py-2"
                 style={{backgroundColor: '#3dbff2'}}
               >
                 {loading ? (
@@ -133,33 +141,6 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Credentials</span>
-              </div>
-            </div>
-
-            <div className="mt-6 bg-gray-50 rounded-md p-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Default Admin Account:</h3>
-              <div className="text-sm text-gray-600">
-                <p><strong>Email:</strong> admin@coldsolutions.com</p>
-                <p><strong>Password:</strong> admin123</p>
-              </div>
-              <button
-                onClick={() => {
-                  setEmail('admin@coldsolutions.com');
-                  setPassword('admin123');
-                }}
-                className="mt-2 text-xs text-[#3dbff2] hover:text-[#2a9fd4] underline"
-              >
-                Fill Demo Credentials
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
