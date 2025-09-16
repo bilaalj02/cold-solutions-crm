@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LeadManager, SalesUser } from '../../lib/leads';
+import { useAuth } from '../../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -10,19 +10,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { isAuthenticated, login } = useAuth();
 
   useEffect(() => {
     // Check if user is already logged in
-    const currentUser = LeadManager.getCurrentUser();
-    if (currentUser) {
-      if (typeof window !== 'undefined') {
-        const baseUrl = window.location.origin;
-        window.location.href = baseUrl + '/';
-      } else {
-        router.push('/');
-      }
+    if (isAuthenticated) {
+      router.push('/');
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,35 +29,21 @@ export default function LoginPage() {
 
     try {
       console.log('Login attempt:', { email, password: '***' });
-      console.log('Available users:', LeadManager.getUsers().map(u => ({ email: u.email, active: u.active })));
-      
-      const user = LeadManager.authenticateUser(email, password);
-      console.log('Authentication result:', user ? 'SUCCESS' : 'FAILED');
 
-      if (user) {
-        console.log('Login successful:', user);
-        LeadManager.setCurrentUser(user);
-        console.log('Current user set, redirecting...');
-        
-        // Use window.location for mobile compatibility
-        if (typeof window !== 'undefined') {
-          // Add a small delay for mobile devices
-          setTimeout(() => {
-            // Use absolute URL to ensure correct redirect
-            const baseUrl = window.location.origin;
-            window.location.href = baseUrl + '/';
-          }, 100);
-        } else {
-          router.push('/');
-        }
+      const success = await login(email, password);
+      console.log('Authentication result:', success ? 'SUCCESS' : 'FAILED');
+
+      if (success) {
+        console.log('Login successful, redirecting...');
+        router.push('/');
       } else {
         console.log('Login failed: Invalid credentials');
         setError('Invalid email or password');
+        setLoading(false);
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('An error occurred during login');
-    } finally {
       setLoading(false);
     }
   };
