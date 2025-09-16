@@ -30,10 +30,27 @@ export default function LeadsDatabase() {
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadedLeads = LeadManager.getLeads();
-    setLeads(loadedLeads);
-    setFilteredLeads(loadedLeads);
+    loadLeads();
   }, []);
+
+  const loadLeads = async () => {
+    try {
+      const response = await fetch('/api/leads');
+      if (response.ok) {
+        const data = await response.json();
+        setLeads(data.leads || []);
+        setFilteredLeads(data.leads || []);
+      } else {
+        console.error('Failed to fetch leads from API');
+        setLeads([]);
+        setFilteredLeads([]);
+      }
+    } catch (error) {
+      console.error('Error loading leads:', error);
+      setLeads([]);
+      setFilteredLeads([]);
+    }
+  };
 
   useEffect(() => {
     let filtered = leads;
@@ -57,70 +74,87 @@ export default function LeadsDatabase() {
     setFilteredLeads(filtered);
   }, [leads, searchTerm, sourceFilter, statusFilter]);
 
-  const handleAddLead = () => {
+  const handleAddLead = async () => {
     if (!newLead.name || !newLead.email || !newLead.phone) {
       alert('Please fill in required fields: Name, Email, and Phone');
       return;
     }
 
-    const lead: Lead = {
-      id: LeadManager.generateId(),
-      name: newLead.name!,
-      email: newLead.email!,
-      phone: newLead.phone!,
-      company: newLead.company,
-      position: newLead.position,
-      source: newLead.source as any,
-      status: newLead.status as any,
-      priority: 'Medium',
-      score: LeadManager.calculateScore(newLead),
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      notes: newLead.notes || '',
-      tags: newLead.tags || [],
-      estimatedValue: newLead.estimatedValue,
-      expectedCloseDate: newLead.expectedCloseDate,
-      lifecycle: {
-        stage: newLead.status as any || 'New',
-        stageChangedAt: new Date().toISOString(),
-        timeInStage: 0
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...newLead,
+          database: 'website-leads', // Default database for manual entries
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the leads after adding
+        await loadLeads();
+        setShowAddModal(false);
+        setNewLead({
+          name: '',
+          email: '',
+          phone: '',
+          company: '',
+          position: '',
+          source: 'Website',
+          status: 'New',
+          notes: '',
+          tags: [],
+          estimatedValue: 0,
+          expectedCloseDate: ''
+        });
+      } else {
+        console.error('Failed to add lead');
+        alert('Failed to add lead. Please try again.');
       }
-    };
-
-    LeadManager.saveLead(lead);
-    const updatedLeads = LeadManager.getLeads();
-    setLeads(updatedLeads);
-    setShowAddModal(false);
-    setNewLead({
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      position: '',
-      source: 'Website',
-      status: 'New',
-      notes: '',
-      tags: [],
-      estimatedValue: 0,
-      expectedCloseDate: ''
-    });
+    } catch (error) {
+      console.error('Error adding lead:', error);
+      alert('Error adding lead. Please try again.');
+    }
   };
 
-  const handleDeleteLead = (leadId: string) => {
-    LeadManager.deleteLead(leadId);
-    const updatedLeads = LeadManager.getLeads();
-    setLeads(updatedLeads);
-    setShowDeleteModal(false);
-    setLeadToDelete(null);
+  const handleDeleteLead = async (leadId: string) => {
+    try {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh the leads after deleting
+        await loadLeads();
+        setShowDeleteModal(false);
+        setLeadToDelete(null);
+      } else {
+        console.error('Failed to delete lead');
+        alert('Failed to delete lead. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      alert('Error deleting lead. Please try again.');
+    }
   };
 
-  const handleBulkDelete = () => {
-    selectedLeads.forEach(leadId => {
-      LeadManager.deleteLead(leadId);
-    });
-    const updatedLeads = LeadManager.getLeads();
-    setLeads(updatedLeads);
-    setSelectedLeads(new Set());
+  const handleBulkDelete = async () => {
+    try {
+      const deletePromises = Array.from(selectedLeads).map(leadId =>
+        fetch(`/api/leads/${leadId}`, { method: 'DELETE' })
+      );
+
+      await Promise.all(deletePromises);
+
+      // Refresh the leads after bulk delete
+      await loadLeads();
+      setSelectedLeads(new Set());
+    } catch (error) {
+      console.error('Error bulk deleting leads:', error);
+      alert('Error deleting leads. Please try again.');
+    }
   };
 
   const toggleLeadSelection = (leadId: string) => {
@@ -187,73 +221,18 @@ export default function LeadsDatabase() {
   const handleSyncFromNotion = async () => {
     setIsSyncing(true);
     try {
-      const response = await fetch('/api/leads');
-      const data = await response.json();
+      const response = await fetch('/api/leads?sync=true', {
+        method: 'POST',
+      });
 
       if (response.ok) {
-        // Convert Notion leads to our Lead format
-        const notionLeads = data.leads || [];
-        const currentLeads = LeadManager.getLeads();
-
-        // Add new leads from Notion that don't exist locally
-        let newLeadsCount = 0;
-        notionLeads.forEach((notionLead: any) => {
-          if (!notionLead.email) return; // Skip leads without email
-
-          const existingLead = currentLeads.find(lead =>
-            lead.email.toLowerCase() === notionLead.email.toLowerCase()
-          );
-
-          if (!existingLead) {
-            const lead: Lead = {
-              id: LeadManager.generateId(),
-              name: notionLead.name || 'Unknown',
-              email: notionLead.email,
-              phone: notionLead.phone || '',
-              company: notionLead.company || '',
-              position: notionLead.position || '',
-              source: notionLead.source as any || 'Notion',
-              status: notionLead.status as any || 'New',
-              priority: 'Medium',
-              score: LeadManager.calculateScore({
-                name: notionLead.name,
-                email: notionLead.email,
-                source: notionLead.source,
-                status: notionLead.status,
-                company: notionLead.company
-              }),
-              createdAt: notionLead.created_time?.split('T')[0] || new Date().toISOString().split('T')[0],
-              updatedAt: new Date().toISOString().split('T')[0],
-              notes: notionLead.notes || '',
-              tags: notionLead.service_interest ? [notionLead.service_interest] : [],
-              estimatedValue: 0,
-              customFields: { notionId: notionLead.id },
-              lifecycle: {
-                stage: notionLead.status || 'New',
-                stageChangedAt: new Date().toISOString(),
-                timeInStage: 0
-              }
-            };
-
-            LeadManager.saveLead(lead);
-            newLeadsCount++;
-          }
-        });
-
-        const updatedLeads = LeadManager.getLeads();
-        setLeads(updatedLeads);
-        setFilteredLeads(updatedLeads);
+        const data = await response.json();
+        // Refresh the leads after sync
+        await loadLeads();
         setLastSyncTime(new Date().toLocaleString());
-
-        if (newLeadsCount > 0) {
-          alert(`✅ Sync successful! Added ${newLeadsCount} new leads from Notion.`);
-        } else if (notionLeads.length === 0) {
-          alert('⚠️ No data found in Notion databases. Please check:\n\n1. Database IDs in environment variables\n2. Integration permissions\n3. Database sharing settings\n\nSync completed but no leads were imported.');
-        } else {
-          alert('✅ Sync completed! No new leads to add (all leads already exist).');
-        }
+        alert('✅ Sync completed successfully!');
       } else {
-        // Handle API errors
+        const data = await response.json();
         const errorMsg = data.error || 'Unknown error';
         alert(`❌ Sync failed: ${errorMsg}\n\nPlease check your Notion integration setup.`);
       }

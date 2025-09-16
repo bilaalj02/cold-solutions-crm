@@ -14,6 +14,8 @@ export default function NotionDatabasePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   
   useEffect(() => {
     if (params?.slug) {
@@ -31,84 +33,24 @@ export default function NotionDatabasePage() {
 
   const loadDatabaseLeads = async (db: NotionDatabase) => {
     setLoading(true);
-    
+
     try {
-      // Try to load from Notion API first (requires API key in environment)
-      if (process.env.NEXT_PUBLIC_NOTION_API_KEY) {
-        try {
-          const response = await notionAPI.queryDatabase(db.id);
-          const notionLeads = response.results.map(page => notionAPI.convertNotionPageToLead(page));
-          setLeads(notionLeads);
-          setFilteredLeads(notionLeads);
-          setLoading(false);
-          return;
-        } catch (error) {
-          console.warn('Notion API failed, falling back to mock data:', error);
-        }
+      // Call the API endpoint to get leads from this specific database
+      const response = await fetch(`/api/leads?database=${db.slug}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLeads(data.leads || []);
+        setFilteredLeads(data.leads || []);
+      } else {
+        console.error('Failed to fetch leads from API');
+        setLeads([]);
+        setFilteredLeads([]);
       }
-      
-      // Fallback to mock data if Notion API is not available
-      setTimeout(() => {
-        // Get all leads and simulate filtering for the specific database
-        const allLeads = LeadManager.getLeads().filter(lead => !lead.isDuplicate);
-      
-      // Simulate different lead sets based on database type
-      let databaseLeads: Lead[] = [];
-      
-      switch (db.slug) {
-        case 'inbound':
-          databaseLeads = allLeads.filter(lead => 
-            lead.source === 'Website' || lead.source === 'Email Campaign'
-          ).slice(0, 50);
-          break;
-        case 'ai-audit-pre-call':
-          databaseLeads = allLeads.filter(lead => 
-            lead.status === 'New' || lead.status === 'Contacted'
-          ).slice(0, 30);
-          break;
-        case 'ai-audit-post-call':
-          databaseLeads = allLeads.filter(lead => 
-            lead.status === 'Qualified' || lead.status === 'Proposal'
-          ).slice(0, 25);
-          break;
-        case 'cold-caller-followup':
-          databaseLeads = allLeads.filter(lead => 
-            lead.nextFollowUp && new Date(lead.nextFollowUp) > new Date()
-          ).slice(0, 40);
-          break;
-        case 'whatsapp-bot':
-          databaseLeads = allLeads.filter(lead => 
-            lead.leadSource === 'WhatsApp Bot' || lead.source === 'Social Media'
-          ).slice(0, 35);
-          break;
-        case 'website-leads':
-          databaseLeads = allLeads.filter(lead => 
-            lead.source === 'Website'
-          ).slice(0, 60);
-          break;
-        default:
-          databaseLeads = allLeads.slice(0, 20);
-      }
-
-      // Generate additional mock leads if needed
-      while (databaseLeads.length < 15) {
-        const baseLead = allLeads[databaseLeads.length % allLeads.length];
-        const mockLead: Lead = {
-          ...baseLead,
-          id: `${db.slug}_${databaseLeads.length}`,
-          name: `${baseLead.name} (${db.name.split(' ')[0]} Lead)`,
-          email: `${db.slug.toLowerCase()}${databaseLeads.length}@example.com`,
-          phone: `555-${String(Math.floor(Math.random() * 900) + 100)}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-        };
-        databaseLeads.push(mockLead);
-      }
-
-        setLeads(databaseLeads);
-        setFilteredLeads(databaseLeads);
-        setLoading(false);
-      }, 1000);
     } catch (error) {
       console.error('Error loading database leads:', error);
+      setLeads([]);
+      setFilteredLeads([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -150,6 +92,55 @@ export default function NotionDatabasePage() {
       case 'emerald': return '#10b981';
       case 'cyan': return '#06b6d4';
       default: return '#3dbff2';
+    }
+  };
+
+  const handleSyncFromNotion = async () => {
+    if (!database) return;
+
+    setSyncing(true);
+    try {
+      const response = await fetch(`/api/leads?database=${database.slug}&sync=true`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        // Refresh the leads after sync
+        await loadDatabaseLeads(database);
+      } else {
+        console.error('Sync failed');
+      }
+    } catch (error) {
+      console.error('Error syncing from Notion:', error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleAddLead = async (leadData: Partial<Lead>) => {
+    if (!database) return;
+
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...leadData,
+          database: database.slug,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the leads after adding
+        await loadDatabaseLeads(database);
+        setShowAddForm(false);
+      } else {
+        console.error('Failed to add lead');
+      }
+    } catch (error) {
+      console.error('Error adding lead:', error);
     }
   };
 
@@ -257,11 +248,16 @@ export default function NotionDatabasePage() {
               />
             </div>
             <div className="flex items-center gap-3">
-              <button className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-                <span className="material-symbols-outlined text-base">sync</span>
-                Sync from Notion
+              <button
+                onClick={handleSyncFromNotion}
+                disabled={syncing}
+                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className={`material-symbols-outlined text-base ${syncing ? 'animate-spin' : ''}`}>sync</span>
+                {syncing ? 'Syncing...' : 'Sync from Notion'}
               </button>
-              <button 
+              <button
+                onClick={() => setShowAddForm(true)}
                 className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
                 style={{backgroundColor: getDatabaseColor(database.color)}}
               >
@@ -354,6 +350,137 @@ export default function NotionDatabasePage() {
 
         </div>
       </main>
+
+      {/* Add Lead Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Add New Lead</h3>
+              <button
+                onClick={() => setShowAddForm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <AddLeadForm
+              database={database}
+              onSubmit={handleAddLead}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Add Lead Form Component
+function AddLeadForm({
+  database,
+  onSubmit,
+  onCancel
+}: {
+  database: NotionDatabase;
+  onSubmit: (leadData: Partial<Lead>) => void;
+  onCancel: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    position: '',
+    source: 'Other' as const,
+    status: 'New' as const,
+    notes: '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+        <input
+          type="text"
+          required
+          value={formData.name}
+          onChange={(e) => setFormData({...formData, name: e.target.value})}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+        <input
+          type="email"
+          required
+          value={formData.email}
+          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+        <input
+          type="tel"
+          value={formData.phone}
+          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+        <input
+          type="text"
+          value={formData.company}
+          onChange={(e) => setFormData({...formData, company: e.target.value})}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+        <input
+          type="text"
+          value={formData.position}
+          onChange={(e) => setFormData({...formData, position: e.target.value})}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+        <textarea
+          value={formData.notes}
+          onChange={(e) => setFormData({...formData, notes: e.target.value})}
+          rows={3}
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+        />
+      </div>
+
+      <div className="flex items-center gap-3 pt-4">
+        <button
+          type="submit"
+          className="flex-1 bg-[#3dbff2] text-white px-4 py-2 rounded-md hover:opacity-90"
+        >
+          Add Lead
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 }

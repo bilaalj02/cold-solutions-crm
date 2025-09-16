@@ -1,6 +1,24 @@
 import { Client } from "@notionhq/client";
 
-const DATABASES = JSON.parse(process.env.NOTION_DATABASES || '{}');
+// Parse database configuration with fallback
+let DATABASES: Record<string, string> = {};
+try {
+  if (process.env.NOTION_DATABASES) {
+    const databasesArray = JSON.parse(process.env.NOTION_DATABASES);
+    // Convert array to object for easier lookup
+    if (Array.isArray(databasesArray)) {
+      DATABASES = databasesArray.reduce((acc: Record<string, string>, db: any) => {
+        acc[db.name] = db.id;
+        return acc;
+      }, {});
+    } else {
+      DATABASES = databasesArray;
+    }
+  }
+} catch (error) {
+  console.warn('Failed to parse NOTION_DATABASES:', error);
+  DATABASES = {};
+}
 
 // Check if we're in development and API key is not set
 if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
@@ -121,12 +139,179 @@ export class NotionService {
 
   async getAllStats(): Promise<Record<string, DatabaseStats>> {
     const stats: Record<string, DatabaseStats> = {};
-    
+
     for (const dbType of Object.keys(DATABASES)) {
       stats[dbType] = await this.getDatabaseStats(dbType as keyof typeof DATABASES);
     }
 
     return stats;
+  }
+
+  async createLead(leadData: any): Promise<LeadData> {
+    try {
+      if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
+        throw new Error('Notion API not configured');
+      }
+
+      // Determine which database to use
+      const databaseType = leadData.database || 'website-leads';
+      const databaseId = DATABASES[databaseType];
+
+      if (!databaseId) {
+        throw new Error(`Database not found for type: ${databaseType}`);
+      }
+
+      const response = await this.notion.pages.create({
+        parent: { database_id: databaseId },
+        properties: {
+          Name: {
+            title: [{ text: { content: leadData.name } }]
+          },
+          Email: {
+            email: leadData.email
+          },
+          Phone: {
+            phone_number: leadData.phone || ''
+          },
+          Company: {
+            rich_text: [{ text: { content: leadData.company || '' } }]
+          },
+          Status: {
+            select: { name: leadData.status || 'New' }
+          },
+          Notes: {
+            rich_text: [{ text: { content: leadData.notes || '' } }]
+          }
+        }
+      });
+
+      return {
+        id: response.id,
+        name: leadData.name,
+        email: leadData.email,
+        phone: leadData.phone || '',
+        source: databaseType,
+        status: leadData.status || 'New',
+        created_time: new Date().toISOString(),
+        company: leadData.company || '',
+        notes: leadData.notes || ''
+      };
+    } catch (error) {
+      console.error('Error creating lead in Notion:', error);
+      throw error;
+    }
+  }
+
+  async deleteLead(leadId: string): Promise<void> {
+    try {
+      if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
+        throw new Error('Notion API not configured');
+      }
+
+      await this.notion.pages.update({
+        page_id: leadId,
+        archived: true
+      });
+    } catch (error) {
+      console.error('Error deleting lead from Notion:', error);
+      throw error;
+    }
+  }
+
+  async getLeadById(leadId: string): Promise<LeadData | null> {
+    try {
+      if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
+        throw new Error('Notion API not configured');
+      }
+
+      const response = await this.notion.pages.retrieve({ page_id: leadId });
+
+      if ('properties' in response) {
+        const properties = response.properties;
+        return {
+          id: response.id,
+          name: this.getPropertyValue(properties.Name || properties.name) || 'Unknown',
+          email: this.getPropertyValue(properties.Email || properties.email) || '',
+          phone: this.getPropertyValue(properties.Phone || properties.phone) || '',
+          source: 'Unknown',
+          status: this.getPropertyValue(properties.Status || properties.status) || 'New',
+          created_time: response.created_time,
+          company: this.getPropertyValue(properties.Company || properties.company) || '',
+          notes: this.getPropertyValue(properties.Notes || properties.notes) || '',
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching lead by ID from Notion:', error);
+      return null;
+    }
+  }
+
+  async updateLead(leadId: string, leadData: any): Promise<LeadData> {
+    try {
+      if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
+        throw new Error('Notion API not configured');
+      }
+
+      const properties: any = {};
+
+      if (leadData.name) {
+        properties.Name = { title: [{ text: { content: leadData.name } }] };
+      }
+      if (leadData.email) {
+        properties.Email = { email: leadData.email };
+      }
+      if (leadData.phone) {
+        properties.Phone = { phone_number: leadData.phone };
+      }
+      if (leadData.company) {
+        properties.Company = { rich_text: [{ text: { content: leadData.company } }] };
+      }
+      if (leadData.status) {
+        properties.Status = { select: { name: leadData.status } };
+      }
+      if (leadData.notes) {
+        properties.Notes = { rich_text: [{ text: { content: leadData.notes } }] };
+      }
+
+      const response = await this.notion.pages.update({
+        page_id: leadId,
+        properties
+      });
+
+      return {
+        id: leadId,
+        name: leadData.name || '',
+        email: leadData.email || '',
+        phone: leadData.phone || '',
+        source: 'Updated',
+        status: leadData.status || 'New',
+        created_time: new Date().toISOString(),
+        company: leadData.company || '',
+        notes: leadData.notes || ''
+      };
+    } catch (error) {
+      console.error('Error updating lead in Notion:', error);
+      throw error;
+    }
+  }
+
+  async syncLeadsFromNotion(databaseType?: keyof typeof DATABASES): Promise<LeadData[]> {
+    try {
+      if (databaseType) {
+        return await this.getLeadsByDatabase(databaseType);
+      } else {
+        return await this.getAllLeads();
+      }
+    } catch (error) {
+      console.error('Error syncing leads from Notion:', error);
+      throw error;
+    }
+  }
+
+  async syncAllLeadsFromNotion(): Promise<LeadData[]> {
+    return await this.getAllLeads();
   }
 
   private getPropertyValue(property: any): string {
