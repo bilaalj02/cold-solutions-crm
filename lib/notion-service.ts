@@ -71,11 +71,11 @@ export class NotionService {
 
       // Map frontend slugs to actual database names
       const slugToNameMap: Record<string, string> = {
-        'inbound': 'inbound-voice-leads',
+        'inbound': 'Cold Solutions Inbound',
         'ai-audit-pre-call': 'ai-audit-pre-call',
         'ai-audit-post-call': 'ai-audit-post-call',
-        'cold-caller-followup': 'whatsapp-followup-leads',
-        'whatsapp-bot': 'whatsapp-bot-leads',
+        'cold-caller-followup': 'Whats App followup leads',
+        'whatsapp-bot': 'Whatsapp bot leads',
         'website-leads': 'website-leads'
       };
 
@@ -190,11 +190,11 @@ export class NotionService {
 
       // Map frontend slugs to actual database names
       const slugToNameMap: Record<string, string> = {
-        'inbound': 'inbound-voice-leads',
+        'inbound': 'Cold Solutions Inbound',
         'ai-audit-pre-call': 'ai-audit-pre-call',
         'ai-audit-post-call': 'ai-audit-post-call',
-        'cold-caller-followup': 'whatsapp-followup-leads',
-        'whatsapp-bot': 'whatsapp-bot-leads',
+        'cold-caller-followup': 'Whats App followup leads',
+        'whatsapp-bot': 'Whatsapp bot leads',
         'website-leads': 'website-leads'
       };
 
