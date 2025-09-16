@@ -1,10 +1,15 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "lib": [
       "dom",
       "dom.iterable",
       "es6"
     ],
+=======
+    "target": "es2015",
+    "lib": ["dom", "dom.iterable", "es6"],
+>>>>>>> 140d6cb255480a6e5c5b6ad04a37b5ba6396d543
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -23,6 +28,7 @@
     ],
     "baseUrl": ".",
     "paths": {
+<<<<<<< HEAD
       "@/*": [
         "./*"
       ]
@@ -38,4 +44,11 @@
   "exclude": [
     "node_modules"
   ]
+=======
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+>>>>>>> 140d6cb255480a6e5c5b6ad04a37b5ba6396d543
 }
