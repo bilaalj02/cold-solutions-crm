@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const debugInfo = {
     timestamp: new Date().toISOString(),
-    codeVersion: 'ai-audit-database-fix-2025-09-16-v2',
+    codeVersion: 'main-leads-fix-2025-09-16-v3',
     hardcodedFallbackActive: true,
-    aiAuditPreCallId: '265c6af7fe2a80febfa8cd94864f68f7',
-    status: 'DEPLOYED - Fixed ai-audit-pre-call database ID'
+    allDatabasesFixed: true,
+    status: 'DEPLOYED - Fixed main leads page and all individual pages'
   };
 
   return NextResponse.json(debugInfo);

@@ -24,7 +24,30 @@ try {
 } catch (error) {
   console.warn('Failed to parse NOTION_DATABASES:', error);
   console.warn('Raw value was:', process.env.NOTION_DATABASES);
-  DATABASES = {};
+
+  // Use hardcoded fallback when environment variable fails
+  console.log('🔄 Using hardcoded database fallback...');
+  DATABASES = {
+    'Cold Solutions Inbound': '269c6af7fe2a809db106f5e0fd83d540',
+    'website-leads': '254c6af7fe2a80beb263e459e36a7fdc',
+    'ai-audit-pre-call': '265c6af7fe2a80febfa8cd94864f68f7',
+    'ai-audit-post-call': '267c6af7fe2a8018b541f86689336ead',
+    'Whats App followup leads': '250c6af7fe2a806495c1f9e1e15f4d75',
+    'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569'
+  };
+}
+
+// Ensure DATABASES is never empty - add final fallback
+if (!DATABASES || Object.keys(DATABASES).length === 0) {
+  console.log('🚨 DATABASES is empty, applying final fallback...');
+  DATABASES = {
+    'Cold Solutions Inbound': '269c6af7fe2a809db106f5e0fd83d540',
+    'website-leads': '254c6af7fe2a80beb263e459e36a7fdc',
+    'ai-audit-pre-call': '265c6af7fe2a80febfa8cd94864f68f7',
+    'ai-audit-post-call': '267c6af7fe2a8018b541f86689336ead',
+    'Whats App followup leads': '250c6af7fe2a806495c1f9e1e15f4d75',
+    'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569'
+  };
 }
 
 // Check if we're in development and API key is not set
