@@ -24,16 +24,28 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    // Prevent multiple submissions
+    if (loading) return;
+
     try {
+      console.log('Login attempt:', { email, password: '***' });
       const user = LeadManager.authenticateUser(email, password);
 
       if (user) {
+        console.log('Login successful:', user);
         LeadManager.setCurrentUser(user);
-        router.push('/cold-caller');
+        // Use window.location for mobile compatibility
+        if (typeof window !== 'undefined') {
+          window.location.href = '/cold-caller';
+        } else {
+          router.push('/cold-caller');
+        }
       } else {
+        console.log('Login failed: Invalid credentials');
         setError('Invalid email or password');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('An error occurred during login');
     } finally {
       setLoading(false);
@@ -68,7 +80,7 @@ export default function LoginPage() {
 
       <div className="mt-6 sm:mt-8 mx-auto w-full max-w-md">
         <div className="bg-white py-6 px-4 shadow sm:rounded-lg sm:py-8 sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit} noValidate>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
@@ -79,6 +91,9 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -98,6 +113,9 @@ export default function LoginPage() {
                   name="password"
                   type="password"
                   autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
