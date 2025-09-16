@@ -353,7 +353,7 @@ export default function LeadListDetail() {
               <div className="bg-white rounded-lg border p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold" style={{color: '#0a2240'}}>
-                    {filteredLeads.length}
+                    {leads.length}
                   </div>
                   <div className="text-xs text-gray-500">Total Leads</div>
                 </div>
@@ -361,7 +361,7 @@ export default function LeadListDetail() {
               <div className="bg-white rounded-lg border p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold" style={{color: '#3dbff2'}}>
-                    {filteredLeads.filter(lead => lead.status === 'New').length}
+                    {leads.filter(lead => lead.status === 'New').length}
                   </div>
                   <div className="text-xs text-gray-500">New Leads</div>
                 </div>
@@ -369,7 +369,7 @@ export default function LeadListDetail() {
               <div className="bg-white rounded-lg border p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold" style={{color: '#10b981'}}>
-                    {filteredLeads.filter(lead => lead.status === 'Contacted').length}
+                    {leads.filter(lead => lead.status === 'Contacted').length}
                   </div>
                   <div className="text-xs text-gray-500">Contacted</div>
                 </div>
