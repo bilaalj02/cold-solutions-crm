@@ -72,8 +72,16 @@ export class NotionService {
         'website-leads': 'website-leads'
       };
 
+      // Log debug information to help troubleshoot
+      console.log('Looking for database slug:', databaseType);
+      console.log('Available databases:', Object.keys(DATABASES));
+      console.log('Slug mapping:', slugToNameMap);
+
       const actualDatabaseName = slugToNameMap[String(databaseType)] || String(databaseType);
       const databaseId = DATABASES[actualDatabaseName];
+
+      console.log('Mapped to database name:', actualDatabaseName);
+      console.log('Found database ID:', databaseId);
 
       if (!databaseId) {
         console.error(`Available databases:`, Object.keys(DATABASES));
