@@ -72,19 +72,26 @@ export class NotionService {
         'website-leads': 'website-leads'
       };
 
-      // Log debug information to help troubleshoot
-      console.log('Looking for database slug:', databaseType);
-      console.log('Available databases:', Object.keys(DATABASES));
-      console.log('Slug mapping:', slugToNameMap);
-
       const actualDatabaseName = slugToNameMap[String(databaseType)] || String(databaseType);
-      const databaseId = DATABASES[actualDatabaseName];
+      let databaseId = DATABASES[actualDatabaseName];
 
-      console.log('Mapped to database name:', actualDatabaseName);
-      console.log('Found database ID:', databaseId);
+      // Fallback: try to find database by partial name match if exact match fails
+      if (!databaseId) {
+        const availableNames = Object.keys(DATABASES);
+        const partialMatch = availableNames.find(name =>
+          name.includes(String(databaseType)) || String(databaseType).includes(name.split('-')[0])
+        );
+        if (partialMatch) {
+          databaseId = DATABASES[partialMatch];
+          console.warn(`Using fallback database: ${partialMatch} for slug: ${String(databaseType)}`);
+        }
+      }
 
       if (!databaseId) {
-        console.error(`Available databases:`, Object.keys(DATABASES));
+        console.error(`Database lookup failed:`);
+        console.error(`- Requested slug: ${String(databaseType)}`);
+        console.error(`- Mapped to: ${actualDatabaseName}`);
+        console.error(`- Available databases:`, Object.keys(DATABASES));
         throw new Error(`Database not found for type: ${String(databaseType)} (mapped to: ${actualDatabaseName})`);
       }
 
