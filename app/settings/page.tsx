@@ -2,44 +2,45 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LeadManager, SalesUser } from '../../lib/leads';
+import { useAuth } from '../../lib/auth';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
-export default function SettingsPage() {
-  const [users, setUsers] = useState<SalesUser[]>([]);
-  const [currentUser, setCurrentUser] = useState<SalesUser | null>(null);
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: 'Admin' | 'Manager' | 'Sales Rep' | 'User';
+  active: boolean;
+  createdAt: string;
+}
+
+function SettingsContent() {
+  const [users, setUsers] = useState<User[]>([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<SalesUser | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     password: '',
     role: 'User' as 'Admin' | 'Manager' | 'Sales Rep' | 'User',
-    territory: '',
-    department: '',
-    maxLeads: 100,
     active: true
   });
+  const { user, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const user = LeadManager.getCurrentUser();
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
-    if (user.role !== 'Admin') {
-      router.push('/');
-      return;
-    }
-
-    setCurrentUser(user);
     loadUsers();
-  }, [router]);
+  }, []);
 
   const loadUsers = () => {
-    const allUsers = LeadManager.getUsers();
-    setUsers(allUsers);
+    try {
+      const storedUsers = JSON.parse(localStorage.getItem('cold_solutions_users') || '[]');
+      setUsers(storedUsers);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setUsers([]);
+    }
   };
 
   const handleAddUser = () => {
@@ -55,32 +56,33 @@ export default function SettingsPage() {
       return;
     }
 
-    LeadManager.createUser(newUser);
-    loadUsers();
+    const userData: User = {
+      ...newUser,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedUsers = [...users, userData];
+    localStorage.setItem('cold_solutions_users', JSON.stringify(updatedUsers));
+    setUsers(updatedUsers);
     setShowAddUserModal(false);
     setNewUser({
       name: '',
       email: '',
       password: '',
       role: 'User',
-      territory: '',
-      department: '',
-      maxLeads: 100,
       active: true
     });
   };
 
-  const handleEditUser = (user: SalesUser) => {
-    setEditingUser(user);
+  const handleEditUser = (userToEdit: User) => {
+    setEditingUser(userToEdit);
     setNewUser({
-      name: user.name,
-      email: user.email,
+      name: userToEdit.name,
+      email: userToEdit.email,
       password: '', // Don't pre-fill password
-      role: user.role,
-      territory: user.territory || '',
-      department: user.department || '',
-      maxLeads: user.maxLeads || 100,
-      active: user.active
+      role: userToEdit.role,
+      active: userToEdit.active
     });
     setShowAddUserModal(true);
   };
@@ -98,20 +100,18 @@ export default function SettingsPage() {
       return;
     }
 
-    const updatedUser: SalesUser = {
+    const updatedUser: User = {
       ...editingUser,
       name: newUser.name,
       email: newUser.email,
       password: newUser.password || editingUser.password, // Keep existing password if not changed
       role: newUser.role,
-      territory: newUser.territory,
-      department: newUser.department,
-      maxLeads: newUser.maxLeads,
       active: newUser.active
     };
 
-    LeadManager.saveUser(updatedUser);
-    loadUsers();
+    const updatedUsers = users.map(u => u.id === editingUser.id ? updatedUser : u);
+    localStorage.setItem('cold_solutions_users', JSON.stringify(updatedUsers));
+    setUsers(updatedUsers);
     setShowAddUserModal(false);
     setEditingUser(null);
     setNewUser({
@@ -119,33 +119,22 @@ export default function SettingsPage() {
       email: '',
       password: '',
       role: 'User',
-      territory: '',
-      department: '',
-      maxLeads: 100,
       active: true
     });
   };
 
   const handleDeleteUser = (userId: string) => {
-    if (userId === currentUser?.id) {
+    if (userId === user?.email) {
       alert('You cannot delete your own account');
       return;
     }
 
     if (confirm('Are you sure you want to delete this user?')) {
-      LeadManager.deleteUser(userId);
-      loadUsers();
+      const updatedUsers = users.filter(u => u.id !== userId);
+      localStorage.setItem('cold_solutions_users', JSON.stringify(updatedUsers));
+      setUsers(updatedUsers);
     }
   };
-
-  const handleLogout = () => {
-    LeadManager.logout();
-    router.push('/login');
-  };
-
-  if (!currentUser) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
@@ -167,19 +156,19 @@ export default function SettingsPage() {
             </a>
           </nav>
         </div>
-        
+
         <div className="p-4 border-t border-gray-600">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-sm">person</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-white">{currentUser.name}</p>
-              <p className="text-xs text-gray-300">{currentUser.role}</p>
+              <p className="text-sm font-medium text-white">{user?.name || 'Admin User'}</p>
+              <p className="text-xs text-gray-300">{user?.role || 'Admin'}</p>
             </div>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
           >
             <span className="material-symbols-outlined text-sm">logout</span>
@@ -192,20 +181,20 @@ export default function SettingsPage() {
       <main className="flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
         {/* Header */}
         <header className="p-6 bg-white border-b">
-              <div className="flex items-center justify-between">
-                <div>
+          <div className="flex items-center justify-between">
+            <div>
               <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>User Management</h1>
               <p className="text-sm text-gray-600 mt-1">Manage users and their permissions</p>
-                </div>
-                <button
+            </div>
+            <button
               onClick={() => setShowAddUserModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-opacity"
-                  style={{backgroundColor: '#3dbff2'}}
-                >
+              style={{backgroundColor: '#3dbff2'}}
+            >
               <span className="material-symbols-outlined text-sm">add</span>
-                  Add User
-                </button>
-              </div>
+              Add User
+            </button>
+          </div>
         </header>
 
         <div className="p-6">
@@ -221,69 +210,61 @@ export default function SettingsPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Territory</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Leads</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id}>
+                  {users.map((userItem) => (
+                    <tr key={userItem.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                             <span className="material-symbols-outlined text-gray-600">person</span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
+                            <div className="text-sm font-medium text-gray-900">{userItem.name}</div>
+                            <div className="text-sm text-gray-500">{userItem.email}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.role === 'Admin' ? 'bg-red-100 text-red-800' :
-                          user.role === 'Manager' ? 'bg-blue-100 text-blue-800' :
-                          user.role === 'Sales Rep' ? 'bg-green-100 text-green-800' :
+                          userItem.role === 'Admin' ? 'bg-red-100 text-red-800' :
+                          userItem.role === 'Manager' ? 'bg-blue-100 text-blue-800' :
+                          userItem.role === 'Sales Rep' ? 'bg-green-100 text-green-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {user.role}
+                          {userItem.role}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.territory || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.maxLeads || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          userItem.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                          {user.active ? 'Active' : 'Inactive'}
+                          {userItem.active ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                        {new Date(userItem.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">
-                        <button
-                            onClick={() => handleEditUser(user)}
-                            className="text-[#3dbff2] hover:text-[#2a9fd4]"
-                        >
-                          Edit
-                        </button>
-                          {user.id !== currentUser.id && (
                           <button
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-900"
+                            onClick={() => handleEditUser(userItem)}
+                            className="text-[#3dbff2] hover:text-[#2a9fd4]"
                           >
-                            Delete
+                            Edit
                           </button>
-                        )}
+                          {userItem.email !== user?.email && (
+                            <button
+                              onClick={() => handleDeleteUser(userItem.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -292,7 +273,7 @@ export default function SettingsPage() {
               </table>
             </div>
           </div>
-              </div>
+        </div>
       </main>
 
       {/* Add/Edit User Modal */}
@@ -312,9 +293,6 @@ export default function SettingsPage() {
                     email: '',
                     password: '',
                     role: 'User',
-                    territory: '',
-                    department: '',
-                    maxLeads: 100,
                     active: true
                   });
                 }}
@@ -327,85 +305,52 @@ export default function SettingsPage() {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-4">
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                   <input
                     type="text"
                     value={newUser.name}
                     onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
+                    className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
                     placeholder="Enter full name"
                   />
                 </div>
 
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input
                     type="email"
                     value={newUser.email}
                     onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
+                    className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
                     placeholder="Enter email address"
                   />
                 </div>
 
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password {editingUser ? '(leave blank to keep current)' : '*'}
-                </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password {editingUser ? '(leave blank to keep current)' : '*'}
+                  </label>
                   <input
                     type="password"
                     value={newUser.password}
                     onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
+                    className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
                     placeholder="Enter password"
                   />
                 </div>
 
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
                   <select
                     value={newUser.role}
-                  onChange={(e) => setNewUser({...newUser, role: e.target.value as any})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
+                    onChange={(e) => setNewUser({...newUser, role: e.target.value as any})}
+                    className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
                   >
                     <option value="User">User</option>
-                  <option value="Sales Rep">Sales Rep</option>
+                    <option value="Sales Rep">Sales Rep</option>
                     <option value="Manager">Manager</option>
                     <option value="Admin">Admin</option>
                   </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Territory</label>
-                <input
-                  type="text"
-                  value={newUser.territory}
-                  onChange={(e) => setNewUser({...newUser, territory: e.target.value})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
-                  placeholder="Enter territory"
-                />
-              </div>
-
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                  <input
-                    type="text"
-                  value={newUser.department}
-                  onChange={(e) => setNewUser({...newUser, department: e.target.value})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
-                  placeholder="Enter department"
-                  />
-                </div>
-
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Leads</label>
-                  <input
-                  type="number"
-                  value={newUser.maxLeads}
-                  onChange={(e) => setNewUser({...newUser, maxLeads: parseInt(e.target.value) || 100})}
-                  className="w-full rounded-md border-gray-300 py-2 px-3 text-sm focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2]"
-                  placeholder="Maximum leads"
-                  />
                 </div>
 
                 <div className="flex items-center">
@@ -433,9 +378,6 @@ export default function SettingsPage() {
                     email: '',
                     password: '',
                     role: 'User',
-                    territory: '',
-                    department: '',
-                    maxLeads: 100,
                     active: true
                   });
                 }}
@@ -455,5 +397,13 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <ProtectedRoute>
+      <SettingsContent />
+    </ProtectedRoute>
   );
 }
