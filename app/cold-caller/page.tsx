@@ -128,7 +128,7 @@ export default function ColdCallerLeadList() {
       return {valid: false, errors};
     }
     
-    const requiredFields = ['name', 'email', 'phone'];
+    const requiredFields = ['name', 'phone'];
     const missingFields = requiredFields.filter(field => 
       !data[0].hasOwnProperty(field)
     );
@@ -137,7 +137,7 @@ export default function ColdCallerLeadList() {
       errors.push(`Missing required fields: ${missingFields.join(', ')}`);
     }
     
-    // Validate email format
+    // Validate email format (only if email is provided)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     data.forEach((row, index) => {
       if (row.email && !emailRegex.test(row.email)) {
@@ -733,7 +733,7 @@ export default function ColdCallerLeadList() {
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Required fields: name, email, phone. Optional: company, position, industry, territory, notes, tags
+                    Required fields: name, phone. Optional: email, company, position, industry, territory, notes, tags
                   </p>
                 </div>
 
