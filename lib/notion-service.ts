@@ -3,20 +3,27 @@ import { Client } from "@notionhq/client";
 // Parse database configuration with fallback
 let DATABASES: Record<string, string> = {};
 try {
+  console.log('Environment NOTION_DATABASES value:', process.env.NOTION_DATABASES);
   if (process.env.NOTION_DATABASES) {
     const databasesArray = JSON.parse(process.env.NOTION_DATABASES);
+    console.log('Parsed databases array:', databasesArray);
     // Convert array to object for easier lookup
     if (Array.isArray(databasesArray)) {
       DATABASES = databasesArray.reduce((acc: Record<string, string>, db: any) => {
         acc[db.name] = db.id;
         return acc;
       }, {});
+      console.log('Final DATABASES object:', DATABASES);
     } else {
       DATABASES = databasesArray;
+      console.log('Used databases as-is:', DATABASES);
     }
+  } else {
+    console.warn('NOTION_DATABASES environment variable is not set');
   }
 } catch (error) {
   console.warn('Failed to parse NOTION_DATABASES:', error);
+  console.warn('Raw value was:', process.env.NOTION_DATABASES);
   DATABASES = {};
 }
 
