@@ -62,12 +62,24 @@ export class NotionService {
   }
 
   async getLeadsByDatabase(databaseType: keyof typeof DATABASES): Promise<LeadData[]> {
+    console.log(`🚀 getLeadsByDatabase called for "${String(databaseType)}"`);
+
     try {
       // Check if Notion is properly configured
       if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
         console.warn(`Notion API not configured for database: ${String(databaseType)}`);
         return [];
       }
+
+      // HARDCODED DATABASE MAPPING - Production fallback
+      const hardcodedDatabases: Record<string, string> = {
+        'Cold Solutions Inbound': '269c6af7fe2a809db106f5e0fd83d540',
+        'website-leads': '254c6af7fe2a80beb263e459e36a7fdc',
+        'ai-audit-pre-call': '265c6af7fe2a80febfa8cd96864f68f7',
+        'ai-audit-post-call': '267c6af7fe2a8018b541f86689336ead',
+        'Whats App followup leads': '250c6af7fe2a806495c1f9e1e15f4d75',
+        'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569'
+      };
 
       // Map frontend slugs to actual database names
       const slugToNameMap: Record<string, string> = {
@@ -80,7 +92,9 @@ export class NotionService {
       };
 
       const actualDatabaseName = slugToNameMap[String(databaseType)] || String(databaseType);
-      let databaseId = DATABASES[actualDatabaseName];
+
+      // Try environment first, then hardcoded fallback
+      let databaseId = DATABASES[actualDatabaseName] || hardcodedDatabases[actualDatabaseName];
 
       // Fallback: try to find database by partial name match if exact match fails
       if (!databaseId) {
