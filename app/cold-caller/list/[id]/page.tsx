@@ -254,6 +254,22 @@ export default function LeadListDetail() {
       updatedLead.status = 'Contacted';
     }
 
+    // Map call outcomes to activity outcomes
+    const getActivityOutcome = (callOutcome: string): 'Positive' | 'Negative' | 'Neutral' => {
+      switch (callOutcome) {
+        case 'Booked Demo':
+        case 'Interested':
+        case 'Requested More Info':
+          return 'Positive';
+        case 'Not Interested':
+          return 'Negative';
+        case 'No Answer':
+        case 'Callback Requested':
+        default:
+          return 'Neutral';
+      }
+    };
+
     // Create call activity for call log
     const activity: LeadActivity = {
       id: LeadManager.generateId(),
@@ -263,10 +279,11 @@ export default function LeadListDetail() {
       createdAt: new Date().toISOString(),
       createdBy: 'Current User',
       duration: 0, // Default duration since we don't track it in this flow
-      outcome: selectedCallOutcome,
+      outcome: getActivityOutcome(selectedCallOutcome),
       metadata: {
         notes: selectedCallNotes,
-        callType: 'Cold Call'
+        callType: 'Cold Call',
+        callOutcome: selectedCallOutcome // Store the original call outcome in metadata
       }
     };
 
