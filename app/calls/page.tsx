@@ -13,7 +13,7 @@ export default function CallsDatabase() {
           </div>
           <h1 className="text-xl font-bold">Cold Solutions</h1>
         </div>
-        
+
         <nav className="flex-1 p-4">
           <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md hover:bg-white/10" href="/">
             <span className="material-symbols-outlined">dashboard</span>
@@ -36,13 +36,15 @@ export default function CallsDatabase() {
             Operations Console
           </a>
         </nav>
-        
+
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-cover bg-center" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBiiaRS0JplxEOtyw6Xi1THBKPw9hutxkXHy-p_Co25lyacKLF-7zVXkeuFMwu6_387OXQs4cfeplforqexR0KhrbcScDdgoDrls-LDKZFa8Bx2ULl124McVDpMCWNix7sPPxafBQ80eqo4d3v4Ur-MFFjp5Skz3-fR-TYVWFINu9d5pAtx88JyUs22VkXpJM6eWyjcr9EZibzFwc4Aldwy7VIrSX8uuZ5gPtiYyD318IkLgdotuZ03tlAddjqxVXTjb3m_5kRiFe2f")'}}></div>
+            <div className="w-10 h-10 rounded-full bg-[#3dbff2] flex items-center justify-center">
+              <span className="material-symbols-outlined text-[#0a2240]">person</span>
+            </div>
             <div>
-              <p className="font-semibold text-sm">Jane Doe</p>
-              <p className="text-xs" style={{color: '#3dbff2'}}>jane.doe@example.com</p>
+              <p className="font-semibold text-sm">System User</p>
+              <p className="text-xs" style={{color: '#3dbff2'}}>system@coldsolutions.com</p>
             </div>
           </div>
         </div>
@@ -91,7 +93,7 @@ export default function CallsDatabase() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-7 gap-4 items-end mt-6 h-48">
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-full rounded-t-md" style={{height: "25%", backgroundColor: '#e1f5fe'}}></div>

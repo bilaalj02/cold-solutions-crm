@@ -27,8 +27,9 @@ export async function GET() {
       );
     }
 
+    // Don't expose actual API token to client
     return NextResponse.json({
-      apiToken,
+      apiToken: 'configured',
       organizationId
     });
   } catch (error) {

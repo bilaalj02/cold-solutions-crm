@@ -5,7 +5,8 @@ export async function makeApiRequest(
   organizationId: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const regions = ['eu1', 'eu2', 'us1', 'us2'];
+  // Prioritize us2 region based on user's zone
+  const regions = ['us2', 'us1', 'eu1', 'eu2'];
 
   // Cache the successful region in memory for subsequent requests
   const cachedRegion = (global as any).__makeApiRegion;
@@ -65,6 +66,9 @@ export async function makeApiRequest(
         // Authentication error
         const errorText = await response.text();
         console.error(`Authentication failed in region ${region}:`, errorText);
+        console.error(`API Token (first 10 chars): ${apiToken.substring(0, 10)}...`);
+        console.error(`Organization ID: ${organizationId}`);
+        console.error(`Full URL attempted: ${url}`);
         lastError = {
           region,
           status: response.status,

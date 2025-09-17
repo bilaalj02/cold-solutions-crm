@@ -58,6 +58,35 @@ export interface KPIMetric {
   status: 'good' | 'warning' | 'critical';
 }
 
+export interface AutomationMetric {
+  name: string;
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  avgExecutionTime: number; // in seconds
+  successRate: number; // percentage
+  lastExecuted: string;
+  status: 'active' | 'inactive' | 'error';
+}
+
+export interface MakeAutomationStats {
+  totalScenarios: number;
+  activeScenarios: number;
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  avgExecutionTime: number;
+  dataTransferred: number; // in MB
+  operationsUsed: number;
+  operationsRemaining: number;
+  monthlyUsage: {
+    period: string;
+    executions: number;
+    operations: number;
+    dataTransferred: number;
+  }[];
+}
+
 export class AdvancedAnalytics {
   // Mock data - in production this would come from your database
   private static revenueData: RevenueData[] = [
@@ -189,11 +218,11 @@ export class AdvancedAnalytics {
     }));
 
     const totalLeads = leads.length;
-    
+
     return stageCounts.map((stageData, index) => {
       const percentage = totalLeads > 0 ? (stageData.count / totalLeads) * 100 : 0;
-      const dropOffRate = index > 0 
-        ? ((stageCounts[index - 1].count - stageData.count) / stageCounts[index - 1].count) * 100 
+      const dropOffRate = index > 0
+        ? ((stageCounts[index - 1].count - stageData.count) / stageCounts[index - 1].count) * 100
         : 0;
 
       return {
@@ -222,17 +251,17 @@ export class AdvancedAnalytics {
   static getRevenueForecast(): ForecastData[] {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
+
     const forecasts: ForecastData[] = [];
-    
+
     for (let i = 0; i < 6; i++) {
       const month = currentMonth + i;
       const year = month > 11 ? currentYear + 1 : currentYear;
       const adjustedMonth = month > 11 ? month - 12 : month;
-      
+
       const period = `${year}-${String(adjustedMonth + 1).padStart(2, '0')}`;
       const baseAmount = 150000 + (i * 15000) + (Math.random() * 20000);
-      
+
       forecasts.push({
         period,
         conservative: Math.round(baseAmount * 0.8),
@@ -247,7 +276,7 @@ export class AdvancedAnalytics {
         ]
       });
     }
-    
+
     return forecasts;
   }
 
@@ -267,7 +296,7 @@ export class AdvancedAnalytics {
 
     const qualifiedThisMonth = currentMonth.filter(lead => lead.status === 'Qualified' || lead.status === 'Proposal' || lead.status === 'Negotiation' || lead.status === 'Won').length;
     const qualifiedLastMonth = lastMonth.filter(lead => lead.status === 'Qualified' || lead.status === 'Proposal' || lead.status === 'Negotiation' || lead.status === 'Won').length;
-    
+
     const wonThisMonth = currentMonth.filter(lead => lead.status === 'Won').length;
     const wonLastMonth = lastMonth.filter(lead => lead.status === 'Won').length;
 
@@ -367,7 +396,7 @@ export class AdvancedAnalytics {
     return ranges.map(range => {
       const count = leads.filter(lead => lead.score >= range.min && lead.score <= range.max).length;
       const percentage = totalLeads > 0 ? (count / totalLeads) * 100 : 0;
-      
+
       return {
         range: range.range,
         count,
@@ -379,11 +408,11 @@ export class AdvancedAnalytics {
   static getActivityTrends(period: 'week' | 'month' = 'month'): { date: string; calls: number; emails: number; meetings: number }[] {
     const trends = [];
     const daysToShow = period === 'week' ? 7 : 30;
-    
+
     for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      
+
       trends.push({
         date: date.toISOString().split('T')[0],
         calls: Math.floor(Math.random() * 50) + 10,
@@ -391,7 +420,7 @@ export class AdvancedAnalytics {
         meetings: Math.floor(Math.random() * 20) + 5
       });
     }
-    
+
     return trends;
   }
 
@@ -414,5 +443,91 @@ export class AdvancedAnalytics {
       revenue: channel.revenue,
       roi: channel.roi
     }));
+  }
+
+  static getMakeAutomationStats(): MakeAutomationStats {
+    return {
+      totalScenarios: 12,
+      activeScenarios: 10,
+      totalExecutions: 2450,
+      successfulExecutions: 2341,
+      failedExecutions: 109,
+      avgExecutionTime: 3.2,
+      dataTransferred: 1250.5,
+      operationsUsed: 18750,
+      operationsRemaining: 31250,
+      monthlyUsage: [
+        { period: '2024-01', executions: 1850, operations: 14200, dataTransferred: 850.2 },
+        { period: '2024-02', executions: 2100, operations: 16300, dataTransferred: 975.8 },
+        { period: '2024-03', executions: 2250, operations: 17800, dataTransferred: 1120.4 },
+        { period: '2024-04', executions: 2400, operations: 18500, dataTransferred: 1200.7 },
+        { period: '2024-05', executions: 2450, operations: 18750, dataTransferred: 1250.5 }
+      ]
+    };
+  }
+
+  static getAutomationMetrics(): AutomationMetric[] {
+    return [
+      {
+        name: 'Lead Qualification Workflow',
+        totalExecutions: 1250,
+        successfulExecutions: 1198,
+        failedExecutions: 52,
+        avgExecutionTime: 2.1,
+        successRate: 95.8,
+        lastExecuted: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+        status: 'active'
+      },
+      {
+        name: 'Email Follow-up Sequence',
+        totalExecutions: 3400,
+        successfulExecutions: 3315,
+        failedExecutions: 85,
+        avgExecutionTime: 1.8,
+        successRate: 97.5,
+        lastExecuted: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
+        status: 'active'
+      },
+      {
+        name: 'Lead Scoring Update',
+        totalExecutions: 5600,
+        successfulExecutions: 5521,
+        failedExecutions: 79,
+        avgExecutionTime: 0.9,
+        successRate: 98.6,
+        lastExecuted: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
+        status: 'active'
+      },
+      {
+        name: 'CRM Data Sync',
+        totalExecutions: 720,
+        successfulExecutions: 695,
+        failedExecutions: 25,
+        avgExecutionTime: 5.2,
+        successRate: 96.5,
+        lastExecuted: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        status: 'active'
+      },
+      {
+        name: 'WhatsApp Notification Bot',
+        totalExecutions: 890,
+        successfulExecutions: 856,
+        failedExecutions: 34,
+        avgExecutionTime: 1.5,
+        successRate: 96.2,
+        lastExecuted: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+        status: 'active'
+      },
+      {
+        name: 'Calendar Booking Integration',
+        totalExecutions: 420,
+        successfulExecutions: 398,
+        failedExecutions: 22,
+        avgExecutionTime: 3.1,
+        successRate: 94.8,
+        lastExecuted: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+        status: 'error'
+      }
+    ];
   }
 }
