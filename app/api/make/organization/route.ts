@@ -55,19 +55,22 @@ export async function GET() {
     console.log('Make organization API response:', JSON.stringify(orgData, null, 2));
 
     // Transform to match MakeOrganization interface
+    // The actual Make API returns: { organization: { ... } }
+    const org = orgData.organization || orgData;
+
     const organization = {
-      id: orgData.id?.toString() || organizationId,
-      name: orgData.name || 'Cold Solutions Organization',
-      plan: orgData.plan?.name || 'Professional',
+      id: org.id?.toString() || organizationId,
+      name: org.name || 'Cold Solutions Organization',
+      plan: org.productName || 'Professional',
       limits: {
-        operations: orgData.limits?.operations || 40000,
-        dataTransfer: orgData.limits?.dataTransfer || 100000000, // 100MB
-        scenarios: orgData.limits?.scenarios || 1000
+        operations: org.license?.operations || 40000,
+        dataTransfer: org.license?.transfer || 100000000,
+        scenarios: org.license?.dslimit || 1000
       },
       usage: {
-        operations: orgData.usage?.operations || 0,
-        dataTransfer: orgData.usage?.dataTransfer || 0,
-        scenarios: orgData.usage?.scenarios || 0
+        operations: parseInt(org.operations) || 0,
+        dataTransfer: parseInt(org.transfer) || 0,
+        scenarios: org.activeScenarios || 0
       }
     };
 

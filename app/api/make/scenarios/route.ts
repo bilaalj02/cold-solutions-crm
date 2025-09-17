@@ -45,8 +45,17 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
-    const scenarios = data.scenarios || data || [];
+    let scenarios = data.scenarios || data || [];
 
+    // Ensure scenarios is always an array
+    if (!Array.isArray(scenarios)) {
+      console.warn('Scenarios is not an array, converting to array:', typeof scenarios);
+      scenarios = [];
+    }
+
+    console.log('Raw scenarios API response type:', typeof data);
+    console.log('Scenarios array type:', typeof scenarios);
+    console.log('Is scenarios array?', Array.isArray(scenarios));
     console.log('Successfully fetched scenarios:', scenarios.length);
 
     // Handle pagination parameters from MakeService
