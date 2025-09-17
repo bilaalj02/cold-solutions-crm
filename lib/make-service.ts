@@ -141,7 +141,7 @@ export class MakeService {
 
   static async getScenario(scenarioId: string): Promise<MakeApiResponse<MakeScenario>> {
     return this.makeRequest<MakeScenario>(
-      `/organizations/${this.organizationId}/scenarios/${scenarioId}`
+      `/scenarios/${scenarioId}`
     );
   }
 
@@ -151,7 +151,7 @@ export class MakeService {
     limit = 50
   ): Promise<MakeApiResponse<MakeExecution[]>> {
     return this.makeRequest<MakeExecution[]>(
-      `/organizations/${this.organizationId}/scenarios/${scenarioId}/executions?page=${page}&limit=${limit}`
+      `/scenarios/${scenarioId}/executions?page=${page}&limit=${limit}`
     );
   }
 
@@ -168,7 +168,7 @@ export class MakeService {
 
   static async getWebhooks(): Promise<MakeApiResponse<MakeWebhook[]>> {
     return this.makeRequest<MakeWebhook[]>(
-      `/organizations/${this.organizationId}/webhooks`
+      `/webhooks`
     );
   }
 
@@ -180,21 +180,21 @@ export class MakeService {
 
   static async activateScenario(scenarioId: string): Promise<MakeApiResponse<void>> {
     return this.makeRequest<void>(
-      `/organizations/${this.organizationId}/scenarios/${scenarioId}/activate`,
+      `/scenarios/${scenarioId}/activate`,
       { method: 'POST' }
     );
   }
 
   static async deactivateScenario(scenarioId: string): Promise<MakeApiResponse<void>> {
     return this.makeRequest<void>(
-      `/organizations/${this.organizationId}/scenarios/${scenarioId}/deactivate`,
+      `/scenarios/${scenarioId}/deactivate`,
       { method: 'POST' }
     );
   }
 
   static async runScenario(scenarioId: string): Promise<MakeApiResponse<{ executionId: string }>> {
     return this.makeRequest<{ executionId: string }>(
-      `/organizations/${this.organizationId}/scenarios/${scenarioId}/run`,
+      `/scenarios/${scenarioId}/run`,
       { method: 'POST' }
     );
   }
@@ -204,7 +204,7 @@ export class MakeService {
     name: string
   ): Promise<MakeApiResponse<MakeScenario>> {
     return this.makeRequest<MakeScenario>(
-      `/organizations/${this.organizationId}/scenarios/${scenarioId}/clone`,
+      `/scenarios/${scenarioId}/clone`,
       {
         method: 'POST',
         body: JSON.stringify({ name }),
