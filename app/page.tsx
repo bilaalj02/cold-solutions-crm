@@ -234,7 +234,7 @@ function ColdSolutionsDashboard() {
                   <select
                     value={timePeriod}
                     onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
-                    className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3dbff2] focus:border-transparent"
+                    className="pl-3 pr-8 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3dbff2] focus:border-transparent"
                   >
                     <option value="day">Today</option>
                     <option value="week">This Week</option>
@@ -677,11 +677,11 @@ function ColdSolutionsDashboard() {
                   <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">NAME</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">SOURCE</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">SCORE</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">LAST INTERACTION</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Source</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Score</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Last interaction</th>
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                       </tr>
                     </thead>

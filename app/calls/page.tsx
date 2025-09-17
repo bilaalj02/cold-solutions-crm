@@ -37,17 +37,6 @@ export default function CallsDatabase() {
           </a>
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#3dbff2] flex items-center justify-center">
-              <span className="material-symbols-outlined text-[#0a2240]">person</span>
-            </div>
-            <div>
-              <p className="font-semibold text-sm">System User</p>
-              <p className="text-xs" style={{color: '#3dbff2'}}>system@coldsolutions.com</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content */}
