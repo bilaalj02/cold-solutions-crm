@@ -5,6 +5,7 @@ import { notionDatabases } from "../lib/notion-databases";
 import { useAuth } from "../lib/auth";
 import { LeadManager, Lead } from "../lib/leads";
 import ProtectedRoute from "../components/ProtectedRoute";
+import StandardSidebar from "../components/StandardSidebar";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,7 +13,6 @@ type TimePeriod = 'day' | 'week' | 'month';
 type ChartType = 'overview' | 'outreach' | 'voice' | 'pipeline';
 
 function ColdSolutionsDashboard() {
-  const [leadsDropdownOpen, setLeadsDropdownOpen] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
   const [activeChart, setActiveChart] = useState<ChartType>('overview');
@@ -104,99 +104,7 @@ function ColdSolutionsDashboard() {
   return (
     <div className="flex min-h-screen w-full group/design-root overflow-x-hidden bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
       {/* Standardized Sidebar */}
-      <div className="flex min-h-screen w-72 flex-col justify-between text-white p-4" style={{backgroundColor: '#0a2240'}}>
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col p-4">
-              <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
-              <p className="text-sm font-normal leading-normal" style={{color: '#a0a0a0'}}>Your Business, Streamlined</p>
-            </div>
-            <nav className="flex flex-col gap-2">
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-white" style={{backgroundColor: '#3dbff2'}} href="/">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dashboard</span>
-                <p className="text-sm font-medium leading-normal">Dashboard</p>
-              </a>
-
-              {/* Leads Database Dropdown */}
-              <div className="flex flex-col">
-                <button
-                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white w-full text-left"
-                  onClick={() => setLeadsDropdownOpen(!leadsDropdownOpen)}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined" style={{fontSize: '20px'}}>group</span>
-                    <p className="text-sm font-medium leading-normal">Leads Database</p>
-                  </div>
-                  <span className={`material-symbols-outlined transition-transform ${leadsDropdownOpen ? 'rotate-180' : ''}`} style={{fontSize: '16px'}}>
-                    expand_more
-                  </span>
-                </button>
-
-                <motion.div
-                  initial={false}
-                  animate={{ height: leadsDropdownOpen ? 'auto' : 0, opacity: leadsDropdownOpen ? 1 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="ml-4 mt-2 flex flex-col gap-1">
-                    <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads">
-                      <span className="material-symbols-outlined" style={{fontSize: '16px'}}>database</span>
-                      <p className="text-sm leading-normal">All Leads</p>
-                    </a>
-                    {notionDatabases.map((db) => (
-                      <a
-                        key={db.id}
-                        className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors"
-                        href={`/database/${db.slug}`}
-                      >
-                        <span className="material-symbols-outlined" style={{fontSize: '16px'}}>{db.icon}</span>
-                        <p className="text-sm leading-normal">{db.name}</p>
-                      </a>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/calls">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>phone_in_talk</span>
-                <p className="text-sm font-medium leading-normal">Calls Database</p>
-              </a>
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/email">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>email</span>
-                <p className="text-sm font-medium leading-normal">Email Management</p>
-              </a>
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/automation">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>smart_toy</span>
-                <p className="text-sm font-medium leading-normal">Automation Hub</p>
-              </a>
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/analytics">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>analytics</span>
-                <p className="text-sm font-medium leading-normal">Performance Analytics</p>
-              </a>
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/operations">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dvr</span>
-                <p className="text-sm font-medium leading-normal">Operations Console</p>
-              </a>
-            </nav>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="px-4 py-3 rounded-lg bg-opacity-10 bg-white">
-              <p className="text-xs font-medium" style={{color: '#a0a0a0'}}>SIGNED IN AS</p>
-              <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
-              <p className="text-xs" style={{color: '#a0a0a0'}}>{user?.email}</p>
-            </div>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/settings">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
-              <p className="text-sm font-medium leading-normal">Settings</p>
-            </a>
-            <button
-              onClick={logout}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white text-left w-full transition-colors"
-            >
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>logout</span>
-              <p className="text-sm font-medium leading-normal">Sign Out</p>
-            </button>
-          </div>
-      </div>
+      <StandardSidebar />
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { LeadManager, Lead } from "../../lib/leads";
+import StandardSidebar from "../../components/StandardSidebar";
 
 export default function LeadsDatabase() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -245,39 +246,27 @@ export default function LeadsDatabase() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Header */}
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-8">
-        <div className="flex items-center gap-4">
-          <svg className="h-8 w-8" style={{color: '#0a2240'}} fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <path clipRule="evenodd" d="M24 4H42V17.3333V30.6667H24V44H6V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
-          </svg>
-          <h1 className="text-xl font-bold" style={{color: '#0a2240'}}>Cold Solutions</h1>
-        </div>
-        <nav className="hidden items-center gap-6 md:flex">
-          <a className="text-sm font-medium text-gray-600 hover:text-[#3dbff2]" href="/">Dashboard</a>
-          <a className="text-sm font-bold" style={{color: '#3dbff2'}} href="/leads">Leads</a>
-          <a className="text-sm font-medium text-gray-600 hover:text-[#3dbff2]" href="/calls">Calls</a>
-          <a className="text-sm font-medium text-gray-600 hover:text-[#3dbff2]" href="/analytics">Analytics</a>
-          <a className="text-sm font-medium text-gray-600 hover:text-[#3dbff2]" href="/operations">Operations</a>
-          <a className="text-sm font-medium text-gray-600 hover:text-[#3dbff2]" href="#">Settings</a>
-        </nav>
-        <div className="flex items-center gap-4">
-          <button className="relative rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <div className="h-10 w-10 rounded-full bg-cover bg-center" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuD6Iqeh64Nrxh4t9N2VjpMbgje2YQQC94kZhJCP1yq6ZH4Hjj8Ge1qM26r1qBw93dRCsEa36j-RgwbGDYjWhUQ0JVkxnY0pePr2f3Zkpu0At4IpxeEGpOMiLkqakfJmisg19Wi0l2vD_FqIwBTJjaoU4PSm6psLAxMZRtig5_khUMHfNaW4LZeCSwUJxUUoa7SV3TK-gQJ_n_DuBqq8tu1JRy0G8nmhgoDNJW9QmNFpnu6I4sdK5ve3jHc8IOBKragNThiOvc66r42N")'}}></div>
-        </div>
-      </header>
+    <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
+      {/* Sidebar */}
+      <StandardSidebar />
 
       {/* Main Content */}
-      <main className="flex-grow bg-white p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Leads Database</h1>
+              <p className="text-gray-600 mt-1">Manage and track all your leads in one place.</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl">
-          {/* Page Header */}
+          {/* Page Actions */}
           <div className="mb-6 md:flex md:items-center md:justify-between">
             <div className="flex-1 min-w-0">
-              <h2 className="text-3xl font-bold leading-tight" style={{color: '#0a2240'}}>Leads Database</h2>
-              <p className="mt-1 text-sm text-gray-500">Manage and track all your leads in one place.</p>
             </div>
             <div className="mt-4 flex gap-4 md:mt-0 md:ml-4">
               {selectedLeads.size > 0 && (
