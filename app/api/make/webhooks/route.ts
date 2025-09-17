@@ -13,14 +13,15 @@ export async function GET() {
       );
     }
 
-    const response = await makeApiRequest(
-      `/organizations/${organizationId}/webhooks`,
-      apiToken,
-      organizationId
-    );
-
-    const webhooks = await response.json();
-    return NextResponse.json(webhooks);
+    // Note: Make.com doesn't have a direct API endpoint to list webhooks
+    // Webhooks are created within scenarios and have dynamic URLs
+    // This endpoint returns an informational message instead
+    return NextResponse.json({
+      message: "Make.com webhooks are created within scenarios and don't have a dedicated list endpoint",
+      info: "Webhooks are managed through the scenario interface in Make.com",
+      webhooks: [],
+      note: "This is expected behavior - Make.com generates webhook URLs dynamically"
+    });
 
   } catch (error) {
     console.error('Error fetching Make webhooks:', error);

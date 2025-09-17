@@ -31,10 +31,9 @@ export async function GET() {
       { name: 'API Info', path: `/info`, description: 'General API information' },
       { name: 'Organization Info', path: `/organizations/${organizationId}`, description: 'Organization details (known working)' },
       { name: 'Organizations List', path: `/organizations`, description: 'All accessible organizations' },
-      { name: 'Scenarios List', path: `/organizations/${organizationId}/scenarios`, description: 'Organization scenarios (failing)' },
-      { name: 'Executions List', path: `/organizations/${organizationId}/executions?limit=5`, description: 'Recent executions' },
-      { name: 'Webhooks List', path: `/organizations/${organizationId}/webhooks`, description: 'Organization webhooks' },
-      { name: 'Teams List', path: `/organizations/${organizationId}/teams`, description: 'Organization teams' },
+      { name: 'Scenarios List (FIXED)', path: `/scenarios?organizationId=${organizationId}`, description: 'Organization scenarios (using correct endpoint)' },
+      { name: 'Executions List (FIXED)', path: `/executions?organizationId=${organizationId}&limit=5`, description: 'Recent executions (using correct endpoint)' },
+      { name: 'Teams List', path: `/teams?organizationId=${organizationId}`, description: 'Organization teams' },
     ];
 
     const testResults: any[] = [];

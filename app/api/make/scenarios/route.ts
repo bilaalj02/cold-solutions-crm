@@ -22,7 +22,7 @@ export async function GET() {
     }
 
     const response = await makeApiRequest(
-      `/organizations/${organizationId}/scenarios`,
+      `/scenarios?organizationId=${organizationId}`,
       apiToken,
       organizationId
     );

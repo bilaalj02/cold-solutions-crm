@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const limit = searchParams.get('limit') || '10';
 
     const response = await makeApiRequest(
-      `/organizations/${organizationId}/executions?limit=${limit}`,
+      `/executions?organizationId=${organizationId}&limit=${limit}`,
       apiToken,
       organizationId
     );

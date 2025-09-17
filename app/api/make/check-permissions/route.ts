@@ -48,7 +48,7 @@ export async function GET() {
       }
 
       // Test team membership (might be required for scenarios access)
-      const teamsResponse = await fetch(`https://us2.make.com/api/v2/organizations/${organizationId}/teams`, {
+      const teamsResponse = await fetch(`https://us2.make.com/api/v2/teams?organizationId=${organizationId}`, {
         headers: {
           'Authorization': `Token ${apiToken}`,
           'Content-Type': 'application/json',

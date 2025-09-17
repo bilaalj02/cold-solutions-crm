@@ -34,8 +34,8 @@ export async function GET() {
 
     for (const method of testMethods) {
       try {
-        // Test with scenarios endpoint since that's failing
-        const testUrl = `https://us2.make.com/api/v2/organizations/${organizationId}/scenarios`;
+        // Test with corrected scenarios endpoint structure
+        const testUrl = `https://us2.make.com/api/v2/scenarios?organizationId=${organizationId}`;
         console.log(`Testing ${method.name} with: ${testUrl}`);
 
         const response = await fetch(testUrl, {
