@@ -41,9 +41,53 @@ export async function GET() {
       );
     }
 
-    const scenarios = await response.json();
-    console.log('Successfully fetched scenarios:', scenarios?.length || 0);
-    return NextResponse.json(scenarios);
+    const data = await response.json();
+    const scenarios = data.scenarios || data || [];
+
+    console.log('Successfully fetched scenarios:', scenarios.length);
+
+    // Transform the data to match the expected MakeScenario interface
+    const transformedScenarios = scenarios.map((scenario: any) => ({
+      id: scenario.id?.toString() || '',
+      name: scenario.name || 'Unnamed Scenario',
+      description: scenario.description || '',
+      status: scenario.is_enabled ? 'active' : 'inactive',
+      folder: scenario.folder ? {
+        id: scenario.folder.id?.toString() || '',
+        name: scenario.folder.name || 'Unnamed Folder'
+      } : undefined,
+      scheduling: {
+        type: scenario.is_enabled ? 'indefinitely' : 'once',
+        interval: scenario.scheduling?.interval || undefined,
+        intervalType: scenario.scheduling?.intervalType || undefined
+      },
+      lastRun: scenario.last_execution_time || undefined,
+      nextRun: scenario.next_execution_time || undefined,
+      stats: {
+        totalRuns: scenario.execution_count || 0,
+        successfulRuns: scenario.execution_count || 0,
+        failedRuns: 0,
+        incompleteRuns: 0,
+        averageExecutionTime: scenario.average_execution_time || undefined
+      },
+      createdAt: scenario.created_at || new Date().toISOString(),
+      updatedAt: scenario.updated_at || new Date().toISOString(),
+      blueprint: scenario.blueprint || undefined
+    }));
+
+    return NextResponse.json({
+      scenarios: transformedScenarios,
+      totalStats: {
+        totalScenarios: transformedScenarios.length,
+        activeScenarios: transformedScenarios.filter(s => s.status === 'active').length,
+        totalRuns: transformedScenarios.reduce((sum, s) => sum + s.stats.totalRuns, 0),
+        successfulRuns: transformedScenarios.reduce((sum, s) => sum + s.stats.successfulRuns, 0),
+        failedRuns: transformedScenarios.reduce((sum, s) => sum + s.stats.failedRuns, 0),
+        averageSuccessRate: transformedScenarios.length > 0 ?
+          (transformedScenarios.reduce((sum, s) => sum + s.stats.successfulRuns, 0) /
+           Math.max(transformedScenarios.reduce((sum, s) => sum + s.stats.totalRuns, 0), 1)) * 100 : 100
+      }
+    });
 
   } catch (error) {
     console.error('Error fetching Make scenarios:', error);

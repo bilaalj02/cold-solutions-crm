@@ -53,24 +53,20 @@ export async function GET(request: Request) {
         });
       }
 
-      // Return scenario information instead of trying to fetch executions
-      // as the /scenarios/{id}/executions endpoint appears to not exist in Make API
-      const scenarioSummary = scenarios.map((scenario: any) => ({
-        scenarioId: scenario.id,
-        scenarioName: scenario.name || 'Unnamed Scenario',
-        status: scenario.scheduling?.type || 'unknown',
-        lastRun: scenario.lastExecution || null,
-        isActive: scenario.scheduling?.type !== 'indefinitely',
-        note: 'Individual execution logs not available via API'
-      }));
+      // Since Make.com doesn't expose execution logs via API,
+      // we'll return an empty array to maintain compatibility with the frontend
+      // The frontend expects an array of executions that it can reduce/map over
+
+      console.log(`Found ${scenarios.length} scenarios, but execution logs not available via API`);
 
       return NextResponse.json({
-        success: true,
+        // Return empty array to maintain compatibility with frontend MakeService
+        executions: [],
+        // Include scenario info for debugging
         totalScenarios: scenarios.length,
-        scenarios: scenarioSummary,
-        message: `Successfully found ${scenarios.length} scenarios in your team`,
-        info: "Make.com doesn't expose individual execution logs via public API",
-        suggestion: "View execution details in the Make.com dashboard at make.com"
+        message: `Found ${scenarios.length} scenarios but execution logs are not available via Make.com public API`,
+        info: "Execution details must be viewed in the Make.com dashboard",
+        // Note: This maintains the expected response format for MakeService.getRecentExecutions()
       });
 
     } catch (error) {
