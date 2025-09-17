@@ -31,8 +31,10 @@ export async function GET() {
       { name: 'API Info', path: `/info`, description: 'General API information' },
       { name: 'Organization Info', path: `/organizations/${organizationId}`, description: 'Organization details (known working)' },
       { name: 'Organizations List', path: `/organizations`, description: 'All accessible organizations' },
-      { name: 'Scenarios List (FIXED)', path: `/scenarios?organizationId=${organizationId}`, description: 'Organization scenarios (using correct endpoint)' },
-      { name: 'Executions List (FIXED)', path: `/executions?organizationId=${organizationId}&limit=5`, description: 'Recent executions (using correct endpoint)' },
+      { name: 'Scenarios List (TEAM)', path: `/scenarios?teamId=1172694`, description: 'Organization scenarios (using teamId)' },
+      { name: 'Scenarios List (ORG)', path: `/scenarios?organizationId=${organizationId}`, description: 'Organization scenarios (using organizationId)' },
+      { name: 'Executions List (TEAM)', path: `/executions?teamId=1172694&limit=5`, description: 'Recent executions (using teamId)' },
+      { name: 'Executions List (ORG)', path: `/executions?organizationId=${organizationId}&limit=5`, description: 'Recent executions (using organizationId)' },
       { name: 'Teams List', path: `/teams?organizationId=${organizationId}`, description: 'Organization teams' },
     ];
 

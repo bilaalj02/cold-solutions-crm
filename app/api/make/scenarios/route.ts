@@ -21,11 +21,24 @@ export async function GET() {
       );
     }
 
-    const response = await makeApiRequest(
-      `/scenarios?organizationId=${organizationId}`,
-      apiToken,
-      organizationId
-    );
+    // Try with teamId first (team "My Team" - ID: 1172694), then fallback to organizationId
+    let response;
+    try {
+      // First try with teamId (team "My Team" - ID: 1172694)
+      response = await makeApiRequest(
+        `/scenarios?teamId=1172694`,
+        apiToken,
+        organizationId
+      );
+    } catch (error) {
+      console.log('TeamId approach failed, trying organizationId approach...');
+      // Fallback to organizationId approach
+      response = await makeApiRequest(
+        `/scenarios?organizationId=${organizationId}`,
+        apiToken,
+        organizationId
+      );
+    }
 
     const scenarios = await response.json();
     console.log('Successfully fetched scenarios:', scenarios?.length || 0);
