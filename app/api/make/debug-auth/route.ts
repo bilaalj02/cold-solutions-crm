@@ -11,7 +11,7 @@ export async function GET() {
 
     console.log('=== Testing Different Authentication Methods ===');
 
-    const testMethods = [
+    const testMethods: Array<{ name: string; headers: Record<string, string> }> = [
       {
         name: 'Standard Token Header',
         headers: { 'Authorization': `Token ${apiToken}`, 'Content-Type': 'application/json' }
@@ -30,7 +30,7 @@ export async function GET() {
       }
     ];
 
-    const results = [];
+    const results: any[] = [];
 
     for (const method of testMethods) {
       try {
