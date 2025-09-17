@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { LeadManager, Lead } from "../../lib/leads";
 import StandardSidebar from "../../components/StandardSidebar";
 
-export default function LeadsDatabase(): JSX.Element {
+export default function LeadsDatabase() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,7 +57,7 @@ export default function LeadsDatabase(): JSX.Element {
     let filtered = leads;
 
     if (searchTerm) {
-      filtered = filtered.filter(lead => 
+      filtered = filtered.filter(lead =>
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.company?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -89,12 +89,11 @@ export default function LeadsDatabase(): JSX.Element {
         },
         body: JSON.stringify({
           ...newLead,
-          database: 'website-leads', // Default database for manual entries
+          database: 'website-leads',
         }),
       });
 
       if (response.ok) {
-        // Refresh the leads after adding
         await loadLeads();
         setShowAddModal(false);
         setNewLead({
@@ -127,7 +126,6 @@ export default function LeadsDatabase(): JSX.Element {
       });
 
       if (response.ok) {
-        // Refresh the leads after deleting
         await loadLeads();
         setShowDeleteModal(false);
         setLeadToDelete(null);
@@ -148,8 +146,6 @@ export default function LeadsDatabase(): JSX.Element {
       );
 
       await Promise.all(deletePromises);
-
-      // Refresh the leads after bulk delete
       await loadLeads();
       setSelectedLeads(new Set());
     } catch (error) {
@@ -228,7 +224,6 @@ export default function LeadsDatabase(): JSX.Element {
 
       if (response.ok) {
         const data = await response.json();
-        // Refresh the leads after sync
         await loadLeads();
         setLastSyncTime(new Date().toLocaleString());
         alert('✅ Sync completed successfully!');
@@ -249,7 +244,6 @@ export default function LeadsDatabase(): JSX.Element {
     <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
       <StandardSidebar />
       <main className="flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
-        {/* Header */}
         <header className="bg-white border-b border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -260,281 +254,278 @@ export default function LeadsDatabase(): JSX.Element {
         </header>
 
         <div className="p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl">
-          {/* Page Actions */}
-          <div className="mb-6 md:flex md:items-center md:justify-between">
-            <div className="flex-1 min-w-0">
-            </div>
-            <div className="mt-4 flex gap-4 md:mt-0 md:ml-4">
-              {selectedLeads.size > 0 && (
-                <button 
-                  onClick={handleBulkDelete}
-                  className="inline-flex items-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-6 md:flex md:items-center md:justify-between">
+              <div className="flex-1 min-w-0">
+              </div>
+              <div className="mt-4 flex gap-4 md:mt-0 md:ml-4">
+                {selectedLeads.size > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="inline-flex items-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    <span className="material-symbols-outlined text-base">delete</span>
+                    Delete Selected ({selectedLeads.size})
+                  </button>
+                )}
+                <a
+                  href="/leads/management"
+                  className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                 >
-                  <span className="material-symbols-outlined text-base">delete</span>
-                  Delete Selected ({selectedLeads.size})
+                  <span className="material-symbols-outlined text-base">settings</span>
+                  Advanced Management
+                </a>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'} as React.CSSProperties}
+                >
+                  <span className="material-symbols-outlined text-base">add</span>
+                  Add New Lead
                 </button>
-              )}
-              <a 
-                href="/leads/management"
-                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2" 
-                style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
-              >
-                <span className="material-symbols-outlined text-base">settings</span>
-                Advanced Management
-              </a>
-              <button 
-                onClick={() => setShowAddModal(true)}
-                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" 
-                style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'} as React.CSSProperties}
-              >
-                <span className="material-symbols-outlined text-base">add</span>
-                Add New Lead
-              </button>
-              <button
-                onClick={handleSyncFromNotion}
-                disabled={isSyncing}
-                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
-              >
-                <span className={`material-symbols-outlined text-base ${isSyncing ? 'animate-spin' : ''}`}>
-                  {isSyncing ? 'sync' : 'cloud_sync'}
-                </span>
-                {isSyncing ? 'Syncing...' : 'Sync from Notion'}
-              </button>
-              <button
-                onClick={handleExportCSV}
-                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
-              >
-                <span className="material-symbols-outlined text-base">download</span>
-                Export CSV
-              </button>
-            </div>
-          </div>
-
-          {/* Filters and Search */}
-          <div className="mb-4 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
-            <div className="relative flex-1 md:max-w-xs">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="material-symbols-outlined text-gray-400">search</span>
-              </div>
-              <input 
-                className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2] sm:text-sm" 
-                placeholder="Search leads..." 
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700" htmlFor="source-filter">Source:</label>
-                <select 
-                  className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm" 
-                  id="source-filter"
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
+                <button
+                  onClick={handleSyncFromNotion}
+                  disabled={isSyncing}
+                  className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                 >
-                  <option>All</option>
-                  <option>Website</option>
-                  <option>Referral</option>
-                  <option>Social Media</option>
-                  <option>Email Campaign</option>
-                  <option>Cold Call</option>
-                  <option>Event</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700" htmlFor="status-filter">Status:</label>
-                <select 
-                  className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm" 
-                  id="status-filter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  <span className={`material-symbols-outlined text-base ${isSyncing ? 'animate-spin' : ''}`}>
+                    {isSyncing ? 'sync' : 'cloud_sync'}
+                  </span>
+                  {isSyncing ? 'Syncing...' : 'Sync from Notion'}
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                 >
-                  <option>All</option>
-                  <option>New</option>
-                  <option>Contacted</option>
-                  <option>Qualified</option>
-                  <option>Proposal</option>
-                  <option>Negotiation</option>
-                  <option>Won</option>
-                  <option>Lost</option>
-                </select>
+                  <span className="material-symbols-outlined text-base">download</span>
+                  Export CSV
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Leads Table */}
-          <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6" style={{color: '#0a2240'}} scope="col">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 text-[#3dbff2] border-gray-300 rounded focus:ring-[#3dbff2]"
-                      checked={selectedLeads.size === filteredLeads.length && filteredLeads.length > 0}
-                      onChange={selectAllLeads}
-                    />
-                  </th>
-                  <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Name
-                      <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-900">
-                        <span className="material-symbols-outlined text-base">expand_less</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Email
-                      <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
-                        <span className="material-symbols-outlined text-base">unfold_more</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Phone
-                      <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
-                        <span className="material-symbols-outlined text-base">unfold_more</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Source
-                      <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
-                        <span className="material-symbols-outlined text-base">unfold_more</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Status
-                      <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
-                        <span className="material-symbols-outlined text-base">unfold_more</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Score
-                      <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
-                        <span className="material-symbols-outlined text-base">unfold_more</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    <a className="group inline-flex items-center" href="#">
-                      Created At
-                      <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
-                        <span className="material-symbols-outlined text-base">unfold_more</span>
-                      </span>
-                    </a>
-                  </th>
-                  <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {filteredLeads.map((lead) => (
-                  <tr key={lead.id} className={selectedLeads.has(lead.id) ? 'bg-blue-50' : ''}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+            <div className="mb-4 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
+              <div className="relative flex-1 md:max-w-xs">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <span className="material-symbols-outlined text-gray-400">search</span>
+                </div>
+                <input
+                  className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2] sm:text-sm"
+                  placeholder="Search leads..."
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700" htmlFor="source-filter">Source:</label>
+                  <select
+                    className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm"
+                    id="source-filter"
+                    value={sourceFilter}
+                    onChange={(e) => setSourceFilter(e.target.value)}
+                  >
+                    <option>All</option>
+                    <option>Website</option>
+                    <option>Referral</option>
+                    <option>Social Media</option>
+                    <option>Email Campaign</option>
+                    <option>Cold Call</option>
+                    <option>Event</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700" htmlFor="status-filter">Status:</label>
+                  <select
+                    className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm"
+                    id="status-filter"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option>All</option>
+                    <option>New</option>
+                    <option>Contacted</option>
+                    <option>Qualified</option>
+                    <option>Proposal</option>
+                    <option>Negotiation</option>
+                    <option>Won</option>
+                    <option>Lost</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6" style={{color: '#0a2240'}} scope="col">
                       <input
                         type="checkbox"
                         className="h-4 w-4 text-[#3dbff2] border-gray-300 rounded focus:ring-[#3dbff2]"
-                        checked={selectedLeads.has(lead.id)}
-                        onChange={() => toggleLeadSelection(lead.id)}
+                        checked={selectedLeads.size === filteredLeads.length && filteredLeads.length > 0}
+                        onChange={selectAllLeads}
                       />
-                    </td>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                      <a href={`/leads/${lead.id}`} className="text-[#3dbff2] hover:underline font-medium">
-                        {lead.name}
+                    </th>
+                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Name
+                        <span className="ml-2 flex-none rounded text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-900">
+                          <span className="material-symbols-outlined text-base">expand_less</span>
+                        </span>
                       </a>
-                      {lead.company && (
-                        <div className="text-xs text-gray-500">{lead.company}</div>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.email}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.phone}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.source}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lead.status)}`}>
-                        {lead.status}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="h-2 rounded-full" 
-                            style={{width: `${lead.score}%`, backgroundColor: lead.score >= 80 ? '#10b981' : lead.score >= 60 ? '#3dbff2' : '#f59e0b'}}
-                          ></div>
-                        </div>
-                        <span className="ml-2 text-xs font-medium">{lead.score}</span>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.createdAt}</td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <a 
-                          href={`/leads/${lead.id}`}
-                          className="text-[#3dbff2] hover:text-blue-900"
-                          title="View Details"
-                        >
-                          <span className="material-symbols-outlined text-base">visibility</span>
-                        </a>
-                        <button 
-                          onClick={() => {
-                            setLeadToDelete(lead);
-                            setShowDeleteModal(true);
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete Lead"
-                        >
-                          <span className="material-symbols-outlined text-base">delete</span>
-                        </button>
-                        <a 
-                          href={`mailto:${lead.email}`}
-                          className="text-gray-600 hover:text-gray-900"
-                          title="Send Email"
-                        >
-                          <span className="material-symbols-outlined text-base">email</span>
-                        </a>
-                        <a 
-                          href={`tel:${lead.phone}`}
-                          className="text-green-600 hover:text-green-900"
-                          title="Call Lead"
-                        >
-                          <span className="material-symbols-outlined text-base">call</span>
-                        </a>
-                      </div>
-                    </td>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Email
+                        <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                          <span className="material-symbols-outlined text-base">unfold_more</span>
+                        </span>
+                      </a>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Phone
+                        <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                          <span className="material-symbols-outlined text-base">unfold_more</span>
+                        </span>
+                      </a>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Source
+                        <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                          <span className="material-symbols-outlined text-base">unfold_more</span>
+                        </span>
+                      </a>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Status
+                        <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                          <span className="material-symbols-outlined text-base">unfold_more</span>
+                        </span>
+                      </a>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Score
+                        <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                          <span className="material-symbols-outlined text-base">unfold_more</span>
+                        </span>
+                      </a>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      <a className="group inline-flex items-center" href="#">
+                        Created At
+                        <span className="invisible ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                          <span className="material-symbols-outlined text-base">unfold_more</span>
+                        </span>
+                      </a>
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-sm font-semibold" style={{color: '#0a2240'}} scope="col">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {filteredLeads.map((lead) => (
+                    <tr key={lead.id} className={selectedLeads.has(lead.id) ? 'bg-blue-50' : ''}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-[#3dbff2] border-gray-300 rounded focus:ring-[#3dbff2]"
+                          checked={selectedLeads.has(lead.id)}
+                          onChange={() => toggleLeadSelection(lead.id)}
+                        />
+                      </td>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                        <a href={`/leads/${lead.id}`} className="text-[#3dbff2] hover:underline font-medium">
+                          {lead.name}
+                        </a>
+                        {lead.company && (
+                          <div className="text-xs text-gray-500">{lead.company}</div>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.email}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.phone}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.source}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lead.status)}`}>
+                          {lead.status}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="h-2 rounded-full"
+                              style={{width: `${lead.score}%`, backgroundColor: lead.score >= 80 ? '#10b981' : lead.score >= 60 ? '#3dbff2' : '#f59e0b'}}
+                            ></div>
+                          </div>
+                          <span className="ml-2 text-xs font-medium">{lead.score}</span>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{lead.createdAt}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`/leads/${lead.id}`}
+                            className="text-[#3dbff2] hover:text-blue-900"
+                            title="View Details"
+                          >
+                            <span className="material-symbols-outlined text-base">visibility</span>
+                          </a>
+                          <button
+                            onClick={() => {
+                              setLeadToDelete(lead);
+                              setShowDeleteModal(true);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete Lead"
+                          >
+                            <span className="material-symbols-outlined text-base">delete</span>
+                          </button>
+                          <a
+                            href={`mailto:${lead.email}`}
+                            className="text-gray-600 hover:text-gray-900"
+                            title="Send Email"
+                          >
+                            <span className="material-symbols-outlined text-base">email</span>
+                          </a>
+                          <a
+                            href={`tel:${lead.phone}`}
+                            className="text-green-600 hover:text-green-900"
+                            title="Call Lead"
+                          >
+                            <span className="material-symbols-outlined text-base">call</span>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </main>
 
-      {/* Add New Lead Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowAddModal(false)}></div>
-            
+
             <div className="inline-block transform rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
               <div className="mb-4">
                 <h3 className="text-lg font-medium leading-6" style={{color: '#0a2240'}}>Add New Lead</h3>
                 <p className="mt-1 text-sm text-gray-500">Enter the lead information below.</p>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -558,7 +549,7 @@ export default function LeadsDatabase(): JSX.Element {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Phone *</label>
@@ -581,7 +572,7 @@ export default function LeadsDatabase(): JSX.Element {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Position</label>
@@ -610,7 +601,7 @@ export default function LeadsDatabase(): JSX.Element {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Estimated Value ($)</label>
@@ -632,7 +623,7 @@ export default function LeadsDatabase(): JSX.Element {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Notes</label>
                   <textarea
@@ -644,11 +635,11 @@ export default function LeadsDatabase(): JSX.Element {
                   />
                 </div>
               </div>
-              
+
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
-                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2" 
+                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{'--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                   onClick={() => setShowAddModal(false)}
                 >
@@ -656,7 +647,7 @@ export default function LeadsDatabase(): JSX.Element {
                 </button>
                 <button
                   type="button"
-                  className="inline-flex justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2" 
+                  className="inline-flex justify-center rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{backgroundColor: '#3dbff2', '--tw-ring-color': '#3dbff2'} as React.CSSProperties}
                   onClick={handleAddLead}
                 >
@@ -668,12 +659,11 @@ export default function LeadsDatabase(): JSX.Element {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && leadToDelete && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowDeleteModal(false)}></div>
-            
+
             <div className="inline-block transform rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
               <div className="flex items-center">
                 <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -688,7 +678,7 @@ export default function LeadsDatabase(): JSX.Element {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                 <button
                   type="button"
