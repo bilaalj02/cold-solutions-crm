@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { AutomationEngine, AutomationWorkflow, Task, Notification, LeadRoutingRule, AutomationLog } from "../../lib/automation-engine";
+import { MakeIntegration } from "../../components/MakeIntegration";
 
 export default function AutomationPage() {
-  const [activeTab, setActiveTab] = useState<'workflows' | 'tasks' | 'notifications' | 'routing' | 'logs' | 'analytics'>('workflows');
+  const [activeTab, setActiveTab] = useState<'workflows' | 'tasks' | 'notifications' | 'routing' | 'logs' | 'analytics' | 'make'>('workflows');
   const [workflows, setWorkflows] = useState<AutomationWorkflow[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -167,6 +168,7 @@ export default function AutomationPage() {
             <nav className="flex space-x-8">
               {[
                 { key: 'workflows', label: 'Workflows', icon: 'auto_awesome' },
+                { key: 'make', label: 'Make.com', icon: 'integration_instructions' },
                 { key: 'tasks', label: 'Tasks', icon: 'task' },
                 { key: 'notifications', label: 'Notifications', icon: 'notifications' },
                 { key: 'routing', label: 'Routing Rules', icon: 'route' },
@@ -660,6 +662,11 @@ export default function AutomationPage() {
                 </table>
               </div>
             </div>
+          )}
+
+          {/* Make.com Tab */}
+          {activeTab === 'make' && (
+            <MakeIntegration />
           )}
 
           {/* Analytics Tab */}
