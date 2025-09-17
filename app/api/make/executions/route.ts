@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { makeApiRequest } from '../../../../lib/make-api-helper';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const apiToken = process.env.MAKE_API_TOKEN || process.env.MAKE_API_KEY;
