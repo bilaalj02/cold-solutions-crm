@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { LeadManager, Lead } from "../../lib/leads";
 import StandardSidebar from "../../components/StandardSidebar";
 
-export default function LeadsDatabase() {
+export default function LeadsDatabase(): JSX.Element {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -247,10 +247,7 @@ export default function LeadsDatabase() {
 
   return (
     <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Sidebar */}
       <StandardSidebar />
-
-      {/* Main Content */}
       <main className="flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
         {/* Header */}
         <header className="bg-white border-b border-gray-200 p-6">
