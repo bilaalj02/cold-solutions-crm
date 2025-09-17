@@ -1,22 +1,19 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import { AutomationEngine, AutomationWorkflow, Task, Notification, LeadRoutingRule, AutomationLog } from "../../lib/automation-engine";
+import { AutomationEngine, Task, Notification, LeadRoutingRule, AutomationLog } from "../../lib/automation-engine";
 import { MakeIntegration } from "../../components/MakeIntegration";
 
 export default function AutomationPage() {
-  const [activeTab, setActiveTab] = useState<'workflows' | 'tasks' | 'notifications' | 'routing' | 'logs' | 'analytics' | 'make'>('workflows');
-  const [workflows, setWorkflows] = useState<AutomationWorkflow[]>([]);
+  const [activeTab, setActiveTab] = useState<'tasks' | 'notifications' | 'routing' | 'logs' | 'analytics' | 'make'>('make');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [routingRules, setRoutingRules] = useState<LeadRoutingRule[]>([]);
   const [automationLogs, setAutomationLogs] = useState<AutomationLog[]>([]);
   const [automationStats, setAutomationStats] = useState<any>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedWorkflow, setSelectedWorkflow] = useState<AutomationWorkflow | null>(null);
 
   useEffect(() => {
-    setWorkflows(AutomationEngine.getWorkflows());
     setTasks(AutomationEngine.getTasks());
     setNotifications(AutomationEngine.getNotifications('current-user'));
     setRoutingRules(AutomationEngine.getRoutingRules());
@@ -64,25 +61,11 @@ export default function AutomationPage() {
     });
   };
 
-  const filteredWorkflows = workflows.filter(workflow => 
-    workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    workflow.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredTasks = tasks.filter(task => 
+  const filteredTasks = tasks.filter(task =>
     task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const toggleWorkflow = (id: string) => {
-    const workflow = workflows.find(w => w.id === id);
-    if (workflow) {
-      const updated = AutomationEngine.updateWorkflow(id, { isActive: !workflow.isActive });
-      if (updated) {
-        setWorkflows(workflows.map(w => w.id === id ? updated : w));
-      }
-    }
-  };
 
   const markNotificationAsRead = (id: string) => {
     AutomationEngine.markNotificationAsRead(id);
@@ -153,9 +136,9 @@ export default function AutomationPage() {
               <div className="bg-white rounded-lg border p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold" style={{color: '#3dbff2'}}>
-                    {automationStats.activeWorkflows || 0}
+                    {tasks.filter(t => t.status !== 'Completed').length}
                   </div>
-                  <div className="text-xs text-gray-500">Active Workflows</div>
+                  <div className="text-xs text-gray-500">Active Tasks</div>
                 </div>
               </div>
             </div>
@@ -167,7 +150,6 @@ export default function AutomationPage() {
           <div className="px-6">
             <nav className="flex space-x-8">
               {[
-                { key: 'workflows', label: 'Workflows', icon: 'auto_awesome' },
                 { key: 'make', label: 'Make.com', icon: 'integration_instructions' },
                 { key: 'tasks', label: 'Tasks', icon: 'task' },
                 { key: 'notifications', label: 'Notifications', icon: 'notifications' },
@@ -213,17 +195,8 @@ export default function AutomationPage() {
               />
             </div>
             <div className="flex items-center gap-3">
-              {activeTab === 'workflows' && (
-                <button 
-                  className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
-                  style={{backgroundColor: '#3dbff2'}}
-                >
-                  <span className="material-symbols-outlined text-base">add</span>
-                  New Workflow
-                </button>
-              )}
               {activeTab === 'routing' && (
-                <button 
+                <button
                   className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
                   style={{backgroundColor: '#3dbff2'}}
                 >
@@ -234,99 +207,6 @@ export default function AutomationPage() {
             </div>
           </div>
 
-          {/* Workflows Tab */}
-          {activeTab === 'workflows' && (
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="px-6 py-4 border-b flex items-center justify-between">
-                <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
-                  Automation Workflows ({filteredWorkflows.length})
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b">
-                    <tr>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Workflow</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Trigger</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Performance</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {filteredWorkflows.map((workflow) => (
-                      <tr key={workflow.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div>
-                            <div className="font-medium" style={{color: '#0a2240'}}>{workflow.name}</div>
-                            <div className="text-xs text-gray-500">{workflow.description}</div>
-                            <div className="text-xs text-gray-400 mt-1">
-                              Created: {formatDate(workflow.createdAt)}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {workflow.trigger.type.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-wrap gap-1">
-                            {workflow.actions.slice(0, 2).map((action, index) => (
-                              <span key={index} className="inline-flex items-center px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">
-                                {action.type.replace('_', ' ')}
-                              </span>
-                            ))}
-                            {workflow.actions.length > 2 && (
-                              <span className="text-xs text-gray-500">+{workflow.actions.length - 2} more</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm">
-                            <div>Executed: <span className="font-medium">{workflow.stats.executed}</span></div>
-                            <div>Failed: <span className="font-medium text-red-600">{workflow.stats.failed}</span></div>
-                            <div className="text-xs text-gray-500">
-                              Success Rate: {workflow.stats.executed > 0 ? ((workflow.stats.executed / (workflow.stats.executed + workflow.stats.failed)) * 100).toFixed(1) : 100}%
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => toggleWorkflow(workflow.id)}
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                              workflow.isActive 
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                            }`}
-                          >
-                            {workflow.isActive ? 'Active' : 'Inactive'}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <button 
-                              className="text-[#3dbff2] hover:underline text-xs"
-                              onClick={() => setSelectedWorkflow(workflow)}
-                            >
-                              View
-                            </button>
-                            <button className="text-gray-400 hover:text-gray-600">
-                              <span className="material-symbols-outlined text-base">edit</span>
-                            </button>
-                            <button className="text-gray-400 hover:text-gray-600">
-                              <span className="material-symbols-outlined text-base">more_horiz</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {/* Tasks Tab */}
           {activeTab === 'tasks' && (
@@ -623,7 +503,7 @@ export default function AutomationPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm">
-                            {workflows.find(w => w.id === log.workflowId)?.name || log.workflowId}
+                            {log.workflowId}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -677,12 +557,12 @@ export default function AutomationPage() {
                 <div className="bg-white p-6 rounded-lg border shadow-sm">
                   <div className="flex items-center">
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600">Total Workflows</p>
-                      <p className="text-2xl font-bold" style={{color: '#0a2240'}}>{automationStats.totalWorkflows}</p>
-                      <p className="text-xs text-gray-500">{automationStats.activeWorkflows} active</p>
+                      <p className="text-sm text-gray-600">Total Notifications</p>
+                      <p className="text-2xl font-bold" style={{color: '#0a2240'}}>{notifications.length}</p>
+                      <p className="text-xs text-gray-500">{notifications.filter(n => !n.isRead).length} unread</p>
                     </div>
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-blue-100">
-                      <span className="material-symbols-outlined text-blue-600">auto_awesome</span>
+                      <span className="material-symbols-outlined text-blue-600">notifications</span>
                     </div>
                   </div>
                 </div>
@@ -731,142 +611,11 @@ export default function AutomationPage() {
                 </div>
               </div>
 
-              {/* Workflow Performance */}
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="px-6 py-4 border-b">
-                  <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Workflow Performance</h3>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {workflows.filter(w => w.stats.executed > 0).map((workflow) => {
-                      const successRate = workflow.stats.executed > 0 
-                        ? ((workflow.stats.executed / (workflow.stats.executed + workflow.stats.failed)) * 100) 
-                        : 100;
-                      
-                      return (
-                        <div key={workflow.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-3 h-3 rounded-full ${workflow.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                            <div>
-                              <div className="font-medium" style={{color: '#0a2240'}}>{workflow.name}</div>
-                              <div className="text-sm text-gray-500">{workflow.stats.executed + workflow.stats.failed} total runs</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-6 text-sm">
-                            <div>
-                              <div className="font-medium">{workflow.stats.executed}</div>
-                              <div className="text-gray-500">Successful</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-red-600">{workflow.stats.failed}</div>
-                              <div className="text-gray-500">Failed</div>
-                            </div>
-                            <div>
-                              <div className="font-medium text-green-600">{successRate.toFixed(1)}%</div>
-                              <div className="text-gray-500">Success Rate</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>
       </main>
 
-      {/* Workflow Detail Modal */}
-      {selectedWorkflow && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Workflow Details</h3>
-              <button 
-                onClick={() => setSelectedWorkflow(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto">
-              <div className="space-y-6">
-                <div>
-                  <h4 className="font-semibold mb-2" style={{color: '#0a2240'}}>{selectedWorkflow.name}</h4>
-                  <p className="text-gray-600">{selectedWorkflow.description}</p>
-                </div>
-
-                <div>
-                  <h5 className="font-medium mb-2">Trigger</h5>
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="font-medium text-blue-800">
-                      {selectedWorkflow.trigger.type.replace('_', ' ').toUpperCase()}
-                    </div>
-                    {selectedWorkflow.trigger.conditions && selectedWorkflow.trigger.conditions.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {selectedWorkflow.trigger.conditions.map((condition, index) => (
-                          <div key={index} className="text-sm text-blue-700">
-                            {condition.field} {condition.operator} {condition.value}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="font-medium mb-2">Actions ({selectedWorkflow.actions.length})</h5>
-                  <div className="space-y-3">
-                    {selectedWorkflow.actions.map((action, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="w-6 h-6 bg-[#3dbff2] text-white rounded-full flex items-center justify-center text-xs font-bold">
-                            {index + 1}
-                          </div>
-                          <div className="font-medium">
-                            {action.type.replace('_', ' ').toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {JSON.stringify(action.parameters, null, 2)}
-                        </div>
-                        {action.delay && (
-                          <div className="text-xs text-gray-500 mt-2">
-                            Delay: {action.delay.value} {action.delay.unit}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="font-medium mb-2">Performance Statistics</h5>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-green-50 p-4 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-green-600">{selectedWorkflow.stats.executed}</div>
-                      <div className="text-sm text-green-700">Successful Executions</div>
-                    </div>
-                    <div className="bg-red-50 p-4 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-red-600">{selectedWorkflow.stats.failed}</div>
-                      <div className="text-sm text-red-700">Failed Executions</div>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {selectedWorkflow.stats.executed > 0 
-                          ? ((selectedWorkflow.stats.executed / (selectedWorkflow.stats.executed + selectedWorkflow.stats.failed)) * 100).toFixed(1)
-                          : 100}%
-                      </div>
-                      <div className="text-sm text-blue-700">Success Rate</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
