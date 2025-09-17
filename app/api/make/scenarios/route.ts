@@ -79,13 +79,13 @@ export async function GET() {
       scenarios: transformedScenarios,
       totalStats: {
         totalScenarios: transformedScenarios.length,
-        activeScenarios: transformedScenarios.filter(s => s.status === 'active').length,
-        totalRuns: transformedScenarios.reduce((sum, s) => sum + s.stats.totalRuns, 0),
-        successfulRuns: transformedScenarios.reduce((sum, s) => sum + s.stats.successfulRuns, 0),
-        failedRuns: transformedScenarios.reduce((sum, s) => sum + s.stats.failedRuns, 0),
+        activeScenarios: transformedScenarios.filter((s: any) => s.status === 'active').length,
+        totalRuns: transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.totalRuns, 0),
+        successfulRuns: transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.successfulRuns, 0),
+        failedRuns: transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.failedRuns, 0),
         averageSuccessRate: transformedScenarios.length > 0 ?
-          (transformedScenarios.reduce((sum, s) => sum + s.stats.successfulRuns, 0) /
-           Math.max(transformedScenarios.reduce((sum, s) => sum + s.stats.totalRuns, 0), 1)) * 100 : 100
+          (transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.successfulRuns, 0) /
+           Math.max(transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.totalRuns, 0), 1)) * 100 : 100
       }
     });
 
