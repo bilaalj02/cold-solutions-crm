@@ -59,24 +59,16 @@ export async function GET(request: Request) {
 
       console.log(`Found ${scenarios.length} scenarios, but execution logs not available via API`);
 
+      // Return in MakeApiResponse format that MakeService expects
       return NextResponse.json({
-        // Return empty array to maintain compatibility with frontend MakeService
-        executions: [],
-        // Include scenario info for debugging
-        totalScenarios: scenarios.length,
-        message: `Found ${scenarios.length} scenarios but execution logs are not available via Make.com public API`,
-        info: "Execution details must be viewed in the Make.com dashboard",
-        // Note: This maintains the expected response format for MakeService.getRecentExecutions()
+        data: []
       });
 
     } catch (error) {
       console.log('Failed to get scenarios for executions:', error);
-      // Fallback to informational response
+      // Fallback to MakeApiResponse format with empty array
       return NextResponse.json({
-        executions: [],
-        message: "Make.com executions are accessed per scenario, not globally",
-        info: "Use /api/make/scenarios/{id}/executions to get executions for a specific scenario",
-        note: "This endpoint attempted to aggregate executions from all scenarios but failed to retrieve scenarios"
+        data: []
       });
     }
 
@@ -84,7 +76,10 @@ export async function GET(request: Request) {
     console.error('Error fetching Make executions:', error);
     return NextResponse.json(
       {
-        error: 'Failed to fetch executions',
+        error: {
+          message: 'Failed to fetch executions',
+          code: '500'
+        },
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

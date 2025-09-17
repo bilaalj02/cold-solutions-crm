@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { makeApiRequest } from '../../../../lib/make-api-helper';
 
-export async function GET() {
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: Request) {
   try {
     const apiToken = process.env.MAKE_API_TOKEN || process.env.MAKE_API_KEY;
     const organizationId = process.env.MAKE_ORGANIZATION_ID;
@@ -46,6 +49,13 @@ export async function GET() {
 
     console.log('Successfully fetched scenarios:', scenarios.length);
 
+    // Handle pagination parameters from MakeService
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+
+    console.log('Pagination params:', { page, limit });
+
     // Transform the data to match the expected MakeScenario interface
     const transformedScenarios = scenarios.map((scenario: any) => ({
       id: scenario.id?.toString() || '',
@@ -75,17 +85,17 @@ export async function GET() {
       blueprint: scenario.blueprint || undefined
     }));
 
+    // Apply pagination (simple slice for now since we have all scenarios)
+    const startIndex = (page - 1) * limit;
+    const paginatedScenarios = transformedScenarios.slice(startIndex, startIndex + limit);
+
+    // Return in MakeApiResponse format that MakeService expects
     return NextResponse.json({
-      scenarios: transformedScenarios,
-      totalStats: {
-        totalScenarios: transformedScenarios.length,
-        activeScenarios: transformedScenarios.filter((s: any) => s.status === 'active').length,
-        totalRuns: transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.totalRuns, 0),
-        successfulRuns: transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.successfulRuns, 0),
-        failedRuns: transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.failedRuns, 0),
-        averageSuccessRate: transformedScenarios.length > 0 ?
-          (transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.successfulRuns, 0) /
-           Math.max(transformedScenarios.reduce((sum: number, s: any) => sum + s.stats.totalRuns, 0), 1)) * 100 : 100
+      data: paginatedScenarios,
+      pagination: {
+        total: transformedScenarios.length,
+        page,
+        limit
       }
     });
 
@@ -93,7 +103,10 @@ export async function GET() {
     console.error('Error fetching Make scenarios:', error);
     return NextResponse.json(
       {
-        error: 'Failed to fetch scenarios',
+        error: {
+          message: 'Failed to fetch scenarios',
+          code: '500'
+        },
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
