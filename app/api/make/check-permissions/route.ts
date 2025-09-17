@@ -4,6 +4,7 @@ export async function GET() {
   try {
     const apiToken = process.env.MAKE_API_TOKEN || process.env.MAKE_API_KEY;
     const organizationId = process.env.MAKE_ORGANIZATION_ID;
+    const teamId = process.env.MAKE_TEAM_ID || '1172694'; // fallback to discovered team ID
 
     if (!apiToken || !organizationId) {
       return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });

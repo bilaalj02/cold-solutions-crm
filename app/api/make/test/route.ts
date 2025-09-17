@@ -4,6 +4,7 @@ export async function GET() {
   try {
     const apiToken = process.env.MAKE_API_TOKEN || process.env.MAKE_API_KEY;
     const organizationId = process.env.MAKE_ORGANIZATION_ID;
+    const teamId = process.env.MAKE_TEAM_ID || '1172694'; // fallback to discovered team ID
 
     console.log('=== Make API Diagnostic Test ===');
     console.log('API Token length:', apiToken?.length || 0);
@@ -31,9 +32,9 @@ export async function GET() {
       { name: 'API Info', path: `/info`, description: 'General API information' },
       { name: 'Organization Info', path: `/organizations/${organizationId}`, description: 'Organization details (known working)' },
       { name: 'Organizations List', path: `/organizations`, description: 'All accessible organizations' },
-      { name: 'Scenarios List (TEAM)', path: `/scenarios?teamId=1172694`, description: 'Organization scenarios (using teamId)' },
+      { name: 'Scenarios List (TEAM)', path: `/scenarios?teamId=${teamId}`, description: 'Organization scenarios (using teamId)' },
       { name: 'Scenarios List (ORG)', path: `/scenarios?organizationId=${organizationId}`, description: 'Organization scenarios (using organizationId)' },
-      { name: 'Executions List (TEAM)', path: `/executions?teamId=1172694&limit=5`, description: 'Recent executions (using teamId)' },
+      { name: 'Executions List (TEAM)', path: `/executions?teamId=${teamId}&limit=5`, description: 'Recent executions (using teamId)' },
       { name: 'Executions List (ORG)', path: `/executions?organizationId=${organizationId}&limit=5`, description: 'Recent executions (using organizationId)' },
       { name: 'Teams List', path: `/teams?organizationId=${organizationId}`, description: 'Organization teams' },
     ];

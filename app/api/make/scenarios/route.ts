@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const apiToken = process.env.MAKE_API_TOKEN || process.env.MAKE_API_KEY;
     const organizationId = process.env.MAKE_ORGANIZATION_ID;
+    const teamId = process.env.MAKE_TEAM_ID || '1172694'; // fallback to discovered team ID
 
     console.log('Make scenarios API debug:', {
       hasApiToken: !!apiToken,
@@ -21,12 +22,12 @@ export async function GET() {
       );
     }
 
-    // Try with teamId first (team "My Team" - ID: 1172694), then fallback to organizationId
+    // Try with teamId first, then fallback to organizationId
     let response;
     try {
-      // First try with teamId (team "My Team" - ID: 1172694)
+      // First try with teamId from environment variable
       response = await makeApiRequest(
-        `/scenarios?teamId=1172694`,
+        `/scenarios?teamId=${teamId}`,
         apiToken,
         organizationId
       );

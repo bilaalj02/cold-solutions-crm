@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   try {
     const apiToken = process.env.MAKE_API_TOKEN || process.env.MAKE_API_KEY;
     const organizationId = process.env.MAKE_ORGANIZATION_ID;
+    const teamId = process.env.MAKE_TEAM_ID || '1172694'; // fallback to discovered team ID
 
     console.log('Make executions API debug:', {
       hasApiToken: !!apiToken,
@@ -32,9 +33,9 @@ export async function GET(request: Request) {
     // Let's first get the scenarios, then get executions for each scenario
 
     try {
-      // First get scenarios using teamId (confirmed working with your team ID: 1172694)
+      // First get scenarios using teamId from environment variable
       const scenariosResponse = await makeApiRequest(
-        `/scenarios?teamId=1172694`,
+        `/scenarios?teamId=${teamId}`,
         apiToken,
         organizationId
       );
