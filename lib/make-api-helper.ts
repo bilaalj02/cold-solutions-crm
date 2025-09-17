@@ -61,8 +61,19 @@ export async function makeApiRequest(
         // Organization not found in this region, try next
         console.log(`Organization not found in region ${region}, trying next...`);
         continue;
+      } else if (response.status === 401) {
+        // Authentication error
+        const errorText = await response.text();
+        console.error(`Authentication failed in region ${region}:`, errorText);
+        lastError = {
+          region,
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+          type: 'authentication_error'
+        };
       } else {
-        // Other error, could be auth issue
+        // Other error
         const errorText = await response.text();
         lastError = {
           region,

@@ -167,13 +167,30 @@ export function MakeIntegration({ className = '' }: MakeIntegrationProps) {
   }
 
   if (error) {
+    const isAuthError = error.includes('401') || error.includes('Unauthorized') || error.includes('Access denied');
+
     return (
       <div className={`bg-red-50 border border-red-200 rounded-lg p-6 ${className}`}>
         <div className="flex items-start gap-3">
           <span className="material-symbols-outlined text-red-600">error</span>
           <div>
-            <h3 className="font-semibold text-red-800">Failed to Load Make Data</h3>
+            <h3 className="font-semibold text-red-800">
+              {isAuthError ? 'Make.com Authentication Error' : 'Failed to Load Make Data'}
+            </h3>
             <p className="text-sm text-red-700 mt-1">{error}</p>
+
+            {isAuthError && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                <p className="text-yellow-800 font-medium">Possible Solutions:</p>
+                <ul className="list-disc list-inside mt-1 text-yellow-700 text-xs">
+                  <li>Verify your Make.com API token is correct</li>
+                  <li>Check that your token has the required scopes: <strong>Organizations, Scenarios, Executions</strong></li>
+                  <li>Ensure your token is for the correct Make.com region</li>
+                  <li>Generate a new API token from: Make → Profile → API → Add token</li>
+                </ul>
+              </div>
+            )}
+
             <button
               onClick={loadMakeData}
               className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
