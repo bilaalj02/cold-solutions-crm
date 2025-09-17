@@ -113,6 +113,7 @@ export class MakeService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error(`MakeService API Error for ${endpoint}:`, response.status, errorData);
         return {
           error: {
             message: errorData.error || `HTTP ${response.status}: ${response.statusText}`,
@@ -122,6 +123,7 @@ export class MakeService {
       }
 
       const data = await response.json();
+      console.log(`MakeService API Success for ${endpoint}:`, data);
       return { data };
     } catch (error) {
       return {

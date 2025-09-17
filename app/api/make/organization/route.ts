@@ -48,7 +48,7 @@ export async function GET() {
         usage: { operations: 0, dataTransfer: 0, scenarios: 0 }
       };
 
-      return NextResponse.json({ data: defaultOrg });
+      return NextResponse.json(defaultOrg);
     }
 
     const orgData = await response.json();
@@ -74,10 +74,8 @@ export async function GET() {
       }
     };
 
-    // Return in MakeApiResponse format
-    return NextResponse.json({
-      data: organization
-    });
+    // Return organization directly - MakeService will wrap in { data: ... } format
+    return NextResponse.json(organization);
 
   } catch (error) {
     console.error('Error fetching Make organization:', error);
@@ -92,6 +90,6 @@ export async function GET() {
     };
 
     console.log('Returning default organization data due to error');
-    return NextResponse.json({ data: defaultOrg });
+    return NextResponse.json(defaultOrg);
   }
 }

@@ -98,15 +98,8 @@ export async function GET(request: Request) {
     const startIndex = (page - 1) * limit;
     const paginatedScenarios = transformedScenarios.slice(startIndex, startIndex + limit);
 
-    // Return in MakeApiResponse format that MakeService expects
-    return NextResponse.json({
-      data: paginatedScenarios,
-      pagination: {
-        total: transformedScenarios.length,
-        page,
-        limit
-      }
-    });
+    // Return scenarios directly - MakeService will wrap in { data: ... } format
+    return NextResponse.json(paginatedScenarios);
 
   } catch (error) {
     console.error('Error fetching Make scenarios:', error);

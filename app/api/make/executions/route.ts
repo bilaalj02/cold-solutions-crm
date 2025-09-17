@@ -59,17 +59,13 @@ export async function GET(request: Request) {
 
       console.log(`Found ${scenarios.length} scenarios, but execution logs not available via API`);
 
-      // Return in MakeApiResponse format that MakeService expects
-      return NextResponse.json({
-        data: []
-      });
+      // Return empty array directly - MakeService will wrap in { data: ... } format
+      return NextResponse.json([]);
 
     } catch (error) {
       console.log('Failed to get scenarios for executions:', error);
-      // Fallback to MakeApiResponse format with empty array
-      return NextResponse.json({
-        data: []
-      });
+      // Fallback to empty array directly
+      return NextResponse.json([]);
     }
 
   } catch (error) {
