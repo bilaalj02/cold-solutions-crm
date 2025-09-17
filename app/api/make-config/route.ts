@@ -5,9 +5,24 @@ export async function GET() {
     const apiToken = process.env.MAKE_API_TOKEN;
     const organizationId = process.env.MAKE_ORGANIZATION_ID;
 
+    // Debug logging
+    console.log('Environment check:', {
+      hasApiToken: !!apiToken,
+      hasOrgId: !!organizationId,
+      apiTokenLength: apiToken?.length || 0,
+      orgIdValue: organizationId || 'undefined'
+    });
+
     if (!apiToken || !organizationId) {
       return NextResponse.json(
-        { error: 'Make.com credentials not configured' },
+        {
+          error: 'Make.com credentials not configured',
+          debug: {
+            hasApiToken: !!apiToken,
+            hasOrgId: !!organizationId,
+            envKeys: Object.keys(process.env).filter(key => key.includes('MAKE'))
+          }
+        },
         { status: 400 }
       );
     }

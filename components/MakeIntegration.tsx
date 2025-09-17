@@ -42,7 +42,8 @@ export function MakeIntegration({ className = '' }: MakeIntegrationProps) {
 
         if (!config.apiToken || !config.organizationId) {
           setIsConfigured(false);
-          setError('Make.com API credentials not configured. Please add MAKE_API_TOKEN and MAKE_ORGANIZATION_ID to your environment variables.');
+          const debugInfo = config.debug ? ` Debug: ${JSON.stringify(config.debug)}` : '';
+          setError(`Make.com API credentials not configured. Please add MAKE_API_TOKEN and MAKE_ORGANIZATION_ID to your environment variables.${debugInfo}`);
           setLoading(false);
           return;
         }
