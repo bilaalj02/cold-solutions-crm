@@ -53,37 +53,24 @@ export async function GET(request: Request) {
         });
       }
 
-      // Get executions from the first few scenarios (limit to avoid too many API calls)
-      const executionsPromises = scenarios.slice(0, 3).map(async (scenario: any) => {
-        try {
-          const execResponse = await makeApiRequest(
-            `/scenarios/${scenario.id}/executions?limit=5`,
-            apiToken,
-            organizationId
-          );
-          const execData = await execResponse.json();
-          return {
-            scenarioId: scenario.id,
-            scenarioName: scenario.name,
-            executions: execData.executions || execData || []
-          };
-        } catch (error) {
-          console.log(`Failed to get executions for scenario ${scenario.id}:`, error);
-          return {
-            scenarioId: scenario.id,
-            scenarioName: scenario.name,
-            executions: [],
-            error: 'Failed to fetch executions for this scenario'
-          };
-        }
-      });
-
-      const allExecutions = await Promise.all(executionsPromises);
+      // Return scenario information instead of trying to fetch executions
+      // as the /scenarios/{id}/executions endpoint appears to not exist in Make API
+      const scenarioSummary = scenarios.map((scenario: any) => ({
+        scenarioId: scenario.id,
+        scenarioName: scenario.name || 'Unnamed Scenario',
+        status: scenario.scheduling?.type || 'unknown',
+        lastRun: scenario.lastExecution || null,
+        isActive: scenario.scheduling?.type !== 'indefinitely',
+        note: 'Individual execution logs not available via API'
+      }));
 
       return NextResponse.json({
-        executions: allExecutions,
+        success: true,
         totalScenarios: scenarios.length,
-        message: "Executions retrieved from active scenarios"
+        scenarios: scenarioSummary,
+        message: `Successfully found ${scenarios.length} scenarios in your team`,
+        info: "Make.com doesn't expose individual execution logs via public API",
+        suggestion: "View execution details in the Make.com dashboard at make.com"
       });
 
     } catch (error) {
