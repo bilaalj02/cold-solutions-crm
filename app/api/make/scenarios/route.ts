@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { makeApiRequest } from '../../../../lib/make-api-helper';
 
 export async function GET() {
   try {
@@ -20,34 +21,11 @@ export async function GET() {
       );
     }
 
-    const url = `https://api.make.com/v2/organizations/${organizationId}/scenarios`;
-    console.log('Fetching Make scenarios from:', url);
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Token ${apiToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('Make API response status:', response.status, response.statusText);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Make API error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      });
-
-      return NextResponse.json(
-        {
-          error: `Make API error: ${response.status} ${response.statusText}`,
-          details: errorText
-        },
-        { status: response.status }
-      );
-    }
+    const response = await makeApiRequest(
+      `/organizations/${organizationId}/scenarios`,
+      apiToken,
+      organizationId
+    );
 
     const scenarios = await response.json();
     console.log('Successfully fetched scenarios:', scenarios?.length || 0);

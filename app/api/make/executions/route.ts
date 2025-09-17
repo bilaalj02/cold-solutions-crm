@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { makeApiRequest } from '../../../../lib/make-api-helper';
 
 export async function GET(request: Request) {
   try {
@@ -22,35 +23,12 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '10';
-    const url = `https://api.make.com/v2/organizations/${organizationId}/executions?limit=${limit}`;
 
-    console.log('Fetching Make executions from:', url);
-
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Token ${apiToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('Make executions API response status:', response.status, response.statusText);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Make executions API error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      });
-
-      return NextResponse.json(
-        {
-          error: `Make API error: ${response.status} ${response.statusText}`,
-          details: errorText
-        },
-        { status: response.status }
-      );
-    }
+    const response = await makeApiRequest(
+      `/organizations/${organizationId}/executions?limit=${limit}`,
+      apiToken,
+      organizationId
+    );
 
     const executions = await response.json();
     console.log('Successfully fetched executions:', executions?.length || 0);
