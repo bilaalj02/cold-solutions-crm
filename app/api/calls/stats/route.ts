@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SupabaseService } from '../../../lib/supabase-service';
+import { SupabaseService } from '@/lib/supabase-service';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
