@@ -87,11 +87,12 @@ export class SupabaseService {
     pending: number
     callsByOutcome: Record<string, number>
     callsByDay?: Record<string, number>
+    averageCallDuration: number
   }> {
     try {
       const { data, error } = await supabase
         .from('crm_call_logs')
-        .select('call_outcome, timestamp')
+        .select('call_outcome, timestamp, call_duration')
         .gte('timestamp', startDate.toISOString())
         .lte('timestamp', endDate.toISOString())
 
@@ -102,7 +103,8 @@ export class SupabaseService {
           successful: 0,
           unsuccessful: 0,
           pending: 0,
-          callsByOutcome: {}
+          callsByOutcome: {},
+          averageCallDuration: 0
         }
       }
 
@@ -116,7 +118,8 @@ export class SupabaseService {
         unsuccessful: 0,
         pending: 0,
         callsByOutcome: {} as Record<string, number>,
-        callsByDay: {} as Record<string, number>
+        callsByDay: {} as Record<string, number>,
+        averageCallDuration: 0
       }
 
       data.forEach(call => {
@@ -137,6 +140,10 @@ export class SupabaseService {
         stats.callsByDay[dayName] = (stats.callsByDay[dayName] || 0) + 1
       })
 
+      // Calculate average call duration
+      const totalDuration = data.reduce((sum, call) => sum + (call.call_duration || 0), 0)
+      stats.averageCallDuration = data.length > 0 ? totalDuration / data.length : 0
+
       return stats
     } catch (error) {
       console.error('Exception fetching call stats:', error)
@@ -145,7 +152,8 @@ export class SupabaseService {
         successful: 0,
         unsuccessful: 0,
         pending: 0,
-        callsByOutcome: {}
+        callsByOutcome: {},
+        averageCallDuration: 0
       }
     }
   }
