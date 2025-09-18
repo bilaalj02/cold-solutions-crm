@@ -76,10 +76,20 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     const data = await response.json();
+    console.log('✅ Raw Retell AI response:', JSON.stringify(data, null, 2));
     console.log('✅ Successfully fetched Retell AI agents:', data.agents?.length || 0, 'agents');
 
+    // Handle different possible response structures
+    let agentsList = data.agents || data || [];
+    if (!Array.isArray(agentsList)) {
+      console.log('⚠️ Expected array but got:', typeof agentsList, agentsList);
+      agentsList = [];
+    }
+
+    console.log('📋 Processing agents list:', agentsList.length, 'items');
+
     // Transform agent data for the UI
-    const transformedAgents = (data.agents || []).map((agent: RetellAgent) => ({
+    const transformedAgents = agentsList.map((agent: RetellAgent) => ({
       id: agent.agent_id,
       name: agent.agent_name || `Agent ${agent.agent_id.slice(-4)}`,
       status: 'active', // Retell AI doesn't provide real-time status, assume active
@@ -102,7 +112,13 @@ export async function GET(request: Request): Promise<NextResponse> {
       success: true,
       agents: transformedAgents,
       total: transformedAgents.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      debug: {
+        rawDataKeys: Object.keys(data),
+        agentsProperty: !!data.agents,
+        dataType: typeof data,
+        hasAnyAgents: transformedAgents.length > 0
+      }
     }, { headers: corsHeaders });
 
   } catch (error) {
