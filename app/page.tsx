@@ -47,7 +47,7 @@ function ColdSolutionsDashboard() {
   // Function to generate chart data from call statistics
   const generateChartData = (callStats: any, callLogs: any[]) => {
     // Generate leads over time data based on call statistics
-    const leadsOverTimeData = [];
+    const leadsOverTimeData: Array<{date: string; leads: number; calls: number; emails: number; inbound: number}> = [];
     if (callStats?.thisWeek?.callsByDay) {
       const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       daysOfWeek.forEach(day => {
@@ -63,7 +63,7 @@ function ColdSolutionsDashboard() {
     }
 
     // Generate voice calls data based on hourly distribution (simulated from total calls)
-    const voiceCallsData = [];
+    const voiceCallsData: Array<{hour: string; calls: number; connects: number; bookings: number}> = [];
     const totalCalls = callStats?.today?.totalCalls || 0;
     const hours = ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM'];
     hours.forEach((hour, index) => {
@@ -74,7 +74,7 @@ function ColdSolutionsDashboard() {
     });
 
     // Generate outreach methods data
-    const outreachMethodsData = [
+    const outreachMethodsData: Array<{method: string; leads: number; converted: number; cost: number; roi: number}> = [
       {
         method: 'Cold Calls',
         leads: callStats?.allTime?.totalCalls || 0,
@@ -85,7 +85,7 @@ function ColdSolutionsDashboard() {
     ];
 
     // Generate lead sources data based on call outcomes
-    const leadSourcesData = [];
+    const leadSourcesData: Array<{name: string; value: number; color: string}> = [];
     if (callStats?.today?.callsByOutcome) {
       const outcomes = callStats.today.callsByOutcome;
       const total = Object.values(outcomes).reduce((sum: number, count: any) => sum + (count || 0), 0) as number;
