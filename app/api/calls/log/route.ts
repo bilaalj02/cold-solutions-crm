@@ -45,8 +45,17 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
   try {
     const callData: CallLogData = await request.json();
 
-    // Validate required fields
+    // Validate required fields (leadEmail is optional)
     if (!callData.leadId || !callData.leadName || !callData.leadPhone || !callData.callOutcome || !callData.callerName) {
+      console.log('❌ CRM API Validation Failed:', {
+        hasLeadId: !!callData.leadId,
+        hasLeadName: !!callData.leadName,
+        hasLeadPhone: !!callData.leadPhone,
+        hasCallOutcome: !!callData.callOutcome,
+        hasCallerName: !!callData.callerName,
+        receivedData: callData
+      });
+
       return NextResponse.json({
         success: false,
         message: 'Missing required fields: leadId, leadName, leadPhone, callOutcome, callerName',
@@ -55,11 +64,13 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
     }
 
     // Log the received call data
-    console.log('Call logged from Cold Caller App:', {
+    console.log('✅ Call received from Cold Caller App:', {
       leadName: callData.leadName,
       callOutcome: callData.callOutcome,
       callerName: callData.callerName,
-      timestamp: callData.timestamp
+      timestamp: callData.timestamp,
+      leadId: callData.leadId,
+      leadPhone: callData.leadPhone
     });
 
     // Generate a unique call ID
