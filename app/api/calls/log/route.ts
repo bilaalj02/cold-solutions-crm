@@ -3,6 +3,13 @@ import { NextResponse } from 'next/server';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// CORS headers for cold caller app integration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export interface CallLogData {
   leadId: string;
   leadName: string;
@@ -30,6 +37,10 @@ export interface CallLogResponse {
   timestamp: string;
 }
 
+export async function OPTIONS(request: Request) {
+  return new Response(null, { status: 200, headers: corsHeaders });
+}
+
 export async function POST(request: Request): Promise<NextResponse<CallLogResponse>> {
   try {
     const callData: CallLogData = await request.json();
@@ -40,7 +51,7 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
         success: false,
         message: 'Missing required fields: leadId, leadName, leadPhone, callOutcome, callerName',
         timestamp: new Date().toISOString()
-      }, { status: 400 });
+      }, { status: 400, headers: corsHeaders });
     }
 
     // Log the received call data
@@ -76,7 +87,7 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
       callId,
       message: 'Call logged successfully in CRM',
       timestamp: new Date().toISOString()
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Error logging call to CRM:', error);
@@ -85,7 +96,7 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
       success: false,
       message: 'Failed to log call in CRM',
       timestamp: new Date().toISOString()
-    }, { status: 500 });
+    }, { status: 500, headers: corsHeaders });
   }
 }
 
@@ -120,7 +131,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       calls: mockCallLogs,
       total: mockCallLogs.length,
       timestamp: new Date().toISOString()
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Error retrieving call logs:', error);
@@ -129,6 +140,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       success: false,
       message: 'Failed to retrieve call logs',
       timestamp: new Date().toISOString()
-    }, { status: 500 });
+    }, { status: 500, headers: corsHeaders });
   }
 }

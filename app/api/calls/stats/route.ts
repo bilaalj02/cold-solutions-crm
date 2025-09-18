@@ -3,6 +3,13 @@ import { NextResponse } from 'next/server';
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
+// CORS headers for cold caller app integration
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export interface CallStats {
   today: {
     totalCalls: number;
@@ -32,6 +39,10 @@ export interface CallStats {
     pending: number;
     averageCallDuration: number;
   };
+}
+
+export async function OPTIONS(request: Request) {
+  return new Response(null, { status: 200, headers: corsHeaders });
 }
 
 export async function GET(request: Request): Promise<NextResponse<CallStats | { error: string }>> {
@@ -97,14 +108,14 @@ export async function GET(request: Request): Promise<NextResponse<CallStats | { 
       }
     };
 
-    return NextResponse.json(mockStats);
+    return NextResponse.json(mockStats, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Error retrieving call stats:', error);
 
     return NextResponse.json({
       error: 'Failed to retrieve call statistics'
-    }, { status: 500 });
+    }, { status: 500, headers: corsHeaders });
   }
 }
 
@@ -122,7 +133,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       success: true,
       message: 'Call statistics updated successfully',
       timestamp: new Date().toISOString()
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Error updating call stats:', error);
@@ -130,6 +141,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({
       success: false,
       message: 'Failed to update call statistics'
-    }, { status: 500 });
+    }, { status: 500, headers: corsHeaders });
   }
 }
