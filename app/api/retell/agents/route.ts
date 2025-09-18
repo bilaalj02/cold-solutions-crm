@@ -47,8 +47,10 @@ export async function GET(request: Request): Promise<NextResponse> {
       }, { status: 500, headers: corsHeaders });
     }
 
+    console.log('🔑 Retell API Key loaded:', retellApiKey ? `${retellApiKey.substring(0, 8)}...` : 'none');
+
     // Fetch agents from Retell AI API
-    const response = await fetch('https://api.retellai.com/v2/list-agents', {
+    const response = await fetch('https://api.retellai.com/list-agents', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${retellApiKey}`,
@@ -57,11 +59,19 @@ export async function GET(request: Request): Promise<NextResponse> {
     });
 
     if (!response.ok) {
-      console.error('❌ Failed to fetch agents from Retell AI:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('❌ Failed to fetch agents from Retell AI:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorBody: errorText,
+        url: 'https://api.retellai.com/list-agents',
+        headers: response.headers
+      });
       return NextResponse.json({
         success: false,
-        message: 'Failed to fetch agents from Retell AI',
-        agents: []
+        message: `Failed to fetch agents from Retell AI: ${response.status} ${response.statusText}`,
+        agents: [],
+        debug: { status: response.status, error: errorText }
       }, { status: response.status, headers: corsHeaders });
     }
 
