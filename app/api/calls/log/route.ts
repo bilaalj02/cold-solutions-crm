@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { SupabaseService } from '../../../lib/supabase-service';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -9,9 +10,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-
-// In-memory storage for call logs (replace with database in production)
-let callLogs: Array<CallLogData & { callId: string; timestamp: string }> = [];
 
 export interface CallLogData {
   leadId: string;
@@ -79,28 +77,40 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
     // Generate a unique call ID
     const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Store call data in memory (replace with database in production)
-    const callRecord = {
-      ...callData,
-      callId,
-      timestamp: new Date().toISOString()
-    };
+    // Store call data in Supabase
+    const callRecord = await SupabaseService.createCallLog({
+      call_id: callId,
+      lead_id: callData.leadId,
+      lead_name: callData.leadName,
+      lead_email: callData.leadEmail,
+      lead_phone: callData.leadPhone,
+      lead_company: callData.leadCompany,
+      lead_position: callData.leadPosition,
+      call_outcome: callData.callOutcome as any,
+      call_notes: callData.callNotes,
+      caller_name: callData.callerName,
+      caller_role: callData.callerRole,
+      call_duration: callData.callDuration,
+      timestamp: callData.timestamp || new Date().toISOString(),
+      lead_source: callData.leadSource,
+      lead_industry: callData.leadIndustry,
+      lead_territory: callData.leadTerritory,
+      collected_email: callData.collectedEmail,
+      preferred_phone: callData.preferredPhone
+    });
 
-    callLogs.push(callRecord);
-
-    // Keep only last 1000 calls to prevent memory issues
-    if (callLogs.length > 1000) {
-      callLogs = callLogs.slice(-1000);
+    if (!callRecord) {
+      throw new Error('Failed to store call in database');
     }
 
-    console.log('📞 Call stored in CRM:', {
+    console.log('📞 Call stored in CRM database:', {
       callId,
       leadName: callData.leadName,
       company: callData.leadCompany,
       outcome: callData.callOutcome,
       notes: callData.callNotes,
       caller: callData.callerName,
-      totalCalls: callLogs.length
+      databaseId: callRecord.id
     });
 
     return NextResponse.json({
@@ -129,37 +139,45 @@ export async function GET(request: Request): Promise<NextResponse> {
     const caller = searchParams.get('caller');
     const outcome = searchParams.get('outcome');
     const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
 
-    console.log('Call logs requested with filters:', { date, caller, outcome, limit });
+    console.log('Call logs requested with filters:', { date, caller, outcome, limit, offset });
 
-    // Filter call logs based on parameters
-    let filteredCalls = [...callLogs];
+    // Fetch call logs from Supabase
+    const result = await SupabaseService.getCallLogs({
+      limit,
+      offset,
+      date,
+      caller,
+      outcome
+    });
 
-    if (date) {
-      const filterDate = new Date(date).toDateString();
-      filteredCalls = filteredCalls.filter(call =>
-        new Date(call.timestamp).toDateString() === filterDate
-      );
-    }
-
-    if (caller) {
-      filteredCalls = filteredCalls.filter(call =>
-        call.callerName.toLowerCase().includes(caller.toLowerCase())
-      );
-    }
-
-    if (outcome) {
-      filteredCalls = filteredCalls.filter(call => call.callOutcome === outcome);
-    }
-
-    // Sort by timestamp (newest first) and limit results
-    filteredCalls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    const paginatedCalls = filteredCalls.slice(0, limit);
+    // Transform data to match expected format
+    const transformedCalls = result.calls.map(call => ({
+      callId: call.call_id,
+      leadId: call.lead_id,
+      leadName: call.lead_name,
+      leadEmail: call.lead_email,
+      leadPhone: call.lead_phone,
+      leadCompany: call.lead_company,
+      leadPosition: call.lead_position,
+      callOutcome: call.call_outcome,
+      callNotes: call.call_notes,
+      callerName: call.caller_name,
+      callerRole: call.caller_role,
+      callDuration: call.call_duration,
+      timestamp: call.timestamp,
+      leadSource: call.lead_source,
+      leadIndustry: call.lead_industry,
+      leadTerritory: call.lead_territory,
+      collectedEmail: call.collected_email,
+      preferredPhone: call.preferred_phone
+    }));
 
     return NextResponse.json({
       success: true,
-      calls: paginatedCalls,
-      total: filteredCalls.length,
+      calls: transformedCalls,
+      total: result.total,
       timestamp: new Date().toISOString()
     }, { headers: corsHeaders });
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { SupabaseService } from '../../../lib/supabase-service';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -9,21 +10,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-
-// Import call logs from the log endpoint (in production, use shared database)
-// For now, we'll fetch from the API endpoint
-async function getCallLogs() {
-  try {
-    const response = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/calls/log?limit=1000`);
-    if (response.ok) {
-      const data = await response.json();
-      return data.calls || [];
-    }
-  } catch (error) {
-    console.error('Error fetching call logs for stats:', error);
-  }
-  return [];
-}
 
 // Helper function to check if a call outcome is successful
 function isSuccessfulOutcome(outcome: string): boolean {
@@ -40,119 +26,6 @@ function isPendingOutcome(outcome: string): boolean {
   return ['Callback Requested', 'Follow Up Required'].includes(outcome);
 }
 
-// Calculate statistics from real call data
-function calculateStatsFromCalls(calls: any[], callerFilter?: string | null, dateFrom?: string | null, dateTo?: string | null): CallStats {
-  // Apply filters
-  let filteredCalls = calls;
-
-  if (callerFilter) {
-    filteredCalls = filteredCalls.filter(call =>
-      call.callerName.toLowerCase().includes(callerFilter.toLowerCase())
-    );
-  }
-
-  if (dateFrom || dateTo) {
-    filteredCalls = filteredCalls.filter(call => {
-      const callDate = new Date(call.timestamp);
-      if (dateFrom && callDate < new Date(dateFrom)) return false;
-      if (dateTo && callDate > new Date(dateTo)) return false;
-      return true;
-    });
-  }
-
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const weekStart = new Date(todayStart);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  // Filter calls by time periods
-  const todayCalls = filteredCalls.filter(call => new Date(call.timestamp) >= todayStart);
-  const weekCalls = filteredCalls.filter(call => new Date(call.timestamp) >= weekStart);
-  const monthCalls = filteredCalls.filter(call => new Date(call.timestamp) >= monthStart);
-
-  // Calculate today's stats
-  const todayStats = {
-    totalCalls: todayCalls.length,
-    successful: todayCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
-    unsuccessful: todayCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
-    pending: todayCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
-    callsByOutcome: todayCalls.reduce((acc, call) => {
-      acc[call.callOutcome] = (acc[call.callOutcome] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>)
-  };
-
-  // Calculate this week's stats
-  const callsByDay = weekCalls.reduce((acc, call) => {
-    const dayName = new Date(call.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
-    acc[dayName] = (acc[dayName] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  // Ensure all days are represented
-  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  daysOfWeek.forEach(day => {
-    if (!callsByDay[day]) callsByDay[day] = 0;
-  });
-
-  const weekStats = {
-    totalCalls: weekCalls.length,
-    successful: weekCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
-    unsuccessful: weekCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
-    pending: weekCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
-    callsByDay
-  };
-
-  // Calculate this month's stats and top callers
-  const callerStats = monthCalls.reduce((acc, call) => {
-    if (!acc[call.callerName]) {
-      acc[call.callerName] = { total: 0, successful: 0 };
-    }
-    acc[call.callerName].total++;
-    if (isSuccessfulOutcome(call.callOutcome)) {
-      acc[call.callerName].successful++;
-    }
-    return acc;
-  }, {} as Record<string, { total: number; successful: number }>);
-
-  const topCallers = (Object.entries(callerStats) as [string, { total: number; successful: number }][])
-    .map(([name, stats]) => ({
-      name,
-      calls: stats.total,
-      successRate: stats.total > 0 ? (stats.successful / stats.total) * 100 : 0
-    }))
-    .sort((a, b) => b.calls - a.calls)
-    .slice(0, 5);
-
-  const monthStats = {
-    totalCalls: monthCalls.length,
-    successful: monthCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
-    unsuccessful: monthCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
-    pending: monthCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
-    topCallers
-  };
-
-  // Calculate all-time stats
-  const averageCallDuration = filteredCalls.length > 0
-    ? filteredCalls.reduce((sum, call) => sum + (call.callDuration || 0), 0) / filteredCalls.length
-    : 0;
-
-  const allTimeStats = {
-    totalCalls: filteredCalls.length,
-    successful: filteredCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
-    unsuccessful: filteredCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
-    pending: filteredCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
-    averageCallDuration: Math.round(averageCallDuration)
-  };
-
-  return {
-    today: todayStats,
-    thisWeek: weekStats,
-    thisMonth: monthStats,
-    allTime: allTimeStats
-  };
-}
 
 export interface CallStats {
   today: {
@@ -198,11 +71,61 @@ export async function GET(request: Request): Promise<NextResponse<CallStats | { 
 
     console.log('Call stats requested with filters:', { callerFilter, dateFrom, dateTo });
 
-    // Get real call logs from API
-    const callLogs = await getCallLogs();
+    // Calculate time periods
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Calculate real statistics
-    const realStats: CallStats = calculateStatsFromCalls(callLogs, callerFilter, dateFrom, dateTo);
+    // Get stats for different time periods from Supabase
+    const todayStats = await SupabaseService.getCallStatsForPeriod(todayStart, now);
+    const weekStats = await SupabaseService.getCallStatsForPeriod(weekStart, now);
+    const monthStats = await SupabaseService.getCallStatsForPeriod(monthStart, now);
+    const allTimeStats = await SupabaseService.getCallStatsForPeriod(new Date('2020-01-01'), now);
+
+    // Calculate top callers for this month
+    const monthCallsResult = await SupabaseService.getCallLogs({
+      limit: 1000,
+      date: undefined
+    });
+
+    const monthCalls = monthCallsResult.calls.filter(call =>
+      new Date(call.timestamp) >= monthStart
+    );
+
+    const callerStats = monthCalls.reduce((acc, call) => {
+      if (!acc[call.caller_name]) {
+        acc[call.caller_name] = { total: 0, successful: 0 };
+      }
+      acc[call.caller_name].total++;
+      if (isSuccessfulOutcome(call.call_outcome)) {
+        acc[call.caller_name].successful++;
+      }
+      return acc;
+    }, {} as Record<string, { total: number; successful: number }>);
+
+    const topCallers = (Object.entries(callerStats) as [string, { total: number; successful: number }][])
+      .map(([name, stats]) => ({
+        name,
+        calls: stats.total,
+        successRate: stats.total > 0 ? (stats.successful / stats.total) * 100 : 0
+      }))
+      .sort((a, b) => b.calls - a.calls)
+      .slice(0, 5);
+
+    const realStats: CallStats = {
+      today: todayStats,
+      thisWeek: {
+        ...weekStats,
+        callsByDay: weekStats.callsByDay || {}
+      },
+      thisMonth: {
+        ...monthStats,
+        topCallers
+      },
+      allTime: allTimeStats
+    };
 
     return NextResponse.json(realStats, { headers: corsHeaders });
 
