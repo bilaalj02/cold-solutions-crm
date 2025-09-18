@@ -34,10 +34,10 @@ export const notionDatabases: NotionDatabase[] = [
   },
   {
     id: '250c6af7fe2a806495c1f9e1e15f4d75',
-    name: 'Cold Caller Follow Up',
-    slug: 'cold-caller-followup',
-    description: 'Leads requiring follow-up from cold calling team',
-    icon: 'follow_the_signs',
+    name: 'WhatsApp Follow-up Leads',
+    slug: 'whatsapp-followup',
+    description: 'Leads requiring follow-up via WhatsApp',
+    icon: 'chat',
     color: 'orange'
   },
   {
