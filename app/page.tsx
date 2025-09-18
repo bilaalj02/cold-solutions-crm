@@ -24,6 +24,7 @@ function ColdSolutionsDashboard() {
     meetingsBooked: 0,
     conversionRate: 0
   });
+  const [callStats, setCallStats] = useState<any>(null);
   const { user, logout } = useAuth();
 
   // Sample data for interactive charts
@@ -63,6 +64,26 @@ function ColdSolutionsDashboard() {
     { name: 'Social Media', value: 15, color: '#f59e0b' }
   ];
 
+  // Function to fetch call stats from CRM API
+  const fetchCallStats = async () => {
+    try {
+      const response = await fetch('/api/calls/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setCallStats(data);
+
+        // Update main stats with real call data
+        setStats(prevStats => ({
+          ...prevStats,
+          callsThisWeek: data.thisWeek.totalCalls,
+          meetingsBooked: data.today.callsByOutcome['Booked Demo'] || 0
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch call stats:', error);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -90,10 +111,13 @@ function ColdSolutionsDashboard() {
 
       setStats({
         newLeads: recentLeads.length,
-        callsThisWeek: Math.floor(recentLeads.length * 1.8), // More realistic estimate
+        callsThisWeek: Math.floor(recentLeads.length * 1.8), // Will be updated by fetchCallStats
         meetingsBooked: qualifiedLeads.length,
         conversionRate: loadedLeads.length > 0 ? Math.round((convertedLeads.length / loadedLeads.length) * 100) : 0
       });
+
+      // Fetch real call stats from Cold Caller integration
+      await fetchCallStats();
 
       setIsLoading(false);
     };
