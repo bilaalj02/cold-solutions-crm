@@ -147,9 +147,9 @@ export async function GET(request: Request): Promise<NextResponse> {
     const result = await SupabaseService.getCallLogs({
       limit,
       offset,
-      date,
-      caller,
-      outcome
+      date: date || undefined,
+      caller: caller || undefined,
+      outcome: outcome || undefined
     });
 
     // Transform data to match expected format
