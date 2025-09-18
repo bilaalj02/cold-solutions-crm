@@ -117,7 +117,7 @@ function calculateStatsFromCalls(calls: any[], callerFilter?: string | null, dat
   }, {} as Record<string, { total: number; successful: number }>);
 
   const topCallers = Object.entries(callerStats)
-    .map(([name, stats]) => ({
+    .map(([name, stats]: [string, { total: number; successful: number }]) => ({
       name,
       calls: stats.total,
       successRate: stats.total > 0 ? (stats.successful / stats.total) * 100 : 0
