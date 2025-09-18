@@ -109,7 +109,7 @@ export class NotionService {
         'inbound': 'Cold Solutions Inbound',
         'ai-audit-pre-call': 'ai-audit-pre-call',
         'ai-audit-post-call': 'ai-audit-post-call',
-        'cold-caller-followup': 'Whats App followup leads',
+        'whatsapp-followup': 'Whats App followup leads',
         'whatsapp-bot': 'Whatsapp bot leads',
         'website-leads': 'website-leads'
       };
@@ -230,7 +230,7 @@ export class NotionService {
         'inbound': 'Cold Solutions Inbound',
         'ai-audit-pre-call': 'ai-audit-pre-call',
         'ai-audit-post-call': 'ai-audit-post-call',
-        'cold-caller-followup': 'Whats App followup leads',
+        'whatsapp-followup': 'Whats App followup leads',
         'whatsapp-bot': 'Whatsapp bot leads',
         'website-leads': 'website-leads'
       };
