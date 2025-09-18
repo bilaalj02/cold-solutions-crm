@@ -247,7 +247,6 @@ export default function AdvancedAnalyticsPage() {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-base">{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}
