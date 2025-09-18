@@ -26,6 +26,7 @@ function ColdSolutionsDashboard() {
   });
   const [callStats, setCallStats] = useState<any>(null);
   const [callLogs, setCallLogs] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [realTimeStats, setRealTimeStats] = useState({
     callsToday: 0,
     callsThisWeek: 0,
@@ -154,6 +155,13 @@ function ColdSolutionsDashboard() {
         if (logsResponse.ok) {
           logsData = await logsResponse.json();
           setCallLogs(logsData.calls || []);
+        }
+
+        // Fetch recent activity for live feed
+        const activityResponse = await fetch('/api/activity/recent?limit=5');
+        if (activityResponse.ok) {
+          const activityData = await activityResponse.json();
+          setRecentActivity(activityData.activities || []);
         }
 
         // Generate chart data from real statistics
@@ -862,64 +870,37 @@ function ColdSolutionsDashboard() {
                           <p className="text-xs mt-1">Activity will appear here as you interact with leads</p>
                         </div>
                       </div>
+                    ) : recentActivity.length === 0 ? (
+                      <div className="text-center py-4">
+                        <div className="text-gray-500">
+                          <p className="text-sm">No recent activity</p>
+                          <p className="text-xs mt-1">Activity will appear here as calls and interactions happen</p>
+                        </div>
+                      </div>
                     ) : (
                       <div className="space-y-4">
-                        {leads.slice(0, 5).map((lead, index) => {
-                          const getActivityIcon = (index: number) => {
-                            const icons = ['phone_in_talk', 'videocam', 'email', 'person_add', 'update'];
-                            return icons[index % icons.length];
-                          };
-
-                          const getActivityText = (lead: Lead, index: number) => {
-                            const activities = [
-                              `New lead added: ${lead.name}`,
-                              `Follow-up scheduled with ${lead.name}`,
-                              `Email sent to ${lead.name}`,
-                              `Status updated for ${lead.name}`,
-                              `Call completed with ${lead.name}`
-                            ];
-                            return activities[index % activities.length];
-                          };
-
-                          const getRelativeTime = (dateString: string) => {
-                            const date = new Date(dateString);
-                            const now = new Date();
-                            const diffTime = Math.abs(now.getTime() - date.getTime());
-                            const diffMins = Math.floor(diffTime / (1000 * 60));
-                            if (diffMins < 60) return `${diffMins}m ago`;
-                            const diffHours = Math.floor(diffMins / 60);
-                            if (diffHours < 24) return `${diffHours}h ago`;
-                            const diffDays = Math.floor(diffHours / 24);
-                            return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
-                          };
-
-                          const getActivityColor = (index: number) => {
-                            const colors = ['#3dbff2', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
-                            return colors[index % colors.length];
-                          };
-
-                          return (
-                            <motion.div
-                              key={lead.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                              onClick={() => console.log(`Clicked activity for ${lead.name}`)}
-                            >
-                              <div className="rounded-full p-2 mt-0.5" style={{backgroundColor: `${getActivityColor(index)}20`}}>
-                                <span className="material-symbols-outlined text-sm" style={{color: getActivityColor(index)}}>
-                                  {getActivityIcon(index)}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-800 text-sm truncate">{getActivityText(lead, index)}</p>
-                                <p className="text-xs text-gray-500">{getRelativeTime(lead.createdAt)}</p>
-                              </div>
-                              <div className="w-2 h-2 rounded-full mt-2" style={{backgroundColor: getActivityColor(index)}}></div>
-                            </motion.div>
-                          );
-                        })}
+                        {recentActivity.map((activity, index) => (
+                          <motion.div
+                            key={activity.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => console.log(`Clicked activity:`, activity)}
+                          >
+                            <div className="rounded-full p-2 mt-0.5" style={{backgroundColor: `${activity.color}20`}}>
+                              <span className="material-symbols-outlined text-sm" style={{color: activity.color}}>
+                                {activity.icon}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-800 text-sm truncate">{activity.title}</p>
+                              <p className="text-xs text-gray-500 truncate">{activity.description}</p>
+                              <p className="text-xs text-gray-400">{activity.timestamp}</p>
+                            </div>
+                            <div className="w-2 h-2 rounded-full mt-2" style={{backgroundColor: activity.color}}></div>
+                          </motion.div>
+                        ))}
 
                         <div className="pt-3 border-t border-gray-100">
                           <a href="/activity" className="flex items-center justify-center gap-2 text-sm font-medium hover:underline" style={{color: '#3dbff2'}}>

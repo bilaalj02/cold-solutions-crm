@@ -1,8 +1,91 @@
 'use client'
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export default function OperationsConsole() {
+  const [operationalStats, setOperationalStats] = useState<any>(null);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [systemLogs, setSystemLogs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  // Fetch operational data
+  const fetchOperationalData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Fetch operational stats
+      const statsResponse = await fetch('/api/operations/stats');
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setOperationalStats(statsData.stats);
+      }
+
+      // Fetch Retell AI agents
+      const agentsResponse = await fetch('/api/retell/agents');
+      if (agentsResponse.ok) {
+        const agentsData = await agentsResponse.json();
+        setAgents(agentsData.agents || []);
+      }
+
+      // Fetch system logs
+      const logsResponse = await fetch('/api/operations/logs?limit=5');
+      if (logsResponse.ok) {
+        const logsData = await logsResponse.json();
+        setSystemLogs(logsData.logs || []);
+      }
+
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Error fetching operational data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchOperationalData();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchOperationalData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Determine system status color
+  const getSystemStatusColor = (status: string) => {
+    switch (status) {
+      case 'operational': return { bg: 'bg-green-100', text: 'text-green-600', icon: 'check_circle' };
+      case 'degraded': return { bg: 'bg-yellow-100', text: 'text-yellow-600', icon: 'warning' };
+      case 'down': return { bg: 'bg-red-100', text: 'text-red-600', icon: 'error' };
+      default: return { bg: 'bg-gray-100', text: 'text-gray-600', icon: 'help' };
+    }
+  };
+
+  // Get agent status badge color
+  const getAgentStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'training': return 'bg-yellow-100 text-yellow-800';
+      case 'error': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get log severity color
+  const getLogSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'success': return 'bg-green-500';
+      case 'warning': return 'bg-yellow-500';
+      case 'error': return 'bg-red-500';
+      case 'info': return 'bg-blue-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const systemStatus = getSystemStatusColor(operationalStats?.system_status || 'operational');
+
   return (
     <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
       {/* Sidebar */}
@@ -55,10 +138,22 @@ export default function OperationsConsole() {
               <span className="material-symbols-outlined">notifications</span>
               <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white" style={{backgroundColor: '#3dbff2'}}></span>
             </button>
-            <button className="flex items-center gap-2 rounded-md border py-1.5 px-3 text-sm font-medium" style={{color: '#0a2240'}}>
-              <span className="material-symbols-outlined">refresh</span>
-              Sync All
-            </button>
+            <div className="flex items-center gap-4">
+              {lastRefresh && (
+                <span className="text-sm text-gray-600">
+                  Last updated: {lastRefresh.toLocaleTimeString()}
+                </span>
+              )}
+              <button
+                onClick={fetchOperationalData}
+                disabled={isLoading}
+                className="flex items-center gap-2 rounded-md border py-1.5 px-3 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{color: '#0a2240'}}
+              >
+                <span className={`material-symbols-outlined ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
+                {isLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -70,10 +165,14 @@ export default function OperationsConsole() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">System Status</p>
-                  <p className="text-lg font-semibold mt-1 text-green-600">All Systems Operational</p>
+                  <p className={`text-lg font-semibold mt-1 ${systemStatus.text}`}>
+                    {operationalStats?.system_status === 'operational' ? 'All Systems Operational' :
+                     operationalStats?.system_status === 'degraded' ? 'Performance Degraded' :
+                     operationalStats?.system_status === 'down' ? 'System Issues Detected' : 'Unknown Status'}
+                  </p>
                 </div>
-                <div className="p-3 rounded-full bg-green-100">
-                  <span className="material-symbols-outlined text-green-600">check_circle</span>
+                <div className={`p-3 rounded-full ${systemStatus.bg}`}>
+                  <span className={`material-symbols-outlined ${systemStatus.text}`}>{systemStatus.icon}</span>
                 </div>
               </div>
             </div>
@@ -82,7 +181,9 @@ export default function OperationsConsole() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Active AI Agents</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#0a2240'}}>3</p>
+                  <p className="text-2xl font-bold mt-1" style={{color: '#0a2240'}}>
+                    {isLoading ? '...' : operationalStats?.active_agents || 0}
+                  </p>
                 </div>
                 <div className="p-3 rounded-full" style={{backgroundColor: '#e1f5fe'}}>
                   <span className="material-symbols-outlined" style={{color: '#3dbff2'}}>psychology</span>
@@ -94,7 +195,9 @@ export default function OperationsConsole() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Queue Depth</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#0a2240'}}>47</p>
+                  <p className="text-2xl font-bold mt-1" style={{color: '#0a2240'}}>
+                    {isLoading ? '...' : operationalStats?.queue_depth || 0}
+                  </p>
                 </div>
                 <div className="p-3 rounded-full" style={{backgroundColor: '#e1f5fe'}}>
                   <span className="material-symbols-outlined" style={{color: '#3dbff2'}}>queue</span>
@@ -134,27 +237,60 @@ export default function OperationsConsole() {
                   <span className="text-sm">API Response Time</span>
                   <div className="flex items-center gap-2">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-500 h-2 rounded-full" style={{width: '85%'}}></div>
+                      <div
+                        className={`h-2 rounded-full ${
+                          (operationalStats?.api_response_time || 0) > 200 ? 'bg-red-500' :
+                          (operationalStats?.api_response_time || 0) > 150 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        style={{width: `${Math.min(100, ((operationalStats?.api_response_time || 0) / 300) * 100)}%`}}
+                      ></div>
                     </div>
-                    <span className="text-sm font-medium text-green-600">142ms</span>
+                    <span className={`text-sm font-medium ${
+                      (operationalStats?.api_response_time || 0) > 200 ? 'text-red-600' :
+                      (operationalStats?.api_response_time || 0) > 150 ? 'text-yellow-600' : 'text-green-600'
+                    }`}>
+                      {isLoading ? '...' : `${operationalStats?.api_response_time || 0}ms`}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Memory Usage</span>
                   <div className="flex items-center gap-2">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="h-2 rounded-full" style={{width: '68%', backgroundColor: '#3dbff2'}}></div>
+                      <div
+                        className={`h-2 rounded-full ${
+                          (operationalStats?.memory_usage || 0) > 85 ? 'bg-red-500' :
+                          (operationalStats?.memory_usage || 0) > 70 ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`}
+                        style={{width: `${operationalStats?.memory_usage || 0}%`}}
+                      ></div>
                     </div>
-                    <span className="text-sm font-medium" style={{color: '#3dbff2'}}>68%</span>
+                    <span className={`text-sm font-medium ${
+                      (operationalStats?.memory_usage || 0) > 85 ? 'text-red-600' :
+                      (operationalStats?.memory_usage || 0) > 70 ? 'text-yellow-600' : 'text-blue-600'
+                    }`}>
+                      {isLoading ? '...' : `${operationalStats?.memory_usage || 0}%`}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Error Rate</span>
                   <div className="flex items-center gap-2">
                     <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div className="bg-red-500 h-2 rounded-full" style={{width: '12%'}}></div>
+                      <div
+                        className={`h-2 rounded-full ${
+                          (operationalStats?.error_rate || 0) > 5 ? 'bg-red-500' :
+                          (operationalStats?.error_rate || 0) > 2 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        style={{width: `${Math.min(100, (operationalStats?.error_rate || 0) * 10)}%`}}
+                      ></div>
                     </div>
-                    <span className="text-sm font-medium text-red-600">0.8%</span>
+                    <span className={`text-sm font-medium ${
+                      (operationalStats?.error_rate || 0) > 5 ? 'text-red-600' :
+                      (operationalStats?.error_rate || 0) > 2 ? 'text-yellow-600' : 'text-green-600'
+                    }`}>
+                      {isLoading ? '...' : `${operationalStats?.error_rate || 0}%`}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -178,69 +314,81 @@ export default function OperationsConsole() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 font-medium" style={{color: '#0a2240'}}>AI-Voice-Agent-001</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Running</span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">2 minutes ago</td>
-                    <td className="px-6 py-4 text-gray-600">v2.1.4</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">pause</span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">restart_alt</span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">settings</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 font-medium" style={{color: '#0a2240'}}>AI-Voice-Agent-002</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Running</span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">1 minute ago</td>
-                    <td className="px-6 py-4 text-gray-600">v2.1.4</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">pause</span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">restart_alt</span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">settings</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 font-medium" style={{color: '#0a2240'}}>AI-Voice-Agent-003</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Training</span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">5 minutes ago</td>
-                    <td className="px-6 py-4 text-gray-600">v2.0.8</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">play_arrow</span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">restart_alt</span>
-                        </button>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <span className="material-symbols-outlined text-base">settings</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3dbff2] mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Loading agents...</p>
+                      </td>
+                    </tr>
+                  ) : agents.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center">
+                        <div className="text-gray-500">
+                          <span className="material-symbols-outlined text-4xl mb-2 block">psychology</span>
+                          <p className="text-sm">No Retell AI agents found</p>
+                          <p className="text-xs mt-1">Configure your RETELL_API_KEY to see your agents</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    agents.map((agent, index) => {
+                      const getLastModifiedTime = (timestamp: string) => {
+                        const date = new Date(timestamp);
+                        const now = new Date();
+                        const diffTime = Math.abs(now.getTime() - date.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                      };
+
+                      return (
+                        <tr key={agent.id}>
+                          <td className="px-6 py-4 font-medium" style={{color: '#0a2240'}}>
+                            {agent.name}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAgentStatusColor(agent.status)}`}>
+                              {agent.status === 'active' ? 'Active' : agent.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">
+                            {getLastModifiedTime(agent.last_modified)}
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">
+                            <div className="text-xs">
+                              <div>{agent.language || 'en-US'}</div>
+                              <div className="text-gray-400">{agent.response_engine}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                className="text-gray-400 hover:text-gray-600"
+                                title="View Agent Details"
+                                onClick={() => console.log('View agent:', agent.id)}
+                              >
+                                <span className="material-symbols-outlined text-base">visibility</span>
+                              </button>
+                              <button
+                                className="text-gray-400 hover:text-gray-600"
+                                title="Agent Settings"
+                                onClick={() => console.log('Settings for:', agent.id)}
+                              >
+                                <span className="material-symbols-outlined text-base">settings</span>
+                              </button>
+                              <button
+                                className="text-gray-400 hover:text-gray-600"
+                                title="Test Agent"
+                                onClick={() => console.log('Test agent:', agent.id)}
+                              >
+                                <span className="material-symbols-outlined text-base">play_arrow</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -253,36 +401,32 @@ export default function OperationsConsole() {
               <button className="text-sm text-gray-600 hover:text-gray-900">View All</button>
             </div>
             <div className="p-6">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">AI-Voice-Agent-001 successfully completed call with lead #1247</p>
-                    <p className="text-xs text-gray-500">2 minutes ago</p>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#3dbff2]"></div>
+                  <span className="ml-2 text-sm text-gray-500">Loading logs...</span>
+                </div>
+              ) : systemLogs.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-500">
+                    <span className="material-symbols-outlined text-4xl mb-2 block">description</span>
+                    <p className="text-sm">No recent system activity</p>
+                    <p className="text-xs mt-1">System logs will appear here as events occur</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">Knowledge base synchronized successfully</p>
-                    <p className="text-xs text-gray-500">15 minutes ago</p>
-                  </div>
+              ) : (
+                <div className="space-y-3">
+                  {systemLogs.map((log, index) => (
+                    <div key={log.id} className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${getLogSeverityColor(log.severity)}`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm">{log.message}</p>
+                        <p className="text-xs text-gray-500">{log.timestamp}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">AI-Voice-Agent-003 entered training mode for performance optimization</p>
-                    <p className="text-xs text-gray-500">1 hour ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm">System backup completed successfully</p>
-                    <p className="text-xs text-gray-500">3 hours ago</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
