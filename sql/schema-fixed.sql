@@ -1,4 +1,4 @@
--- Cold Solutions CRM Database Schema
+-- Cold Solutions CRM Database Schema (Fixed Version)
 -- Run this in your Supabase SQL Editor
 
 -- Enable UUID extension if not already enabled
@@ -97,7 +97,7 @@ ALTER TABLE crm_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crm_call_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crm_settings ENABLE ROW LEVEL SECURITY;
 
--- Policies for crm_users
+-- Policies for crm_users (fixed UUID comparison)
 CREATE POLICY "Users can view own profile" ON crm_users
   FOR SELECT USING (auth.uid() = id);
 
@@ -114,30 +114,9 @@ CREATE POLICY "Authenticated users can insert call logs" ON crm_call_logs
 CREATE POLICY "Authenticated users can update call logs" ON crm_call_logs
   FOR UPDATE USING (auth.role() = 'authenticated');
 
--- Policies for crm_settings
+-- Policies for crm_settings (fixed UUID comparison)
 CREATE POLICY "Users can view own settings" ON crm_settings
   FOR SELECT USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can manage own settings" ON crm_settings
   FOR ALL USING (auth.uid() = user_id);
-
--- Insert default admin user (optional)
--- INSERT INTO crm_users (id, email, name, role)
--- VALUES (
---   '00000000-0000-0000-0000-000000000000',
---   'admin@coldsolutions.com',
---   'CRM Administrator',
---   'admin'
--- ) ON CONFLICT (email) DO NOTHING;
-
--- Insert some default settings
--- INSERT INTO crm_settings (user_id, settings)
--- VALUES (
---   '00000000-0000-0000-0000-000000000000',
---   '{
---     "dashboard_refresh_interval": 30,
---     "default_time_period": "week",
---     "email_notifications": true,
---     "call_outcome_reminders": true
---   }'
--- ) ON CONFLICT (user_id) DO NOTHING;

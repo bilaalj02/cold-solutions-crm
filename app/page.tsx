@@ -175,46 +175,52 @@ function ColdSolutionsDashboard() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Load leads and calculate stats
-      const loadedLeads = LeadManager.getLeads();
-      setLeads(loadedLeads);
+      try {
+        // Load leads and calculate stats
+        const loadedLeads = LeadManager.getLeads();
+        setLeads(loadedLeads);
 
-      // Calculate real stats based on time period
-      const today = new Date();
-      const periodDays = timePeriod === 'day' ? 1 : timePeriod === 'week' ? 7 : 30;
-      const periodAgo = new Date(today.getTime() - periodDays * 24 * 60 * 60 * 1000);
+        // Calculate real stats based on time period
+        const today = new Date();
+        const periodDays = timePeriod === 'day' ? 1 : timePeriod === 'week' ? 7 : 30;
+        const periodAgo = new Date(today.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
-      const recentLeads = loadedLeads.filter(lead =>
-        new Date(lead.createdAt) >= periodAgo
-      );
+        const recentLeads = loadedLeads.filter(lead =>
+          new Date(lead.createdAt) >= periodAgo
+        );
 
-      const qualifiedLeads = loadedLeads.filter(lead =>
-        ['Qualified', 'Proposal', 'Won'].includes(lead.status)
-      );
+        const qualifiedLeads = loadedLeads.filter(lead =>
+          ['Qualified', 'Proposal', 'Won'].includes(lead.status)
+        );
 
-      const convertedLeads = loadedLeads.filter(lead => lead.status === 'Won');
+        const convertedLeads = loadedLeads.filter(lead => lead.status === 'Won');
 
-      setStats({
-        newLeads: recentLeads.length,
-        callsThisWeek: Math.floor(recentLeads.length * 1.8), // Will be updated by fetchCallStats
-        meetingsBooked: qualifiedLeads.length,
-        conversionRate: loadedLeads.length > 0 ? Math.round((convertedLeads.length / loadedLeads.length) * 100) : 0
-      });
+        setStats({
+          newLeads: recentLeads.length,
+          callsThisWeek: Math.floor(recentLeads.length * 1.8), // Will be updated by fetchCallStats
+          meetingsBooked: qualifiedLeads.length,
+          conversionRate: loadedLeads.length > 0 ? Math.round((convertedLeads.length / loadedLeads.length) * 100) : 0
+        });
 
-      // Fetch real call data from Cold Caller integration
-      await fetchRealCallData();
-
-      setIsLoading(false);
+        // Fetch real call data from Cold Caller integration (client-side only)
+        if (typeof window !== 'undefined') {
+          await fetchRealCallData();
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadData();
   }, [timePeriod]);
 
-  // Real-time updates - fetch call data every 30 seconds
+  // Real-time updates - fetch call data every 30 seconds (client-side only)
   useEffect(() => {
+    if (typeof window === 'undefined') return; // Skip on server-side
+
     const interval = setInterval(() => {
       console.log('🔄 Auto-refreshing call data...');
       fetchRealCallData(true);
