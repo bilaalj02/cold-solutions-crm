@@ -89,15 +89,30 @@ export async function GET(request: Request): Promise<NextResponse> {
     console.log('📋 Processing agents list:', agentsList.length, 'items');
 
     // Transform agent data for the UI
-    const transformedAgents = agentsList.map((agent: RetellAgent) => ({
+    const transformedAgents = agentsList.map((agent: RetellAgent) => {
+      try {
+        return {
       id: agent.agent_id,
       name: agent.agent_name || `Agent ${agent.agent_id.slice(-4)}`,
       status: 'active', // Retell AI doesn't provide real-time status, assume active
       voice_id: agent.voice_id,
       language: agent.language || 'en-US',
       response_engine: agent.response_engine?.type || 'unknown',
-      last_modified: new Date(agent.last_modification_timestamp).toISOString(),
-      created: new Date(agent.created_timestamp).toISOString(),
+      last_modified: (() => {
+        try {
+          return agent.last_modification_timestamp ? new Date(agent.last_modification_timestamp).toISOString() : new Date().toISOString();
+        } catch (e) {
+          console.warn('Invalid timestamp for agent', agent.agent_id, ':', agent.last_modification_timestamp);
+          return new Date().toISOString();
+        }
+      })(),
+      created: (() => {
+        try {
+          return agent.last_modification_timestamp ? new Date(agent.last_modification_timestamp).toISOString() : new Date().toISOString();
+        } catch (e) {
+          return new Date().toISOString();
+        }
+      })(),
       settings: {
         interruption_sensitivity: agent.interruption_sensitivity,
         responsiveness: agent.responsiveness,
@@ -106,7 +121,12 @@ export async function GET(request: Request): Promise<NextResponse> {
         reminder_max_count: agent.reminder_max_count,
         ambient_sound: agent.ambient_sound
       }
-    }));
+    };
+      } catch (error) {
+        console.error('Error transforming agent:', agent?.agent_id, error);
+        return null;
+      }
+    }).filter(Boolean);
 
     return NextResponse.json({
       success: true,
