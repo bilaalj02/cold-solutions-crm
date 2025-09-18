@@ -232,7 +232,7 @@ export default function AdvancedAnalyticsPage() {
               {[
                 { key: 'overview', label: 'Overview', icon: 'dashboard' },
                 { key: 'revenue', label: 'Revenue', icon: 'trending_up' },
-                { key: 'conversion', label: 'Conversion Funnel', icon: 'funnel_chart' },
+                { key: 'conversion', label: 'Funnel Chart', icon: 'funnel_chart' },
                 { key: 'territories', label: 'Territories', icon: 'map' },
                 { key: 'channels', label: 'Channels', icon: 'campaign' },
                 { key: 'automation', label: 'Make.com Automation', icon: 'smart_toy' },

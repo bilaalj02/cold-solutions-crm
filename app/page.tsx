@@ -391,7 +391,7 @@ function ColdSolutionsDashboard() {
                     { key: 'overview', label: 'Overview', icon: 'dashboard' },
                     { key: 'outreach', label: 'Outreach Methods', icon: 'campaign' },
                     { key: 'voice', label: 'Voice Agent', icon: 'record_voice_over' },
-                    { key: 'pipeline', label: 'Pipeline', icon: 'funnel_chart' }
+                    { key: 'pipeline', label: 'Funnel Chart', icon: 'funnel_chart' }
                   ].map((tab) => (
                     <button
                       key={tab.key}
