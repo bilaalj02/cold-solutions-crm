@@ -73,6 +73,30 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>database</span>
                   <p className="text-sm leading-normal">All Leads</p>
                 </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/Cold Solutions Inbound">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>call_received</span>
+                  <p className="text-sm leading-normal">Inbound Leads</p>
+                </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/website-leads">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>language</span>
+                  <p className="text-sm leading-normal">Website Leads</p>
+                </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/ai-audit-pre-call">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>psychology</span>
+                  <p className="text-sm leading-normal">AI Audit (Pre-Call)</p>
+                </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/ai-audit-post-call">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>psychology_alt</span>
+                  <p className="text-sm leading-normal">AI Audit (Post-Call)</p>
+                </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/Whats App followup leads">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chat</span>
+                  <p className="text-sm leading-normal">WhatsApp Follow-up</p>
+                </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/Whatsapp bot leads">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>smart_toy</span>
+                  <p className="text-sm leading-normal">WhatsApp Bot Leads</p>
+                </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads/management">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>settings</span>
                   <p className="text-sm leading-normal">Advanced Management</p>
