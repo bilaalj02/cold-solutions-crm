@@ -206,6 +206,71 @@ export default function OperationsConsole() {
             </div>
           </div>
 
+          {/* Call Analytics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Voice Agent Calls</p>
+                  <p className="text-2xl font-bold mt-1" style={{color: '#10b981'}}>
+                    {isLoading ? '...' : operationalStats?.voice_agent_calls_today || 0}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Today</p>
+                </div>
+                <div className="p-3 rounded-full bg-green-100">
+                  <span className="material-symbols-outlined text-green-600">record_voice_over</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Avg Call Duration</p>
+                  <p className="text-2xl font-bold mt-1" style={{color: '#f59e0b'}}>
+                    {isLoading ? '...' : `${operationalStats?.average_call_duration || 0}s`}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Today</p>
+                </div>
+                <div className="p-3 rounded-full bg-yellow-100">
+                  <span className="material-symbols-outlined text-yellow-600">timer</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total Call Minutes</p>
+                  <p className="text-2xl font-bold mt-1" style={{color: '#8b5cf6'}}>
+                    {isLoading ? '...' : operationalStats?.total_call_minutes_today || 0}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Today</p>
+                </div>
+                <div className="p-3 rounded-full bg-purple-100">
+                  <span className="material-symbols-outlined text-purple-600">schedule</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Published Agents</p>
+                  <p className="text-2xl font-bold mt-1" style={{color: '#3dbff2'}}>
+                    {isLoading ? '...' : operationalStats?.published_agents || 0}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    of {operationalStats?.active_agents || 0} total
+                  </p>
+                </div>
+                <div className="p-3 rounded-full" style={{backgroundColor: '#e1f5fe'}}>
+                  <span className="material-symbols-outlined" style={{color: '#3dbff2'}}>verified</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">

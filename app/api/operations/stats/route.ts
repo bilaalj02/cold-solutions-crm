@@ -14,6 +14,7 @@ const corsHeaders = {
 export interface OperationalStats {
   system_status: 'operational' | 'degraded' | 'down';
   active_agents: number;
+  published_agents: number;
   queue_depth: number;
   api_response_time: number;
   memory_usage: number;
@@ -21,6 +22,10 @@ export interface OperationalStats {
   calls_today: number;
   success_rate_today: number;
   uptime_percentage: number;
+  voice_agent_calls_today: number;
+  average_call_duration: number;
+  total_call_minutes_today: number;
+  peak_calls_hour: number;
 }
 
 export async function OPTIONS(request: Request) {
@@ -71,12 +76,14 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Simulate queue depth based on recent activity
     const queueDepth = Math.max(0, Math.floor(recentActivity * 1.5 + Math.random() * 10));
 
-    // Try to get actual agent count from Retell AI
+    // Get actual agent count and analytics from Retell AI
     let activeAgents = 0;
+    let publishedAgents = 0;
+
     try {
       const retellApiKey = process.env.RETELL_API_KEY;
       if (retellApiKey) {
-        const agentResponse = await fetch('https://api.retellai.com/v2/list-agents', {
+        const agentResponse = await fetch('https://api.retellai.com/list-agents', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${retellApiKey}`,
@@ -86,25 +93,64 @@ export async function GET(request: Request): Promise<NextResponse> {
 
         if (agentResponse.ok) {
           const agentData = await agentResponse.json();
-          activeAgents = agentData.agents?.length || 0;
+          const agents = Array.isArray(agentData) ? agentData : [];
+
+          // Count total agents and published agents
+          activeAgents = agents.length;
+          publishedAgents = agents.filter(agent => agent.is_published).length;
+
+          console.log('📊 Real agent count:', {
+            total_agents: activeAgents,
+            published_agents: publishedAgents
+          });
         }
       }
     } catch (error) {
       console.warn('Could not fetch agent count from Retell AI:', error);
-      // Fallback to a reasonable default
-      activeAgents = totalCalls > 0 ? Math.max(1, Math.min(5, Math.ceil(totalCalls / 10))) : 1;
+      // Fallback based on call data
+      const retellCalls = recentCalls.calls.filter(call =>
+        call.caller_name === 'Retell AI Voice Agent'
+      ).length;
+      activeAgents = retellCalls > 0 ? Math.max(1, Math.ceil(retellCalls / 5)) : 0;
+      publishedAgents = activeAgents;
     }
+
+    // Calculate enhanced call analytics
+    const voiceAgentCalls = recentCalls.calls.filter(call =>
+      call.caller_name === 'Retell AI Voice Agent'
+    ).length;
+
+    const totalCallDuration = recentCalls.calls.reduce((sum, call) =>
+      sum + (call.call_duration || 0), 0
+    );
+
+    const averageCallDuration = totalCalls > 0 ? Math.round(totalCallDuration / totalCalls) : 0;
+    const totalCallMinutes = Math.round(totalCallDuration / 60);
+
+    // Calculate peak hour (simplified - hour with most calls)
+    const callsByHour: Record<number, number> = {};
+    recentCalls.calls.forEach(call => {
+      const hour = new Date(call.timestamp).getHours();
+      callsByHour[hour] = (callsByHour[hour] || 0) + 1;
+    });
+
+    const peakCallsHour = Math.max(...Object.values(callsByHour), 0);
 
     const stats: OperationalStats = {
       system_status: systemStatus,
       active_agents: activeAgents,
+      published_agents: publishedAgents,
       queue_depth: queueDepth,
       api_response_time: Math.round(apiResponseTime),
       memory_usage: Math.round(memoryUsage),
       error_rate: Math.round(errorRate * 10) / 10, // One decimal place
       calls_today: totalCalls,
       success_rate_today: Math.round(successRate),
-      uptime_percentage: Math.round(uptime * 10) / 10 // One decimal place
+      uptime_percentage: Math.round(uptime * 10) / 10, // One decimal place
+      voice_agent_calls_today: voiceAgentCalls,
+      average_call_duration: averageCallDuration,
+      total_call_minutes_today: totalCallMinutes,
+      peak_calls_hour: peakCallsHour
     };
 
     console.log('📊 Operational stats calculated:', {
@@ -129,13 +175,18 @@ export async function GET(request: Request): Promise<NextResponse> {
       stats: {
         system_status: 'degraded' as const,
         active_agents: 0,
+        published_agents: 0,
         queue_depth: 0,
         api_response_time: 0,
         memory_usage: 0,
         error_rate: 100,
         calls_today: 0,
         success_rate_today: 0,
-        uptime_percentage: 0
+        uptime_percentage: 0,
+        voice_agent_calls_today: 0,
+        average_call_duration: 0,
+        total_call_minutes_today: 0,
+        peak_calls_hour: 0
       },
       timestamp: new Date().toISOString()
     }, { status: 500, headers: corsHeaders });
