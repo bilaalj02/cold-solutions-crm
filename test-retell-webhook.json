@@ -1,0 +1,25 @@
+{
+  "event": "call_ended",
+  "call": {
+    "call_id": "retell_test_call_123456",
+    "from_number": "+12137771234",
+    "to_number": "+12137771235",
+    "direction": "inbound",
+    "call_status": "registered",
+    "start_timestamp": 1714608475945,
+    "end_timestamp": 1714608551736,
+    "disconnection_reason": "user_hangup",
+    "transcript": "Hello, I'm interested in learning more about your AI voice solutions. Can you tell me about pricing and implementation timeline? This sounds like exactly what our company needs for our customer service department.",
+    "agent_id": "oBeDLoLOeuAbiuaMFXRtDOLriTJ5tSxD",
+    "metadata": {
+      "customer_name": "John Smith",
+      "company": "Tech Innovations Inc",
+      "industry": "Technology"
+    },
+    "retell_llm_dynamic_variables": {
+      "customer_name": "John Smith",
+      "customer_email": "john.smith@techinnovations.com",
+      "company": "Tech Innovations Inc"
+    }
+  }
+}

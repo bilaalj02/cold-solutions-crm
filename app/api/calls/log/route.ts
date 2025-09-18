@@ -38,13 +38,113 @@ export interface CallLogResponse {
   timestamp: string;
 }
 
+// Retell AI webhook interface
+export interface RetellWebhookData {
+  event: 'call_started' | 'call_ended' | 'call_analyzed';
+  call: {
+    call_id: string;
+    from_number?: string;
+    to_number?: string;
+    direction?: 'inbound' | 'outbound';
+    call_status?: string;
+    start_timestamp?: number;
+    end_timestamp?: number;
+    disconnection_reason?: string;
+    transcript?: string;
+    agent_id?: string;
+    metadata?: Record<string, any>;
+    retell_llm_dynamic_variables?: Record<string, any>;
+  };
+}
+
+// Helper function to detect if data is from Retell AI webhook
+function isRetellWebhookData(data: any): data is RetellWebhookData {
+  return data.event && data.call && data.call.call_id;
+}
+
+// Helper function to convert Retell AI webhook data to CallLogData format
+function convertRetellToCallLogData(retellData: RetellWebhookData): CallLogData {
+  const call = retellData.call;
+
+  // Calculate call duration
+  const callDuration = call.start_timestamp && call.end_timestamp
+    ? Math.round((call.end_timestamp - call.start_timestamp) / 1000)
+    : undefined;
+
+  // Determine call outcome based on disconnection reason and call status
+  let callOutcome: CallLogData['callOutcome'] = 'No Answer'; // Default
+
+  if (call.disconnection_reason === 'user_hangup' && callDuration && callDuration > 30) {
+    callOutcome = 'Interested'; // Assume longer calls are positive
+  } else if (call.disconnection_reason === 'agent_hangup') {
+    callOutcome = 'Follow Up Required';
+  } else if (call.call_status === 'registered' && callDuration && callDuration > 60) {
+    callOutcome = 'Booked Demo'; // Longer successful calls
+  }
+
+  // Extract lead info from dynamic variables or metadata
+  const leadName = call.retell_llm_dynamic_variables?.customer_name ||
+                   call.metadata?.customer_name ||
+                   call.from_number ||
+                   'Unknown Caller';
+
+  const leadPhone = call.from_number || call.to_number || 'Unknown';
+
+  return {
+    leadId: call.call_id,
+    leadName,
+    leadPhone,
+    leadEmail: call.retell_llm_dynamic_variables?.customer_email || call.metadata?.customer_email,
+    leadCompany: call.retell_llm_dynamic_variables?.company || call.metadata?.company,
+    callOutcome,
+    callNotes: call.transcript ? `Retell AI Call Transcript: ${call.transcript.substring(0, 500)}...` : 'Retell AI Voice Call',
+    callerName: 'Retell AI Voice Agent',
+    callerRole: 'AI Agent',
+    callDuration,
+    timestamp: call.end_timestamp ? new Date(call.end_timestamp).toISOString() : new Date().toISOString(),
+    leadSource: 'Retell AI Voice Agent',
+    leadIndustry: call.metadata?.industry,
+    leadTerritory: call.metadata?.territory
+  };
+}
+
 export async function OPTIONS(request: Request) {
   return new Response(null, { status: 200, headers: corsHeaders });
 }
 
 export async function POST(request: Request): Promise<NextResponse<CallLogResponse>> {
   try {
-    const callData: CallLogData = await request.json();
+    const rawData = await request.json();
+
+    // Detect data source and convert if needed
+    let callData: CallLogData;
+
+    if (isRetellWebhookData(rawData)) {
+      // Handle Retell AI webhook data
+      console.log('📞 Retell AI webhook received:', {
+        event: rawData.event,
+        callId: rawData.call.call_id,
+        direction: rawData.call.direction,
+        duration: rawData.call.end_timestamp && rawData.call.start_timestamp
+          ? Math.round((rawData.call.end_timestamp - rawData.call.start_timestamp) / 1000)
+          : 'unknown'
+      });
+
+      // Only process call_ended events for logging
+      if (rawData.event !== 'call_ended') {
+        console.log(`⏭️ Skipping ${rawData.event} event - only logging call_ended events`);
+        return NextResponse.json({
+          success: true,
+          message: `${rawData.event} event received but not logged`,
+          timestamp: new Date().toISOString()
+        }, { headers: corsHeaders });
+      }
+
+      callData = convertRetellToCallLogData(rawData);
+    } else {
+      // Handle Cold Caller App data (existing format)
+      callData = rawData as CallLogData;
+    }
 
     // Validate required fields (leadEmail is optional)
     if (!callData.leadId || !callData.leadName || !callData.leadPhone || !callData.callOutcome || !callData.callerName) {
@@ -65,13 +165,15 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
     }
 
     // Log the received call data
-    console.log('✅ Call received from Cold Caller App:', {
+    const dataSource = isRetellWebhookData(rawData) ? 'Retell AI' : 'Cold Caller App';
+    console.log(`✅ Call received from ${dataSource}:`, {
       leadName: callData.leadName,
       callOutcome: callData.callOutcome,
       callerName: callData.callerName,
       timestamp: callData.timestamp,
       leadId: callData.leadId,
-      leadPhone: callData.leadPhone
+      leadPhone: callData.leadPhone,
+      source: callData.leadSource
     });
 
     // Generate a unique call ID
