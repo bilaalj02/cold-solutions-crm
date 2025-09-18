@@ -10,6 +10,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+// In-memory storage for call logs (replace with database in production)
+let callLogs: Array<CallLogData & { callId: string; timestamp: string }> = [];
+
 export interface CallLogData {
   leadId: string;
   leadName: string;
@@ -76,21 +79,28 @@ export async function POST(request: Request): Promise<NextResponse<CallLogRespon
     // Generate a unique call ID
     const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Here you would typically save to your database
-    // For now, we'll simulate successful storage
+    // Store call data in memory (replace with database in production)
+    const callRecord = {
+      ...callData,
+      callId,
+      timestamp: new Date().toISOString()
+    };
 
-    // You can add database storage logic here, for example:
-    // await saveToCRMDatabase(callData, callId);
+    callLogs.push(callRecord);
 
-    // For now, just log to console for debugging
-    console.log('Call data received in CRM:', {
+    // Keep only last 1000 calls to prevent memory issues
+    if (callLogs.length > 1000) {
+      callLogs = callLogs.slice(-1000);
+    }
+
+    console.log('📞 Call stored in CRM:', {
       callId,
       leadName: callData.leadName,
       company: callData.leadCompany,
       outcome: callData.callOutcome,
       notes: callData.callNotes,
       caller: callData.callerName,
-      timestamp: callData.timestamp
+      totalCalls: callLogs.length
     });
 
     return NextResponse.json({
@@ -122,25 +132,34 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     console.log('Call logs requested with filters:', { date, caller, outcome, limit });
 
-    // For now, return mock data - you would replace this with actual database queries
-    const mockCallLogs = [
-      {
-        callId: 'call_example_1',
-        leadName: 'John Doe',
-        leadCompany: 'Acme Corp',
-        leadPhone: '+1234567890',
-        callOutcome: 'Interested',
-        callNotes: 'Very interested in our services, wants to schedule a demo',
-        callerName: 'Sarah Johnson',
-        timestamp: new Date().toISOString(),
-        callDuration: 180
-      }
-    ];
+    // Filter call logs based on parameters
+    let filteredCalls = [...callLogs];
+
+    if (date) {
+      const filterDate = new Date(date).toDateString();
+      filteredCalls = filteredCalls.filter(call =>
+        new Date(call.timestamp).toDateString() === filterDate
+      );
+    }
+
+    if (caller) {
+      filteredCalls = filteredCalls.filter(call =>
+        call.callerName.toLowerCase().includes(caller.toLowerCase())
+      );
+    }
+
+    if (outcome) {
+      filteredCalls = filteredCalls.filter(call => call.callOutcome === outcome);
+    }
+
+    // Sort by timestamp (newest first) and limit results
+    filteredCalls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const paginatedCalls = filteredCalls.slice(0, limit);
 
     return NextResponse.json({
       success: true,
-      calls: mockCallLogs,
-      total: mockCallLogs.length,
+      calls: paginatedCalls,
+      total: filteredCalls.length,
       timestamp: new Date().toISOString()
     }, { headers: corsHeaders });
 

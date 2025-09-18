@@ -10,6 +10,150 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+// Import call logs from the log endpoint (in production, use shared database)
+// For now, we'll fetch from the API endpoint
+async function getCallLogs() {
+  try {
+    const response = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/calls/log?limit=1000`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.calls || [];
+    }
+  } catch (error) {
+    console.error('Error fetching call logs for stats:', error);
+  }
+  return [];
+}
+
+// Helper function to check if a call outcome is successful
+function isSuccessfulOutcome(outcome: string): boolean {
+  return ['Booked Demo', 'Interested', 'Requested More Info'].includes(outcome);
+}
+
+// Helper function to check if a call outcome is unsuccessful
+function isUnsuccessfulOutcome(outcome: string): boolean {
+  return ['Not Interested', 'No Answer'].includes(outcome);
+}
+
+// Helper function to check if a call outcome is pending
+function isPendingOutcome(outcome: string): boolean {
+  return ['Callback Requested', 'Follow Up Required'].includes(outcome);
+}
+
+// Calculate statistics from real call data
+function calculateStatsFromCalls(calls: any[], callerFilter?: string | null, dateFrom?: string | null, dateTo?: string | null): CallStats {
+  // Apply filters
+  let filteredCalls = calls;
+
+  if (callerFilter) {
+    filteredCalls = filteredCalls.filter(call =>
+      call.callerName.toLowerCase().includes(callerFilter.toLowerCase())
+    );
+  }
+
+  if (dateFrom || dateTo) {
+    filteredCalls = filteredCalls.filter(call => {
+      const callDate = new Date(call.timestamp);
+      if (dateFrom && callDate < new Date(dateFrom)) return false;
+      if (dateTo && callDate > new Date(dateTo)) return false;
+      return true;
+    });
+  }
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(todayStart);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Filter calls by time periods
+  const todayCalls = filteredCalls.filter(call => new Date(call.timestamp) >= todayStart);
+  const weekCalls = filteredCalls.filter(call => new Date(call.timestamp) >= weekStart);
+  const monthCalls = filteredCalls.filter(call => new Date(call.timestamp) >= monthStart);
+
+  // Calculate today's stats
+  const todayStats = {
+    totalCalls: todayCalls.length,
+    successful: todayCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
+    unsuccessful: todayCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
+    pending: todayCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
+    callsByOutcome: todayCalls.reduce((acc, call) => {
+      acc[call.callOutcome] = (acc[call.callOutcome] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>)
+  };
+
+  // Calculate this week's stats
+  const callsByDay = weekCalls.reduce((acc, call) => {
+    const dayName = new Date(call.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
+    acc[dayName] = (acc[dayName] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Ensure all days are represented
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  daysOfWeek.forEach(day => {
+    if (!callsByDay[day]) callsByDay[day] = 0;
+  });
+
+  const weekStats = {
+    totalCalls: weekCalls.length,
+    successful: weekCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
+    unsuccessful: weekCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
+    pending: weekCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
+    callsByDay
+  };
+
+  // Calculate this month's stats and top callers
+  const callerStats = monthCalls.reduce((acc, call) => {
+    if (!acc[call.callerName]) {
+      acc[call.callerName] = { total: 0, successful: 0 };
+    }
+    acc[call.callerName].total++;
+    if (isSuccessfulOutcome(call.callOutcome)) {
+      acc[call.callerName].successful++;
+    }
+    return acc;
+  }, {} as Record<string, { total: number; successful: number }>);
+
+  const topCallers = Object.entries(callerStats)
+    .map(([name, stats]) => ({
+      name,
+      calls: stats.total,
+      successRate: stats.total > 0 ? (stats.successful / stats.total) * 100 : 0
+    }))
+    .sort((a, b) => b.calls - a.calls)
+    .slice(0, 5);
+
+  const monthStats = {
+    totalCalls: monthCalls.length,
+    successful: monthCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
+    unsuccessful: monthCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
+    pending: monthCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
+    topCallers
+  };
+
+  // Calculate all-time stats
+  const averageCallDuration = filteredCalls.length > 0
+    ? filteredCalls.reduce((sum, call) => sum + (call.callDuration || 0), 0) / filteredCalls.length
+    : 0;
+
+  const allTimeStats = {
+    totalCalls: filteredCalls.length,
+    successful: filteredCalls.filter(call => isSuccessfulOutcome(call.callOutcome)).length,
+    unsuccessful: filteredCalls.filter(call => isUnsuccessfulOutcome(call.callOutcome)).length,
+    pending: filteredCalls.filter(call => isPendingOutcome(call.callOutcome)).length,
+    averageCallDuration: Math.round(averageCallDuration)
+  };
+
+  return {
+    today: todayStats,
+    thisWeek: weekStats,
+    thisMonth: monthStats,
+    allTime: allTimeStats
+  };
+}
+
 export interface CallStats {
   today: {
     totalCalls: number;
@@ -54,61 +198,13 @@ export async function GET(request: Request): Promise<NextResponse<CallStats | { 
 
     console.log('Call stats requested with filters:', { callerFilter, dateFrom, dateTo });
 
-    // For now, return mock data - you would replace this with actual database queries
-    const mockStats: CallStats = {
-      today: {
-        totalCalls: 23,
-        successful: 8, // Booked Demo (3) + Interested (5)
-        unsuccessful: 12, // Not Interested (8) + No Answer (4)
-        pending: 3, // Callback Requested (2) + Follow Up Required (1)
-        callsByOutcome: {
-          'Booked Demo': 3,
-          'Interested': 5,
-          'Not Interested': 8,
-          'Requested More Info': 2,
-          'No Answer': 4,
-          'Callback Requested': 2,
-          'Follow Up Required': 1
-        }
-      },
-      thisWeek: {
-        totalCalls: 156,
-        successful: 47,
-        unsuccessful: 89,
-        pending: 20,
-        callsByDay: {
-          'Monday': 32,
-          'Tuesday': 28,
-          'Wednesday': 31,
-          'Thursday': 35,
-          'Friday': 30,
-          'Saturday': 0,
-          'Sunday': 0
-        }
-      },
-      thisMonth: {
-        totalCalls: 634,
-        successful: 198,
-        unsuccessful: 356,
-        pending: 80,
-        topCallers: [
-          { name: 'Sarah Johnson', calls: 89, successRate: 34.8 },
-          { name: 'Mike Chen', calls: 76, successRate: 31.6 },
-          { name: 'Emily Rodriguez', calls: 71, successRate: 29.6 },
-          { name: 'David Kim', calls: 68, successRate: 27.9 },
-          { name: 'Alex Thompson', calls: 65, successRate: 26.2 }
-        ]
-      },
-      allTime: {
-        totalCalls: 2847,
-        successful: 891,
-        unsuccessful: 1623,
-        pending: 333,
-        averageCallDuration: 127 // seconds
-      }
-    };
+    // Get real call logs from API
+    const callLogs = await getCallLogs();
 
-    return NextResponse.json(mockStats, { headers: corsHeaders });
+    // Calculate real statistics
+    const realStats: CallStats = calculateStatsFromCalls(callLogs, callerFilter, dateFrom, dateTo);
+
+    return NextResponse.json(realStats, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Error retrieving call stats:', error);
