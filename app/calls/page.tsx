@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import StandardSidebar from "../components/StandardSidebar";
+import StandardSidebar from "../../components/StandardSidebar";
 import { motion } from 'framer-motion';
 
 interface CallLog {
