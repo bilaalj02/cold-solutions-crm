@@ -133,9 +133,20 @@ export default function EmailInboxPage() {
           {/* Email List */}
           <div className="w-1/3 bg-white border-r">
             <div className="p-4 border-b">
-              <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
-                Inbox ({emails.length})
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
+                  Inbox ({emails.length})
+                </h3>
+                <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                  Demo Data
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-2 bg-blue-50 border-b">
+              <p className="text-xs text-blue-700">
+                ℹ️ This inbox shows demo data. Real email integration requires IMAP configuration which is not yet implemented.
+              </p>
             </div>
 
             {loading ? (
@@ -147,7 +158,9 @@ export default function EmailInboxPage() {
               <div className="p-8 text-center">
                 <span className="material-symbols-outlined text-gray-400 text-6xl">inbox</span>
                 <p className="text-gray-500 mt-4">No emails found</p>
-                <p className="text-sm text-gray-400 mt-2">Configure your SMTP settings to receive emails</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Real email integration requires IMAP setup. Currently showing demo data above.
+                </p>
               </div>
             ) : (
               <div className="overflow-y-auto">

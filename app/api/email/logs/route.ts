@@ -1,16 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
-// This is a placeholder API for email logs
-// In production, this would fetch from your email_logs table in Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '100');
     const status = searchParams.get('status');
+
+    // Try to fetch real email logs from Supabase
+    let query = supabase
+      .from('email_logs')
+      .select('*')
+      .order('sent_at', { ascending: false })
+      .limit(limit);
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data: realLogs, error } = await query;
+
+    // If we have real logs, use them; otherwise fall back to mock data
+    if (!error && realLogs && realLogs.length > 0) {
+      const logs = realLogs.map(log => ({
+        id: log.id,
+        templateId: log.template_id,
+        subject: log.subject,
+        status: log.status,
+        sentAt: log.sent_at,
+        deliveredAt: log.delivered_at,
+        openedAt: log.opened_at,
+        clickedAt: log.clicked_at,
+        repliedAt: log.replied_at,
+        errorMessage: log.error_message,
+        metadata: log.metadata
+      }));
+
+      return NextResponse.json({
+        success: true,
+        logs,
+        total: logs.length,
+        source: 'database',
+      });
+    }
 
     // Mock email logs data for demonstration
     // In production, you would fetch from Supabase email_logs table
@@ -100,7 +139,8 @@ export async function GET(request: NextRequest) {
       success: true,
       logs,
       total: filteredLogs.length,
-      notice: 'This is demo data. Real email logs will appear here once you start sending emails.',
+      source: 'mock',
+      notice: 'This is demo data. Real email logs will appear here once you start sending emails through the system.',
     });
   } catch (error) {
     console.error('Email logs fetch error:', error);

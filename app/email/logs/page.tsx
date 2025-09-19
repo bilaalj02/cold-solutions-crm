@@ -29,6 +29,8 @@ export default function EmailLogsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dataSource, setDataSource] = useState<string>('');
+  const [notice, setNotice] = useState<string>('');
 
   useEffect(() => {
     fetchEmailLogs();
@@ -44,6 +46,8 @@ export default function EmailLogsPage() {
           ...log,
           sentAt: new Date(log.sentAt)
         })));
+        setDataSource(data.source || 'unknown');
+        setNotice(data.notice || '');
       }
     } catch (error) {
       console.error('Failed to fetch email logs:', error);
@@ -203,7 +207,25 @@ export default function EmailLogsPage() {
               <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
                 Email Activity ({filteredLogs.length})
               </h3>
+              {dataSource === 'mock' && (
+                <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                  Demo Data
+                </div>
+              )}
+              {dataSource === 'database' && (
+                <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                  Live Data
+                </div>
+              )}
             </div>
+
+            {notice && dataSource === 'mock' && (
+              <div className="px-6 py-3 bg-blue-50 border-b">
+                <p className="text-sm text-blue-700">
+                  ℹ️ {notice}
+                </p>
+              </div>
+            )}
 
             {loading ? (
               <div className="p-8 text-center">

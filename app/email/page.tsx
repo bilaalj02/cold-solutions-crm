@@ -15,6 +15,8 @@ export default function EmailManagementPage() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showSequenceModal, setShowSequenceModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -69,6 +71,14 @@ export default function EmailManagementPage() {
   const handleCreateTemplate = () => {
     setEditingTemplate(null);
     setShowTemplateModal(true);
+  };
+
+  const handleCreateCampaign = () => {
+    setShowCampaignModal(true);
+  };
+
+  const handleCreateSequence = () => {
+    setShowSequenceModal(true);
   };
 
   const handleEditTemplate = (template: EmailTemplate) => {
@@ -253,7 +263,8 @@ export default function EmailManagementPage() {
                 </button>
               )}
               {activeTab === 'campaigns' && (
-                <button 
+                <button
+                  onClick={handleCreateCampaign}
                   className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
                   style={{backgroundColor: '#3dbff2'}}
                 >
@@ -262,7 +273,8 @@ export default function EmailManagementPage() {
                 </button>
               )}
               {activeTab === 'sequences' && (
-                <button 
+                <button
+                  onClick={handleCreateSequence}
                   className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
                   style={{backgroundColor: '#3dbff2'}}
                 >
@@ -718,6 +730,50 @@ export default function EmailManagementPage() {
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Campaign Modal (Placeholder) */}
+      {showCampaignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Create New Campaign</h3>
+              <p className="text-gray-600 mb-6">
+                Campaign creation feature is coming soon! This will allow you to create automated email campaigns.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowCampaignModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sequence Modal (Placeholder) */}
+      {showSequenceModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Create New Sequence</h3>
+              <p className="text-gray-600 mb-6">
+                Email sequence creation feature is coming soon! This will allow you to create automated email sequences.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowSequenceModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Close
                 </button>
               </div>
             </div>
