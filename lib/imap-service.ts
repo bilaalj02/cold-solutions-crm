@@ -116,100 +116,122 @@ export class IMAPService {
             part.which === 'HEADER.FIELDS (FROM TO SUBJECT DATE MESSAGE-ID IN-REPLY-TO REFERENCES)'
           );
 
-          // Try to get the message body more carefully
+          // Try multiple approaches to get email content
           let fullMessage: any;
+          let emailText = '';
+          let emailHtml = '';
+
+          // Approach 1: Try to get individual BODY parts
           try {
-            // Try to fetch the full RFC822 message
-            fullMessage = await connection.getPartData(message, 'RFC822');
-          } catch (rfcError) {
+            // Try to get BODY[1] (usually the main text content)
+            const bodyPart = await connection.getPartData(message, 'BODY[1]');
+            if (bodyPart) {
+              emailText = Buffer.isBuffer(bodyPart) ? bodyPart.toString('utf8') : String(bodyPart);
+              emailText = this.cleanEmailText(emailText);
+            }
+          } catch (bodyError) {
+            // Ignore and try next approach
+          }
+
+          // Approach 2: Try to get BODY[TEXT] if BODY[1] failed
+          if (!emailText) {
             try {
-              // Fallback to TEXT part
-              fullMessage = await connection.getPartData(message, 'TEXT');
+              const textPart = await connection.getPartData(message, 'BODY[TEXT]');
+              if (textPart) {
+                emailText = Buffer.isBuffer(textPart) ? textPart.toString('utf8') : String(textPart);
+                emailText = this.cleanEmailText(emailText);
+              }
             } catch (textError) {
-              // Final fallback - use header only and create basic email
-              console.log('Could not fetch message body, using header only');
-
-              const headerString = headerPart?.body ?
-                (Buffer.isBuffer(headerPart.body) ? headerPart.body.toString() : String(headerPart.body)) : '';
-
-              // Enhanced header parsing with better regex patterns that handle folded headers
-              const fromMatch = headerString.match(/From:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
-              const toMatch = headerString.match(/To:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
-              const subjectMatch = headerString.match(/Subject:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
-              const dateMatch = headerString.match(/Date:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
-              const messageIdMatch = headerString.match(/Message-ID:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
-
-              // Clean and decode the extracted values with better handling
-              let cleanFrom = fromMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Sender';
-              let cleanTo = toMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Recipient';
-              let cleanSubject = subjectMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'No Subject';
-              const cleanDate = dateMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || new Date().toISOString();
-              const cleanMessageId = messageIdMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || '';
-
-              // Decode MIME encoded words (RFC 2047)
-              cleanFrom = this.decodeMimeWords(cleanFrom);
-              cleanTo = this.decodeMimeWords(cleanTo);
-              cleanSubject = this.decodeMimeWords(cleanSubject);
-
-              console.log('Raw header string sample:', headerString.substring(0, 500));
-              console.log('Parsed header info:', {
-                from: cleanFrom,
-                subject: cleanSubject,
-                date: cleanDate,
-                rawFrom: fromMatch?.[1],
-                rawSubject: subjectMatch?.[1]
-              });
-
-              const email: IMAPEmail = {
-                id: message.attributes.uid.toString(),
-                from: this.formatSenderName(cleanFrom),
-                to: this.extractEmailAddress(cleanTo),
-                subject: cleanSubject,
-                text: 'Message content could not be retrieved from this email server',
-                html: '',
-                date: new Date(cleanDate),
-                messageId: cleanMessageId,
-                unread: !message.attributes.flags.includes('\\Seen'),
-                attachments: [],
-              };
-
-              emails.push(email);
-              continue;
+              // Ignore and try next approach
             }
           }
 
-          // Parse the message
-          const parsed: ParsedMail = await simpleParser(fullMessage);
-
-          // Extract clean text content
-          let cleanText = '';
-          if (parsed.text) {
-            cleanText = this.cleanEmailText(parsed.text);
-          } else if (parsed.html) {
-            cleanText = this.cleanEmailText(parsed.html.replace(/<[^>]*>/g, ''));
+          // Approach 3: Try BODY.PEEK[1] for non-destructive read
+          if (!emailText) {
+            try {
+              const peekPart = await connection.getPartData(message, 'BODY.PEEK[1]');
+              if (peekPart) {
+                emailText = Buffer.isBuffer(peekPart) ? peekPart.toString('utf8') : String(peekPart);
+                emailText = this.cleanEmailText(emailText);
+              }
+            } catch (peekError) {
+              // Ignore and use header-only approach
+            }
           }
 
-          if (!cleanText) {
-            cleanText = 'Email content could not be parsed';
+          // If we still have no content, fall back to header-only parsing
+          if (!emailText) {
+            const headerString = headerPart?.body ?
+              (Buffer.isBuffer(headerPart.body) ? headerPart.body.toString() : String(headerPart.body)) : '';
+
+            // Enhanced header parsing with better regex patterns that handle folded headers
+            const fromMatch = headerString.match(/From:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+            const toMatch = headerString.match(/To:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+            const subjectMatch = headerString.match(/Subject:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+            const dateMatch = headerString.match(/Date:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+            const messageIdMatch = headerString.match(/Message-ID:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+
+            // Clean and decode the extracted values with better handling
+            let cleanFrom = fromMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Sender';
+            let cleanTo = toMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Recipient';
+            let cleanSubject = subjectMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'No Subject';
+            const cleanDate = dateMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || new Date().toISOString();
+            const cleanMessageId = messageIdMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || '';
+
+            // Decode MIME encoded words (RFC 2047)
+            cleanFrom = this.decodeMimeWords(cleanFrom);
+            cleanTo = this.decodeMimeWords(cleanTo);
+            cleanSubject = this.decodeMimeWords(cleanSubject);
+
+            const email: IMAPEmail = {
+              id: message.attributes.uid.toString(),
+              from: this.formatSenderName(cleanFrom),
+              to: this.extractEmailAddress(cleanTo),
+              subject: cleanSubject,
+              text: 'Email content unavailable - server restrictions limit content access',
+              html: '',
+              date: new Date(cleanDate),
+              messageId: cleanMessageId,
+              unread: !message.attributes.flags.includes('\\Seen'),
+              attachments: [],
+            };
+
+            emails.push(email);
+            continue;
           }
+
+          // If we successfully got content, parse the headers for metadata
+          const headerString = headerPart?.body ?
+            (Buffer.isBuffer(headerPart.body) ? headerPart.body.toString() : String(headerPart.body)) : '';
+
+          const fromMatch = headerString.match(/From:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+          const toMatch = headerString.match(/To:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+          const subjectMatch = headerString.match(/Subject:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+          const dateMatch = headerString.match(/Date:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+          const messageIdMatch = headerString.match(/Message-ID:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+
+          let cleanFrom = fromMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Sender';
+          let cleanTo = toMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Recipient';
+          let cleanSubject = subjectMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'No Subject';
+          const cleanDate = dateMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || new Date().toISOString();
+          const cleanMessageId = messageIdMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || '';
+
+          // Decode MIME encoded words
+          cleanFrom = this.decodeMimeWords(cleanFrom);
+          cleanTo = this.decodeMimeWords(cleanTo);
+          cleanSubject = this.decodeMimeWords(cleanSubject);
 
           const email: IMAPEmail = {
             id: message.attributes.uid.toString(),
-            from: this.extractEmailAddress(this.getAddressString(parsed.from) || 'Unknown'),
-            to: this.extractEmailAddress(this.getAddressString(parsed.to) || 'Unknown'),
-            subject: parsed.subject || 'No Subject',
-            text: cleanText,
-            html: parsed.html || '',
-            date: parsed.date || new Date(),
-            messageId: parsed.messageId || '',
-            inReplyTo: parsed.inReplyTo || undefined,
-            references: Array.isArray(parsed.references) ? parsed.references : (parsed.references ? [parsed.references] : []),
+            from: this.formatSenderName(cleanFrom),
+            to: this.extractEmailAddress(cleanTo),
+            subject: cleanSubject,
+            text: emailText || 'Email content could not be retrieved',
+            html: emailHtml,
+            date: new Date(cleanDate),
+            messageId: cleanMessageId,
             unread: !message.attributes.flags.includes('\\Seen'),
-            attachments: parsed.attachments?.map(att => ({
-              filename: att.filename || 'unnamed',
-              contentType: att.contentType || 'application/octet-stream',
-              size: att.size || 0,
-            })) || [],
+            attachments: [],
           };
 
           emails.push(email);
