@@ -19,6 +19,9 @@ export default function EmailInboxPage() {
   const [loading, setLoading] = useState(true);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [smtpConnected, setSmtpConnected] = useState<boolean | null>(null);
+  const [dataSource, setDataSource] = useState<string>('');
+  const [notice, setNotice] = useState<string>('');
+  const [imapError, setImapError] = useState<string>('');
 
   useEffect(() => {
     fetchEmails();
@@ -35,6 +38,9 @@ export default function EmailInboxPage() {
           ...email,
           date: new Date(email.date)
         })));
+        setDataSource(data.source || 'unknown');
+        setNotice(data.notice || '');
+        setImapError(data.imapError || '');
       }
     } catch (error) {
       console.error('Failed to fetch emails:', error);
@@ -137,17 +143,31 @@ export default function EmailInboxPage() {
                 <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
                   Inbox ({emails.length})
                 </h3>
-                <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
-                  Demo Data
-                </div>
+                {dataSource === 'mock' && (
+                  <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                    Demo Data
+                  </div>
+                )}
+                {dataSource === 'imap' && (
+                  <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+                    Live IMAP Data
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="px-4 py-2 bg-blue-50 border-b">
-              <p className="text-xs text-blue-700">
-                ℹ️ This inbox shows demo data. Real email integration requires IMAP configuration which is not yet implemented.
-              </p>
-            </div>
+            {notice && (
+              <div className={`px-4 py-2 border-b ${dataSource === 'imap' ? 'bg-green-50' : 'bg-blue-50'}`}>
+                <p className={`text-xs ${dataSource === 'imap' ? 'text-green-700' : 'text-blue-700'}`}>
+                  {dataSource === 'imap' ? '✅' : 'ℹ️'} {notice}
+                </p>
+                {imapError && dataSource === 'mock' && (
+                  <p className="text-xs text-orange-700 mt-1">
+                    IMAP Error: {imapError}
+                  </p>
+                )}
+              </div>
+            )}
 
             {loading ? (
               <div className="p-8 text-center">

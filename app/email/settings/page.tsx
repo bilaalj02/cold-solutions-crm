@@ -15,6 +15,8 @@ export default function EmailSettingsPage() {
   });
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testingImap, setTestingImap] = useState(false);
+  const [imapTestResult, setImapTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     // Load current configuration
@@ -28,13 +30,13 @@ export default function EmailSettingsPage() {
 
       if (data.config) {
         setSettings({
-          smtpHost: data.config.smtp.host || '',
-          smtpPort: data.config.smtp.port?.toString() || '587',
-          smtpSecure: data.config.smtp.secure || false,
-          smtpUser: data.config.smtp.user || '',
+          smtpHost: data.config?.smtp?.host || data.config?.host || '',
+          smtpPort: data.config?.smtp?.port?.toString() || data.config?.port?.toString() || '587',
+          smtpSecure: data.config?.smtp?.secure || data.config?.tls || false,
+          smtpUser: data.config?.smtp?.user || data.config?.user || '',
           smtpPass: '', // Don't expose password
-          fromName: data.config.fromName || '',
-          fromEmail: data.config.fromEmail || '',
+          fromName: data.config?.fromName || '',
+          fromEmail: data.config?.fromEmail || '',
         });
       }
     } catch (error) {
@@ -69,6 +71,28 @@ export default function EmailSettingsPage() {
       });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const testImapConnection = async () => {
+    setTestingImap(true);
+    setImapTestResult(null);
+
+    try {
+      const response = await fetch('/api/email/test-imap');
+      const data = await response.json();
+
+      setImapTestResult({
+        success: data.success,
+        message: data.success ? 'IMAP connection successful!' : `IMAP connection failed: ${data.error}`
+      });
+    } catch (error) {
+      setImapTestResult({
+        success: false,
+        message: 'Failed to test IMAP connection'
+      });
+    } finally {
+      setTestingImap(false);
     }
   };
 
@@ -151,29 +175,49 @@ export default function EmailSettingsPage() {
               <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Email Settings</h1>
               <p className="text-sm text-gray-600 mt-1">Configure SMTP settings for sending and receiving emails</p>
             </div>
-            <button
-              onClick={testConnection}
-              disabled={testing}
-              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
-              style={{backgroundColor: '#3dbff2'}}
-            >
-              {testing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Testing...
-                </>
-              ) : (
-                <>
-                  <span className="material-symbols-outlined text-base">wifi_find</span>
-                  Test Connection
-                </>
-              )}
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={testConnection}
+                disabled={testing}
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+                style={{backgroundColor: '#3dbff2'}}
+              >
+                {testing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Testing SMTP...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-base">send</span>
+                    Test SMTP
+                  </>
+                )}
+              </button>
+              <button
+                onClick={testImapConnection}
+                disabled={testingImap}
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90 disabled:opacity-50"
+                style={{backgroundColor: '#10b981'}}
+              >
+                {testingImap ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Testing IMAP...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-base">inbox</span>
+                    Test IMAP
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </header>
 
         <div className="p-6 max-w-4xl mx-auto">
-          {/* Test Result */}
+          {/* Test Results */}
           {testResult && (
             <div className={`mb-6 p-4 rounded-lg ${
               testResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
@@ -187,7 +231,26 @@ export default function EmailSettingsPage() {
                 <p className={`text-sm font-medium ${
                   testResult.success ? 'text-green-800' : 'text-red-800'
                 }`}>
-                  {testResult.message}
+                  SMTP: {testResult.message}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {imapTestResult && (
+            <div className={`mb-6 p-4 rounded-lg ${
+              imapTestResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+            }`}>
+              <div className="flex items-center">
+                <span className={`material-symbols-outlined mr-2 ${
+                  imapTestResult.success ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {imapTestResult.success ? 'check_circle' : 'error'}
+                </span>
+                <p className={`text-sm font-medium ${
+                  imapTestResult.success ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  IMAP: {imapTestResult.message}
                 </p>
               </div>
             </div>
@@ -322,7 +385,14 @@ SMTP_PORT=${settings.smtpPort}
 SMTP_USER=${settings.smtpUser}
 SMTP_PASS=your_password_here
 SMTP_FROM_NAME=${settings.fromName}
-SMTP_FROM_EMAIL=${settings.fromEmail}`}
+SMTP_FROM_EMAIL=${settings.fromEmail}
+
+# IMAP for receiving emails
+IMAP_HOST=${settings.smtpHost}
+IMAP_PORT=993
+IMAP_SECURE=true
+IMAP_USER=${settings.smtpUser}
+IMAP_PASS=your_password_here`}
                   </pre>
                 </div>
               </div>
