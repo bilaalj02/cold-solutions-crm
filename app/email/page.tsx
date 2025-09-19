@@ -1,7 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
-import { EmailManager, EmailTemplate, EmailCampaign, EmailSequence } from "../../lib/email-system";
+import { EmailTemplate, EmailCampaign, EmailSequence } from "../../lib/email-system";
+import { SupabaseEmailManager } from "../../lib/supabase-email";
+import TemplateModal from "../../components/TemplateModal";
 
 export default function EmailManagementPage() {
   const [activeTab, setActiveTab] = useState<'templates' | 'campaigns' | 'sequences' | 'analytics'>('templates');
@@ -10,12 +12,29 @@ export default function EmailManagementPage() {
   const [sequences, setSequences] = useState<EmailSequence[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
-    setTemplates(EmailManager.getTemplates());
-    setCampaigns(EmailManager.getCampaigns());
-    setSequences(EmailManager.getSequences());
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      const [templatesData, campaignsData] = await Promise.all([
+        SupabaseEmailManager.getTemplates(),
+        SupabaseEmailManager.getCampaigns()
+      ]);
+
+      setTemplates(templatesData);
+      setCampaigns(campaignsData);
+      // setSequences will be implemented later
+      setSequences([]);
+    } catch (error) {
+      console.error('Error loading email data:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -47,6 +66,62 @@ export default function EmailManagementPage() {
     return sent > 0 ? ((clicked / sent) * 100).toFixed(1) : '0.0';
   };
 
+  const handleCreateTemplate = () => {
+    setEditingTemplate(null);
+    setShowTemplateModal(true);
+  };
+
+  const handleEditTemplate = (template: EmailTemplate) => {
+    setEditingTemplate(template);
+    setShowTemplateModal(true);
+  };
+
+  const handleDeleteTemplate = (templateId: string) => {
+    setShowDeleteConfirm(templateId);
+  };
+
+  const confirmDeleteTemplate = async (templateId: string) => {
+    try {
+      const success = await SupabaseEmailManager.deleteTemplate(templateId);
+      if (success) {
+        await loadData(); // Reload data from database
+      } else {
+        alert('Failed to delete template');
+      }
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      alert('Error deleting template');
+    }
+    setShowDeleteConfirm(null);
+  };
+
+  const handleSaveTemplate = async (templateData: any) => {
+    try {
+      if (editingTemplate) {
+        // Update existing template
+        const updatedTemplate = await SupabaseEmailManager.updateTemplate(editingTemplate.id, templateData);
+        if (updatedTemplate) {
+          await loadData(); // Reload data from database
+        } else {
+          alert('Failed to update template');
+        }
+      } else {
+        // Create new template
+        const newTemplate = await SupabaseEmailManager.createTemplate(templateData);
+        if (newTemplate) {
+          await loadData(); // Reload data from database
+        } else {
+          alert('Failed to create template');
+        }
+      }
+      setShowTemplateModal(false);
+      setEditingTemplate(null);
+    } catch (error) {
+      console.error('Error saving template:', error);
+      alert('Error saving template');
+    }
+  };
+
   const filteredTemplates = templates.filter(template => 
     template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     template.subject.toLowerCase().includes(searchTerm.toLowerCase())
@@ -70,9 +145,17 @@ export default function EmailManagementPage() {
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>email</span>
               <p className="text-sm font-medium leading-normal">Email Management</p>
             </a>
+            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/inbox">
+              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>inbox</span>
+              <p className="text-sm font-medium leading-normal">Inbox</p>
+            </a>
             <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/composer">
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>edit</span>
               <p className="text-sm font-medium leading-normal">Email Composer</p>
+            </a>
+            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/settings">
+              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
+              <p className="text-sm font-medium leading-normal">Email Settings</p>
             </a>
             <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/logs">
               <span className="material-symbols-outlined" style={{fontSize: '20px'}}>history</span>
@@ -160,7 +243,8 @@ export default function EmailManagementPage() {
             </div>
             <div className="flex items-center gap-3">
               {activeTab === 'templates' && (
-                <button 
+                <button
+                  onClick={handleCreateTemplate}
                   className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
                   style={{backgroundColor: '#3dbff2'}}
                 >
@@ -258,11 +342,19 @@ export default function EmailManagementPage() {
                             >
                               Preview
                             </button>
-                            <button className="text-gray-400 hover:text-gray-600">
+                            <button
+                              className="text-gray-400 hover:text-gray-600"
+                              onClick={() => handleEditTemplate(template)}
+                              title="Edit template"
+                            >
                               <span className="material-symbols-outlined text-base">edit</span>
                             </button>
-                            <button className="text-gray-400 hover:text-gray-600">
-                              <span className="material-symbols-outlined text-base">more_horiz</span>
+                            <button
+                              className="text-gray-400 hover:text-red-600"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                              title="Delete template"
+                            >
+                              <span className="material-symbols-outlined text-base">delete</span>
                             </button>
                           </div>
                         </td>
@@ -554,7 +646,7 @@ export default function EmailManagementPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b">
               <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Template Preview</h3>
-              <button 
+              <button
                 onClick={() => setSelectedTemplate(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -587,6 +679,46 @@ export default function EmailManagementPage() {
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template Create/Edit Modal */}
+      {showTemplateModal && (
+        <TemplateModal
+          template={editingTemplate}
+          onSave={handleSaveTemplate}
+          onClose={() => {
+            setShowTemplateModal(false);
+            setEditingTemplate(null);
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Delete Template</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this template? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => confirmDeleteTemplate(showDeleteConfirm)}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

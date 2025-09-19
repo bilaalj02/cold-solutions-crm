@@ -351,13 +351,21 @@ Cold Solutions`,
   static updateTemplate(id: string, updates: Partial<EmailTemplate>): EmailTemplate | null {
     const index = this.templates.findIndex(t => t.id === id);
     if (index === -1) return null;
-    
+
     this.templates[index] = {
       ...this.templates[index],
       ...updates,
       updatedAt: new Date().toISOString()
     };
     return this.templates[index];
+  }
+
+  static deleteTemplate(id: string): boolean {
+    const index = this.templates.findIndex(t => t.id === id);
+    if (index === -1) return false;
+
+    this.templates.splice(index, 1);
+    return true;
   }
 
   static createCampaign(campaign: Omit<EmailCampaign, 'id' | 'createdAt' | 'updatedAt' | 'stats'>): EmailCampaign {
