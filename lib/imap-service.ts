@@ -133,11 +133,11 @@ export class IMAPService {
                 (Buffer.isBuffer(headerPart.body) ? headerPart.body.toString() : String(headerPart.body)) : '';
 
               // Enhanced header parsing with better regex patterns that handle folded headers
-              const fromMatch = headerString.match(/From:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
-              const toMatch = headerString.match(/To:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
-              const subjectMatch = headerString.match(/Subject:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
-              const dateMatch = headerString.match(/Date:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
-              const messageIdMatch = headerString.match(/Message-ID:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
+              const fromMatch = headerString.match(/From:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+              const toMatch = headerString.match(/To:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+              const subjectMatch = headerString.match(/Subject:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+              const dateMatch = headerString.match(/Date:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
+              const messageIdMatch = headerString.match(/Message-ID:\s*(.+?)(?:\r?\n(?![ \t])|$)/i);
 
               // Clean and decode the extracted values with better handling
               let cleanFrom = fromMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Sender';
@@ -374,7 +374,7 @@ export class IMAPService {
           // Quoted-printable encoding
           const decoded = encodedText
             .replace(/_/g, ' ')
-            .replace(/=([0-9A-F]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+            .replace(/=([0-9A-F]{2})/g, (match: string, hex: string) => String.fromCharCode(parseInt(hex, 16)));
           return decoded;
         }
       } catch (error) {
