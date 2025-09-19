@@ -132,20 +132,43 @@ export class IMAPService {
               const headerString = headerPart?.body ?
                 (Buffer.isBuffer(headerPart.body) ? headerPart.body.toString() : String(headerPart.body)) : '';
 
-              const fromMatch = headerString.match(/From:\s*(.+)/i);
-              const toMatch = headerString.match(/To:\s*(.+)/i);
-              const subjectMatch = headerString.match(/Subject:\s*(.+)/i);
-              const dateMatch = headerString.match(/Date:\s*(.+)/i);
+              // Enhanced header parsing with better regex patterns that handle folded headers
+              const fromMatch = headerString.match(/From:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
+              const toMatch = headerString.match(/To:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
+              const subjectMatch = headerString.match(/Subject:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
+              const dateMatch = headerString.match(/Date:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
+              const messageIdMatch = headerString.match(/Message-ID:\s*(.+?)(?:\r?\n(?![^\S\r\n])|$)/is);
+
+              // Clean and decode the extracted values with better handling
+              let cleanFrom = fromMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Sender';
+              let cleanTo = toMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'Unknown Recipient';
+              let cleanSubject = subjectMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || 'No Subject';
+              const cleanDate = dateMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || new Date().toISOString();
+              const cleanMessageId = messageIdMatch?.[1]?.replace(/\r?\n\s+/g, ' ').trim() || '';
+
+              // Decode MIME encoded words (RFC 2047)
+              cleanFrom = this.decodeMimeWords(cleanFrom);
+              cleanTo = this.decodeMimeWords(cleanTo);
+              cleanSubject = this.decodeMimeWords(cleanSubject);
+
+              console.log('Raw header string sample:', headerString.substring(0, 500));
+              console.log('Parsed header info:', {
+                from: cleanFrom,
+                subject: cleanSubject,
+                date: cleanDate,
+                rawFrom: fromMatch?.[1],
+                rawSubject: subjectMatch?.[1]
+              });
 
               const email: IMAPEmail = {
                 id: message.attributes.uid.toString(),
-                from: this.extractEmailAddress(fromMatch?.[1]?.trim() || 'Unknown'),
-                to: this.extractEmailAddress(toMatch?.[1]?.trim() || 'Unknown'),
-                subject: subjectMatch?.[1]?.trim() || 'No Subject',
+                from: this.formatSenderName(cleanFrom),
+                to: this.extractEmailAddress(cleanTo),
+                subject: cleanSubject,
                 text: 'Message content could not be retrieved from this email server',
                 html: '',
-                date: dateMatch?.[1] ? new Date(dateMatch[1]) : new Date(),
-                messageId: '',
+                date: new Date(cleanDate),
+                messageId: cleanMessageId,
                 unread: !message.attributes.flags.includes('\\Seen'),
                 attachments: [],
               };
@@ -305,9 +328,22 @@ export class IMAPService {
   }
 
   private extractEmailAddress(emailString: string): string {
+    if (!emailString) return '';
+
     // Extract email from "Name <email@domain.com>" format
-    const match = emailString.match(/<([^>]+)>/);
-    return match ? match[1] : emailString.trim();
+    const bracketMatch = emailString.match(/<([^>]+)>/);
+    if (bracketMatch) {
+      return bracketMatch[1].trim();
+    }
+
+    // If no brackets, check if it's just an email address
+    const emailMatch = emailString.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) {
+      return emailMatch[1];
+    }
+
+    // Return the original string if no email pattern found
+    return emailString.trim();
   }
 
   private extractFolderNames(boxes: any, prefix: string = ''): string[] {
@@ -323,6 +359,50 @@ export class IMAPService {
     }
 
     return folders;
+  }
+
+  private decodeMimeWords(str: string): string {
+    if (!str) return str;
+
+    // Decode RFC 2047 MIME encoded words: =?charset?encoding?encoded_text?=
+    return str.replace(/=\?([^?]+)\?([BQbq])\?([^?]*)\?=/g, (match, charset, encoding, encodedText) => {
+      try {
+        if (encoding.toUpperCase() === 'B') {
+          // Base64 encoding
+          return Buffer.from(encodedText, 'base64').toString('utf8');
+        } else if (encoding.toUpperCase() === 'Q') {
+          // Quoted-printable encoding
+          const decoded = encodedText
+            .replace(/_/g, ' ')
+            .replace(/=([0-9A-F]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+          return decoded;
+        }
+      } catch (error) {
+        console.log('Error decoding MIME word:', error);
+      }
+      return match; // Return original if decoding fails
+    });
+  }
+
+  private formatSenderName(fromField: string): string {
+    if (!fromField) return 'Unknown Sender';
+
+    // Check if it's in "Name <email@domain.com>" format
+    const nameEmailMatch = fromField.match(/^(.+?)\s*<([^>]+)>$/);
+    if (nameEmailMatch) {
+      const name = nameEmailMatch[1].trim().replace(/^["']|["']$/g, ''); // Remove quotes
+      const email = nameEmailMatch[2].trim();
+      return name || email; // Return name if available, otherwise email
+    }
+
+    // Check if it's just an email address
+    const emailMatch = fromField.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) {
+      return emailMatch[1];
+    }
+
+    // Return as-is if no pattern matches
+    return fromField.trim();
   }
 
   getConfig() {
