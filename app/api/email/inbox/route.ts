@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // This is a placeholder for IMAP inbox functionality
 // In a production environment, you would implement IMAP connection here
 // For now, we'll return mock data to show the UI structure
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const folder = url.searchParams.get('folder') || 'INBOX';
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const folder = searchParams.get('folder') || 'INBOX';
 
     // Mock email data for demonstration
     const mockEmails = [

@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 // This is a placeholder API for email logs
 // In production, this would fetch from your email_logs table in Supabase
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '100');
-    const status = url.searchParams.get('status');
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '100');
+    const status = searchParams.get('status');
 
     // Mock email logs data for demonstration
     // In production, you would fetch from Supabase email_logs table

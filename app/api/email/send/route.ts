@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '../../../../lib/email-service';
 import { SupabaseEmailManager } from '../../../../lib/supabase-email';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
