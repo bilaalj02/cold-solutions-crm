@@ -16,6 +16,7 @@ export default function NotionDatabasePage() {
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
   
   useEffect(() => {
     if (params?.slug) {
@@ -59,7 +60,7 @@ export default function NotionDatabasePage() {
     let filtered = leads;
 
     if (searchTerm) {
-      filtered = filtered.filter(lead => 
+      filtered = filtered.filter(lead =>
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,8 +68,36 @@ export default function NotionDatabasePage() {
       );
     }
 
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.created_time || b.createdAt || '').getTime() - new Date(a.created_time || a.createdAt || '').getTime();
+        case 'oldest':
+          return new Date(a.created_time || a.createdAt || '').getTime() - new Date(b.created_time || b.createdAt || '').getTime();
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'company-asc':
+          return (a.company || '').localeCompare(b.company || '');
+        case 'company-desc':
+          return (b.company || '').localeCompare(a.company || '');
+        case 'status-asc':
+          return a.status.localeCompare(b.status);
+        case 'status-desc':
+          return b.status.localeCompare(a.status);
+        case 'score-high':
+          return (b.score || 0) - (a.score || 0);
+        case 'score-low':
+          return (a.score || 0) - (b.score || 0);
+        default:
+          return 0;
+      }
+    });
+
     setFilteredLeads(filtered);
-  }, [leads, searchTerm]);
+  }, [leads, searchTerm, sortBy]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -235,17 +264,39 @@ export default function NotionDatabasePage() {
 
           {/* Search and Actions */}
           <div className="mb-6 flex items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="material-symbols-outlined text-gray-400">search</span>
+            <div className="flex items-center gap-4 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                  <span className="material-symbols-outlined text-gray-400">search</span>
+                </div>
+                <input
+                  className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2] sm:text-sm"
+                  placeholder="Search records..."
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
-              <input 
-                className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2] sm:text-sm" 
-                placeholder="Search records..." 
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700" htmlFor="sort-select">Sort by:</label>
+                <select
+                  id="sort-select"
+                  className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="company-asc">Company (A-Z)</option>
+                  <option value="company-desc">Company (Z-A)</option>
+                  <option value="status-asc">Status (A-Z)</option>
+                  <option value="status-desc">Status (Z-A)</option>
+                  <option value="score-high">Score (High-Low)</option>
+                  <option value="score-low">Score (Low-High)</option>
+                </select>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <button

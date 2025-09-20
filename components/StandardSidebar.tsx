@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '../lib/auth';
 
 interface StandardSidebarProps {
   className?: string;
@@ -10,6 +11,7 @@ interface StandardSidebarProps {
 export default function StandardSidebar({ className = '' }: StandardSidebarProps) {
   const [leadsDropdownOpen, setLeadsDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -46,7 +48,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             href="/"
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dashboard</span>
-            <p className="text-sm font-medium leading-normal">Dashboard</p>
+            <span className="text-sm font-medium leading-normal">Dashboard</span>
           </a>
 
           {/* Leads Database Dropdown */}
@@ -58,7 +60,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             >
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined" style={{fontSize: '20px'}}>group</span>
-                <p className="text-sm font-medium leading-normal">Leads Database</p>
+                <span className="text-sm font-medium leading-normal">Leads Database</span>
               </div>
               <span className={`material-symbols-outlined transition-transform ${leadsDropdownOpen ? 'rotate-180' : ''}`} style={{fontSize: '16px'}}>
                 expand_more
@@ -71,39 +73,43 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
               <div className="ml-4 mt-2 flex flex-col gap-1">
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>database</span>
-                  <p className="text-sm leading-normal">All Leads</p>
+                  <span className="text-sm leading-normal">All Leads</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/inbound">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>call_received</span>
-                  <p className="text-sm leading-normal">Inbound Leads</p>
+                  <span className="text-sm leading-normal">Inbound Leads</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/website-leads">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>language</span>
-                  <p className="text-sm leading-normal">Website Leads</p>
+                  <span className="text-sm leading-normal">Website Leads</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/ai-audit-pre-call">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>psychology</span>
-                  <p className="text-sm leading-normal">AI Audit (Pre-Call)</p>
+                  <span className="text-sm leading-normal">AI Audit (Pre-Call)</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/ai-audit-post-call">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>psychology_alt</span>
-                  <p className="text-sm leading-normal">AI Audit (Post-Call)</p>
+                  <span className="text-sm leading-normal">AI Audit (Post-Call)</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/whatsapp-followup">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chat</span>
-                  <p className="text-sm leading-normal">WhatsApp Follow-up</p>
+                  <span className="text-sm leading-normal">WhatsApp Follow-up</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/whatsapp-bot">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>smart_toy</span>
-                  <p className="text-sm leading-normal">WhatsApp Bot Leads</p>
+                  <span className="text-sm leading-normal">WhatsApp Bot Leads</span>
+                </a>
+                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/new-lead-database">
+                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>phone_in_talk</span>
+                  <span className="text-sm leading-normal">Cold Caller Leads</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads/management">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>settings</span>
-                  <p className="text-sm leading-normal">Advanced Management</p>
+                  <span className="text-sm leading-normal">Advanced Management</span>
                 </a>
                 <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads/duplicates">
                   <span className="material-symbols-outlined" style={{fontSize: '16px'}}>content_copy</span>
-                  <p className="text-sm leading-normal">Duplicates</p>
+                  <span className="text-sm leading-normal">Duplicates</span>
                 </a>
               </div>
             </div>
@@ -116,7 +122,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             href="/email"
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>email</span>
-            <p className="text-sm font-medium leading-normal">Email Management</p>
+            <span className="text-sm font-medium leading-normal">Email Management</span>
           </a>
 
           {/* Automation Hub */}
@@ -126,7 +132,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             href="/automation"
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>smart_toy</span>
-            <p className="text-sm font-medium leading-normal">Automation Hub</p>
+            <span className="text-sm font-medium leading-normal">Automation Hub</span>
           </a>
 
           {/* Performance Analytics */}
@@ -136,7 +142,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             href="/analytics"
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>analytics</span>
-            <p className="text-sm font-medium leading-normal">Performance Analytics</p>
+            <span className="text-sm font-medium leading-normal">Performance Analytics</span>
           </a>
 
           {/* Operations Console */}
@@ -146,7 +152,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             href="/operations"
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dvr</span>
-            <p className="text-sm font-medium leading-normal">Operations Console</p>
+            <span className="text-sm font-medium leading-normal">Operations Console</span>
           </a>
 
           {/* Calls Database */}
@@ -156,21 +162,33 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
             href="/calls"
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>phone_in_talk</span>
-            <p className="text-sm font-medium leading-normal">Calls Database</p>
+            <span className="text-sm font-medium leading-normal">Calls Database</span>
           </a>
         </nav>
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="px-4 py-3 rounded-lg bg-opacity-10 bg-white">
-          <p className="text-xs font-medium" style={{color: '#a0a0a0'}}>SIGNED IN AS</p>
-          <p className="text-sm font-medium text-white">User</p>
-          <p className="text-xs" style={{color: '#a0a0a0'}}>user@example.com</p>
-        </div>
+        {user && (
+          <div className="px-4 py-3 rounded-lg bg-opacity-10 bg-white">
+            <p className="text-xs font-medium" style={{color: '#a0a0a0'}}>SIGNED IN AS</p>
+            <p className="text-sm font-medium text-white">{user.name}</p>
+            <p className="text-xs" style={{color: '#a0a0a0'}}>{user.email}</p>
+            <p className="text-xs mt-1" style={{color: '#a0a0a0'}}>{user.role}</p>
+          </div>
+        )}
         <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/settings">
           <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
-          <p className="text-sm font-medium leading-normal">Settings</p>
+          <span className="text-sm font-medium leading-normal">Settings</span>
         </a>
+        {user && (
+          <button
+            onClick={logout}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors"
+          >
+            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>logout</span>
+            <span className="text-sm font-medium leading-normal">Sign Out</span>
+          </button>
+        )}
       </div>
     </div>
   );

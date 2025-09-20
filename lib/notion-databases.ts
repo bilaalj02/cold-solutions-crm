@@ -55,6 +55,14 @@ export const notionDatabases: NotionDatabase[] = [
     description: 'Direct leads from Cold Solutions website',
     icon: 'language',
     color: 'cyan'
+  },
+  {
+    id: '271c6af7fe2a80f38695d0a28bf9724a',
+    name: 'Cold Caller Leads',
+    slug: 'new-lead-database',
+    description: 'Leads generated from cold calling activities',
+    icon: 'phone_in_talk',
+    color: 'indigo'
   }
 ];
 

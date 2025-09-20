@@ -33,7 +33,8 @@ try {
     'ai-audit-pre-call': '265c6af7fe2a80febfa8cd94864f68f7',
     'ai-audit-post-call': '267c6af7fe2a8018b541f86689336ead',
     'Whats App followup leads': '250c6af7fe2a806495c1f9e1e15f4d75',
-    'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569'
+    'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569',
+    'CRM database': '271c6af7fe2a80f38695d0a28bf9724a'
   };
 }
 
@@ -46,7 +47,8 @@ if (!DATABASES || Object.keys(DATABASES).length === 0) {
     'ai-audit-pre-call': '265c6af7fe2a80febfa8cd94864f68f7',
     'ai-audit-post-call': '267c6af7fe2a8018b541f86689336ead',
     'Whats App followup leads': '250c6af7fe2a806495c1f9e1e15f4d75',
-    'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569'
+    'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569',
+    'CRM database': '271c6af7fe2a80f38695d0a28bf9724a'
   };
 }
 
@@ -101,7 +103,8 @@ export class NotionService {
         'ai-audit-pre-call': '265c6af7fe2a80febfa8cd94864f68f7',
         'ai-audit-post-call': '267c6af7fe2a8018b541f86689336ead',
         'Whats App followup leads': '250c6af7fe2a806495c1f9e1e15f4d75',
-        'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569'
+        'Whatsapp bot leads': '268c6af7fe2a805e8b25ee868ec7e569',
+        'CRM database': '271c6af7fe2a80f38695d0a28bf9724a'
       };
 
       // Map frontend slugs to actual database names
@@ -111,7 +114,8 @@ export class NotionService {
         'ai-audit-post-call': 'ai-audit-post-call',
         'whatsapp-followup': 'Whats App followup leads',
         'whatsapp-bot': 'Whatsapp bot leads',
-        'website-leads': 'website-leads'
+        'website-leads': 'website-leads',
+        'new-lead-database': 'CRM database'
       };
 
       const actualDatabaseName = slugToNameMap[String(databaseType)] || String(databaseType);
@@ -154,14 +158,14 @@ export class NotionService {
         const properties = page.properties;
         return {
           id: page.id,
-          name: this.getPropertyValue(properties.Name || properties.name) || 'Unknown',
+          name: this.getPropertyValue(properties['Contact Name'] || properties['Contact name'] || properties.Name || properties.name) || 'Unknown',
           email: this.getPropertyValue(properties.Email || properties.email) || '',
           phone: this.getPropertyValue(properties.Phone || properties.phone) || '',
           source: String(databaseType),
           status: this.getPropertyValue(properties.Status || properties.status) || 'New',
           created_time: page.created_time,
           service_interest: this.getPropertyValue(properties['Service Interest'] || properties.service_interest) || '',
-          company: this.getPropertyValue(properties.Company || properties.company) || '',
+          company: this.getPropertyValue(properties['Business Name'] || properties['Business name'] || properties.Company || properties.company) || '',
           notes: this.getPropertyValue(properties.Notes || properties.notes) || '',
         };
       });
@@ -232,7 +236,8 @@ export class NotionService {
         'ai-audit-post-call': 'ai-audit-post-call',
         'whatsapp-followup': 'Whats App followup leads',
         'whatsapp-bot': 'Whatsapp bot leads',
-        'website-leads': 'website-leads'
+        'website-leads': 'website-leads',
+        'new-lead-database': 'CRM database'
       };
 
       // Determine which database to use

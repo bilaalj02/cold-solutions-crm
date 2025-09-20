@@ -10,6 +10,7 @@ export default function LeadsDatabase() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sourceFilter, setSourceFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
@@ -72,8 +73,44 @@ export default function LeadsDatabase() {
       filtered = filtered.filter(lead => lead.status === statusFilter);
     }
 
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
+        case 'oldest':
+          return new Date(a.createdAt || '').getTime() - new Date(b.createdAt || '').getTime();
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'email-asc':
+          return a.email.localeCompare(b.email);
+        case 'email-desc':
+          return b.email.localeCompare(a.email);
+        case 'company-asc':
+          return (a.company || '').localeCompare(b.company || '');
+        case 'company-desc':
+          return (b.company || '').localeCompare(a.company || '');
+        case 'source-asc':
+          return a.source.localeCompare(b.source);
+        case 'source-desc':
+          return b.source.localeCompare(a.source);
+        case 'status-asc':
+          return a.status.localeCompare(b.status);
+        case 'status-desc':
+          return b.status.localeCompare(a.status);
+        case 'score-high':
+          return (b.score || 0) - (a.score || 0);
+        case 'score-low':
+          return (a.score || 0) - (b.score || 0);
+        default:
+          return 0;
+      }
+    });
+
     setFilteredLeads(filtered);
-  }, [leads, searchTerm, sourceFilter, statusFilter]);
+  }, [leads, searchTerm, sourceFilter, statusFilter, sortBy]);
 
   const handleAddLead = async () => {
     if (!newLead.name || !newLead.email || !newLead.phone) {
@@ -320,6 +357,30 @@ export default function LeadsDatabase() {
                 />
               </div>
               <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700" htmlFor="sort-select">Sort by:</label>
+                  <select
+                    id="sort-select"
+                    className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="email-asc">Email (A-Z)</option>
+                    <option value="email-desc">Email (Z-A)</option>
+                    <option value="company-asc">Company (A-Z)</option>
+                    <option value="company-desc">Company (Z-A)</option>
+                    <option value="source-asc">Source (A-Z)</option>
+                    <option value="source-desc">Source (Z-A)</option>
+                    <option value="status-asc">Status (A-Z)</option>
+                    <option value="status-desc">Status (Z-A)</option>
+                    <option value="score-high">Score (High-Low)</option>
+                    <option value="score-low">Score (Low-High)</option>
+                  </select>
+                </div>
                 <div className="flex items-center gap-2">
                   <label className="text-sm font-medium text-gray-700" htmlFor="source-filter">Source:</label>
                   <select
