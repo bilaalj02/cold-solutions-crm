@@ -751,41 +751,42 @@ function ColdSolutionsDashboard() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recent Leads Table */}
+                {/* Recent Calls Table */}
                 <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold p-6" style={{color: '#0a2240'}}>Recent Leads</h3>
+                <h3 className="text-lg font-semibold p-6" style={{color: '#0a2240'}}>Recent Calls</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Lead Name</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Company</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Outcome</th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Caller</th>
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Source</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Score</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Last interaction</th>
-                        <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                        <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Time</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {leads.length === 0 ? (
+                      {callLogs.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-6 py-12 text-center">
                             <div className="text-gray-500">
-                              <p className="text-sm">No leads found</p>
-                              <p className="text-xs mt-1">Add leads manually or sync from Notion to see data here</p>
+                              <p className="text-sm">No calls found</p>
+                              <p className="text-xs mt-1">Call activity will appear here as calls are made from Cold Caller App</p>
                             </div>
                           </td>
                         </tr>
                       ) : (
-                        leads.slice(0, 5).map((lead) => {
-                          const getStatusColor = (status: string) => {
-                            switch (status) {
-                              case 'New': return 'bg-blue-100 text-blue-800';
-                              case 'Contacted': return 'bg-yellow-100 text-yellow-800';
-                              case 'Qualified': return 'bg-green-100 text-green-800';
-                              case 'Proposal': return 'bg-purple-100 text-purple-800';
-                              case 'Won': return 'bg-emerald-100 text-emerald-800';
-                              case 'Lost': return 'bg-red-100 text-red-800';
+                        callLogs.slice(0, 10).map((call) => {
+                          const getOutcomeColor = (outcome: string) => {
+                            switch (outcome) {
+                              case 'Booked Demo': return 'bg-green-100 text-green-800';
+                              case 'Interested': return 'bg-blue-100 text-blue-800';
+                              case 'Requested More Info': return 'bg-purple-100 text-purple-800';
+                              case 'Not Interested': return 'bg-red-100 text-red-800';
+                              case 'No Answer': return 'bg-gray-100 text-gray-800';
+                              case 'Callback Requested': return 'bg-yellow-100 text-yellow-800';
+                              case 'Follow Up Required': return 'bg-orange-100 text-orange-800';
                               default: return 'bg-gray-100 text-gray-800';
                             }
                           };
@@ -794,23 +795,55 @@ function ColdSolutionsDashboard() {
                             const date = new Date(dateString);
                             const now = new Date();
                             const diffTime = Math.abs(now.getTime() - date.getTime());
-                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                            return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                            const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                            const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                            if (diffMinutes < 60) {
+                              return diffMinutes === 0 ? 'Just now' : `${diffMinutes}m ago`;
+                            } else if (diffHours < 24) {
+                              return `${diffHours}h ago`;
+                            } else {
+                              return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                            }
                           };
 
                           return (
-                            <tr key={lead.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lead.name}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.source}</td>
+                            <tr key={call.callId} className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(lead.status)}`}>
-                                  {lead.status}
+                                <div className="flex items-center">
+                                  <div className="flex-shrink-0 h-8 w-8">
+                                    <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                      <span className="text-xs font-medium text-gray-600">
+                                        {call.leadName?.charAt(0)?.toUpperCase() || 'U'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="ml-4">
+                                    <div className="text-sm font-medium text-gray-900">{call.leadName || 'Unknown'}</div>
+                                    <div className="text-sm text-gray-500">{call.leadPhone || 'No phone'}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {call.leadCompany || 'No company'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getOutcomeColor(call.callOutcome)}`}>
+                                  {call.callOutcome || 'No outcome'}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lead.score}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{getRelativeTime(lead.createdAt)}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href={`/leads/${lead.id}`} className="hover:underline" style={{color: '#3dbff2'}}>Open</a>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">{call.callerName || 'Unknown'}</div>
+                                {call.dataSource && (
+                                  <div className="text-xs text-gray-500">{call.dataSource}</div>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {call.leadSource || 'Unknown'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {getRelativeTime(call.timestamp)}
                               </td>
                             </tr>
                           );
@@ -819,6 +852,18 @@ function ColdSolutionsDashboard() {
                     </tbody>
                   </table>
                 </div>
+                {callLogs.length > 0 && (
+                  <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-700">
+                        Showing {Math.min(10, callLogs.length)} of {callLogs.length} recent calls
+                      </p>
+                      <a href="/calls" className="text-sm font-medium hover:underline" style={{color: '#3dbff2'}}>
+                        View all calls →
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
 
                 {/* Quick Actions & Activity */}
@@ -862,49 +907,94 @@ function ColdSolutionsDashboard() {
                   {/* Recent Activity */}
                   <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                     <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Live Activity Feed</h3>
-                    {leads.length === 0 ? (
+                    {callLogs.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="text-gray-500">
                           <span className="material-symbols-outlined text-4xl mb-2 block">timeline</span>
                           <p className="text-sm">No recent activity</p>
-                          <p className="text-xs mt-1">Activity will appear here as you interact with leads</p>
-                        </div>
-                      </div>
-                    ) : recentActivity.length === 0 ? (
-                      <div className="text-center py-4">
-                        <div className="text-gray-500">
-                          <p className="text-sm">No recent activity</p>
-                          <p className="text-xs mt-1">Activity will appear here as calls and interactions happen</p>
+                          <p className="text-xs mt-1">Call activity will appear here as calls are made from Cold Caller App</p>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {recentActivity.map((activity, index) => (
-                          <motion.div
-                            key={activity.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                            onClick={() => console.log(`Clicked activity:`, activity)}
-                          >
-                            <div className="rounded-full p-2 mt-0.5" style={{backgroundColor: `${activity.color}20`}}>
-                              <span className="material-symbols-outlined text-sm" style={{color: activity.color}}>
-                                {activity.icon}
-                              </span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-gray-800 text-sm truncate">{activity.title}</p>
-                              <p className="text-xs text-gray-500 truncate">{activity.description}</p>
-                              <p className="text-xs text-gray-400">{activity.timestamp}</p>
-                            </div>
-                            <div className="w-2 h-2 rounded-full mt-2" style={{backgroundColor: activity.color}}></div>
-                          </motion.div>
-                        ))}
+                        {callLogs.slice(0, 5).map((call, index) => {
+                          const getActivityIcon = (outcome: string) => {
+                            switch (outcome) {
+                              case 'Booked Demo': return 'event';
+                              case 'Interested': return 'thumb_up';
+                              case 'Requested More Info': return 'info';
+                              case 'Not Interested': return 'thumb_down';
+                              case 'No Answer': return 'phone_missed';
+                              case 'Callback Requested': return 'schedule';
+                              case 'Follow Up Required': return 'follow_the_signs';
+                              default: return 'call';
+                            }
+                          };
+
+                          const getActivityColor = (outcome: string) => {
+                            switch (outcome) {
+                              case 'Booked Demo': return '#10b981';
+                              case 'Interested': return '#3dbff2';
+                              case 'Requested More Info': return '#8b5cf6';
+                              case 'Not Interested': return '#ef4444';
+                              case 'No Answer': return '#6b7280';
+                              case 'Callback Requested': return '#f59e0b';
+                              case 'Follow Up Required': return '#f97316';
+                              default: return '#0a2240';
+                            }
+                          };
+
+                          const getRelativeTime = (dateString: string) => {
+                            const date = new Date(dateString);
+                            const now = new Date();
+                            const diffTime = Math.abs(now.getTime() - date.getTime());
+                            const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                            const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                            if (diffMinutes < 60) {
+                              return diffMinutes === 0 ? 'Just now' : `${diffMinutes}m ago`;
+                            } else if (diffHours < 24) {
+                              return `${diffHours}h ago`;
+                            } else {
+                              return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+                            }
+                          };
+
+                          const activityColor = getActivityColor(call.callOutcome);
+
+                          return (
+                            <motion.div
+                              key={call.callId}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                              onClick={() => console.log(`Clicked call:`, call)}
+                            >
+                              <div className="rounded-full p-2 mt-0.5" style={{backgroundColor: `${activityColor}20`}}>
+                                <span className="material-symbols-outlined text-sm" style={{color: activityColor}}>
+                                  {getActivityIcon(call.callOutcome)}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-800 text-sm truncate">
+                                  {call.callerName} called {call.leadName}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {call.callOutcome} • {call.leadCompany || 'No company'}
+                                  {call.dataSource && ` • ${call.dataSource}`}
+                                </p>
+                                <p className="text-xs text-gray-400">{getRelativeTime(call.timestamp)}</p>
+                              </div>
+                              <div className="w-2 h-2 rounded-full mt-2" style={{backgroundColor: activityColor}}></div>
+                            </motion.div>
+                          );
+                        })}
 
                         <div className="pt-3 border-t border-gray-100">
-                          <a href="/activity" className="flex items-center justify-center gap-2 text-sm font-medium hover:underline" style={{color: '#3dbff2'}}>
-                            View all activity
+                          <a href="/calls" className="flex items-center justify-center gap-2 text-sm font-medium hover:underline" style={{color: '#3dbff2'}}>
+                            View all call activity
                             <span className="material-symbols-outlined text-base">arrow_forward</span>
                           </a>
                         </div>
