@@ -72,9 +72,9 @@ export default function NotionDatabasePage() {
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.created_time || b.createdAt || '').getTime() - new Date(a.created_time || a.createdAt || '').getTime();
+          return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
         case 'oldest':
-          return new Date(a.created_time || a.createdAt || '').getTime() - new Date(b.created_time || b.createdAt || '').getTime();
+          return new Date(a.createdAt || '').getTime() - new Date(b.createdAt || '').getTime();
         case 'name-asc':
           return a.name.localeCompare(b.name);
         case 'name-desc':
