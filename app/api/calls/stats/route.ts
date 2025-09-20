@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SupabaseService } from '@/lib/supabase-service';
+import { notionCRMService } from '@/lib/notion-crm-service';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,31 @@ function isUnsuccessfulOutcome(outcome: string): boolean {
 // Helper function to check if a call outcome is pending
 function isPendingOutcome(outcome: string): boolean {
   return ['Callback Requested', 'Follow Up Required'].includes(outcome);
+}
+
+// Helper function to combine stats from Supabase and Notion
+function combineStats(supabaseStats: any, notionStats: any): any {
+  return {
+    totalCalls: supabaseStats.totalCalls + notionStats.totalCalls,
+    successful: supabaseStats.successful + notionStats.successful,
+    unsuccessful: supabaseStats.unsuccessful + notionStats.unsuccessful,
+    pending: supabaseStats.pending + notionStats.pending,
+    callsByOutcome: {
+      ...supabaseStats.callsByOutcome,
+      ...Object.keys(notionStats.callsByOutcome).reduce((acc, key) => {
+        acc[key] = (supabaseStats.callsByOutcome[key] || 0) + notionStats.callsByOutcome[key];
+        return acc;
+      }, {} as Record<string, number>)
+    },
+    callsByDay: {
+      ...supabaseStats.callsByDay,
+      ...Object.keys(notionStats.callsByDay || {}).reduce((acc, key) => {
+        acc[key] = (supabaseStats.callsByDay?.[key] || 0) + notionStats.callsByDay[key];
+        return acc;
+      }, {} as Record<string, number>)
+    },
+    averageCallDuration: (supabaseStats.averageCallDuration + notionStats.averageCallDuration) / 2
+  };
 }
 
 
@@ -84,6 +110,33 @@ export async function GET(request: Request): Promise<NextResponse<CallStats | { 
     const monthStats = await SupabaseService.getCallStatsForPeriod(monthStart, now);
     const allTimeStats = await SupabaseService.getCallStatsForPeriod(new Date('2020-01-01'), now);
 
+    // Get stats from Notion CRM database (Cold Caller App leads)
+    let notionTodayStats, notionWeekStats, notionMonthStats, notionAllTimeStats;
+    try {
+      console.log('📋 Fetching call stats from Notion CRM database...');
+      notionTodayStats = await notionCRMService.getCallStatsFromNotion(todayStart, now);
+      notionWeekStats = await notionCRMService.getCallStatsFromNotion(weekStart, now);
+      notionMonthStats = await notionCRMService.getCallStatsFromNotion(monthStart, now);
+      notionAllTimeStats = await notionCRMService.getCallStatsFromNotion(new Date('2020-01-01'), now);
+      console.log('✅ Successfully fetched Notion CRM stats');
+    } catch (notionError) {
+      console.warn('⚠️ Failed to fetch Notion CRM stats, using only Supabase data:', notionError);
+      // Set empty stats if Notion fails
+      const emptyStats = {
+        totalCalls: 0,
+        successful: 0,
+        unsuccessful: 0,
+        pending: 0,
+        callsByOutcome: {},
+        callsByDay: {},
+        averageCallDuration: 0
+      };
+      notionTodayStats = emptyStats;
+      notionWeekStats = emptyStats;
+      notionMonthStats = emptyStats;
+      notionAllTimeStats = emptyStats;
+    }
+
     // Calculate top callers for this month
     const monthCallsResult = await SupabaseService.getCallLogs({
       limit: 1000,
@@ -114,17 +167,29 @@ export async function GET(request: Request): Promise<NextResponse<CallStats | { 
       .sort((a, b) => b.calls - a.calls)
       .slice(0, 5);
 
+    // Combine Supabase and Notion stats
+    const combinedTodayStats = combineStats(todayStats, notionTodayStats);
+    const combinedWeekStats = combineStats(weekStats, notionWeekStats);
+    const combinedMonthStats = combineStats(monthStats, notionMonthStats);
+    const combinedAllTimeStats = combineStats(allTimeStats, notionAllTimeStats);
+
+    console.log('📊 Combined stats summary:', {
+      today: `${combinedTodayStats.totalCalls} calls (Supabase: ${todayStats.totalCalls}, Notion: ${notionTodayStats.totalCalls})`,
+      week: `${combinedWeekStats.totalCalls} calls (Supabase: ${weekStats.totalCalls}, Notion: ${notionWeekStats.totalCalls})`,
+      successful: `${combinedTodayStats.successful} successful today`
+    });
+
     const realStats: CallStats = {
-      today: todayStats,
+      today: combinedTodayStats,
       thisWeek: {
-        ...weekStats,
-        callsByDay: weekStats.callsByDay || {}
+        ...combinedWeekStats,
+        callsByDay: combinedWeekStats.callsByDay || {}
       },
       thisMonth: {
-        ...monthStats,
+        ...combinedMonthStats,
         topCallers
       },
-      allTime: allTimeStats
+      allTime: combinedAllTimeStats
     };
 
     return NextResponse.json(realStats, { headers: corsHeaders });

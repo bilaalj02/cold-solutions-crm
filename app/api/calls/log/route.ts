@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SupabaseService } from '@/lib/supabase-service';
+import { notionCRMService } from '@/lib/notion-crm-service';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -254,8 +255,8 @@ export async function GET(request: Request): Promise<NextResponse> {
       outcome: outcome || undefined
     });
 
-    // Transform data to match expected format
-    const transformedCalls = result.calls.map(call => ({
+    // Transform Supabase data to match expected format
+    const transformedSupabaseCalls = result.calls.map(call => ({
       callId: call.call_id,
       leadId: call.lead_id,
       leadName: call.lead_name,
@@ -273,13 +274,83 @@ export async function GET(request: Request): Promise<NextResponse> {
       leadIndustry: call.lead_industry,
       leadTerritory: call.lead_territory,
       collectedEmail: call.collected_email,
-      preferredPhone: call.preferred_phone
+      preferredPhone: call.preferred_phone,
+      dataSource: 'Supabase'
     }));
+
+    // Fetch call data from Notion CRM database (Cold Caller App leads)
+    let notionCalls: any[] = [];
+    try {
+      console.log('📋 Fetching call logs from Notion CRM database...');
+      const notionCallData = await notionCRMService.getCallDataFromNotion();
+
+      // Transform Notion data to match expected format and apply filters
+      notionCalls = notionCallData
+        .filter(call => {
+          // Apply date filter if specified
+          if (date) {
+            const callDate = new Date(call.timestamp).toISOString().split('T')[0];
+            if (callDate !== date) return false;
+          }
+          // Apply caller filter if specified
+          if (caller && !call.caller_name.toLowerCase().includes(caller.toLowerCase())) {
+            return false;
+          }
+          // Apply outcome filter if specified
+          if (outcome && call.call_outcome !== outcome) {
+            return false;
+          }
+          return true;
+        })
+        .map(call => ({
+          callId: call.call_id,
+          leadId: call.lead_id,
+          leadName: call.lead_name,
+          leadEmail: call.lead_email,
+          leadPhone: call.lead_phone,
+          leadCompany: call.lead_company,
+          leadPosition: null,
+          callOutcome: call.call_outcome,
+          callNotes: call.call_notes,
+          callerName: call.caller_name,
+          callerRole: call.caller_role,
+          callDuration: null,
+          timestamp: call.timestamp,
+          leadSource: call.lead_source,
+          leadIndustry: null,
+          leadTerritory: null,
+          collectedEmail: null,
+          preferredPhone: null,
+          dataSource: 'Notion CRM'
+        }));
+
+      console.log(`✅ Fetched ${notionCalls.length} calls from Notion CRM`);
+    } catch (notionError) {
+      console.warn('⚠️ Failed to fetch Notion CRM call logs, using only Supabase data:', notionError);
+    }
+
+    // Combine both data sources
+    const allCalls = [...transformedSupabaseCalls, ...notionCalls];
+
+    // Sort by timestamp (newest first)
+    allCalls.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Apply pagination to combined results
+    const paginatedCalls = allCalls.slice(offset, offset + limit);
+
+    console.log('📊 Combined call logs:', {
+      supabase: transformedSupabaseCalls.length,
+      notion: notionCalls.length,
+      total: allCalls.length,
+      paginated: paginatedCalls.length
+    });
 
     return NextResponse.json({
       success: true,
-      calls: transformedCalls,
-      total: result.total,
+      calls: paginatedCalls,
+      total: allCalls.length,
+      supabaseTotal: result.total,
+      notionTotal: notionCalls.length,
       timestamp: new Date().toISOString()
     }, { headers: corsHeaders });
 
