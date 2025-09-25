@@ -1,14 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 
 // Define the webhook data types
 interface WebhookData {
-  type: 'lead_created' | 'lead_updated' | 'lead_status_changed' | 'record_created' | 'record_updated' | 'metrics_updated'
+  type: 'lead_created' | 'lead_updated' | 'lead_status_changed' | 'record_created' | 'record_updated' | 'metrics_updated' | 'email_sent'
   timestamp: string
   database?: string
   recordId?: string
   data: any
   changes?: any
+}
+
+// Email log interface for MCP server data
+interface MCPEmailLog {
+  timestamp: string
+  status: 'SUCCESS' | 'ERROR'
+  to: string
+  from: string
+  subject: string
+  messageId: string | null
+  template: string
+  variables: Record<string, any>
+  error?: string
+}
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+// Function to store email log in Supabase
+async function storeEmailLog(emailLog: MCPEmailLog) {
+  const { error } = await supabase
+    .from('email_logs')
+    .insert({
+      id: `mcp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      template_id: emailLog.template,
+      subject: emailLog.subject,
+      status: emailLog.status === 'SUCCESS' ? 'sent' : 'bounced',
+      sent_at: emailLog.timestamp,
+      delivered_at: emailLog.status === 'SUCCESS' ? emailLog.timestamp : null,
+      error_message: emailLog.error || null,
+      metadata: {
+        fromEmail: emailLog.from,
+        toEmail: emailLog.to,
+        messageId: emailLog.messageId,
+        variables: emailLog.variables,
+        source: 'mcp_server'
+      },
+      lead_id: null, // Will be linked later if needed
+      campaign_id: null,
+      sequence_id: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+
+  if (error) {
+    throw new Error(`Failed to store email log: ${error.message}`)
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -153,6 +203,22 @@ export async function POST(request: NextRequest) {
         // Example: await updateDashboardMetrics(webhookData.data)
         break
 
+      case 'email_sent':
+        console.log('📧 Email log received from MCP server:', {
+          to: webhookData.data.to,
+          subject: webhookData.data.subject,
+          status: webhookData.data.status
+        })
+
+        // Store email log in CRM database
+        try {
+          await storeEmailLog(webhookData.data as MCPEmailLog)
+          console.log('✅ Email log stored successfully')
+        } catch (error) {
+          console.error('❌ Failed to store email log:', error)
+        }
+        break
+
       default:
         console.log('ℹ️ Unknown webhook type received:', webhookData.type)
     }
@@ -196,7 +262,8 @@ export async function GET() {
       'lead_status_changed',
       'record_created',
       'record_updated',
-      'metrics_updated'
+      'metrics_updated',
+      'email_sent'
     ]
   })
 }
