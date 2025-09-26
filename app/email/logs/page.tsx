@@ -186,18 +186,50 @@ export default function EmailLogsPage() {
               <button
                 onClick={async () => {
                   try {
+                    console.log('🛠️ Setting up database table...');
+                    const response = await fetch('/api/email/setup-table', { method: 'POST' });
+                    const data = await response.json();
+
+                    console.log('🔍 Setup response:', data);
+
+                    if (data.success) {
+                      console.log('✅ Database table setup successful');
+                      setNotice('Database table setup completed successfully');
+                      await fetchEmailLogs(); // Refresh the logs
+                    } else {
+                      console.error('❌ Failed to setup table:', data);
+                      setNotice(`Failed to setup table: ${data.error}`);
+                    }
+                  } catch (error) {
+                    console.error('❌ Setup error:', error);
+                    setNotice(`Setup error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
+                style={{backgroundColor: '#f59e0b'}}
+              >
+                <span className="material-symbols-outlined text-base">build</span>
+                Setup Table
+              </button>
+              <button
+                onClick={async () => {
+                  try {
                     console.log('🧪 Creating test email log...');
                     const response = await fetch('/api/email/test-log', { method: 'POST' });
                     const data = await response.json();
+
+                    console.log('🔍 Test endpoint response:', data);
 
                     if (data.success) {
                       console.log('✅ Test email log created successfully');
                       await fetchEmailLogs(); // Refresh the logs
                     } else {
-                      console.error('❌ Failed to create test email log:', data.error);
+                      console.error('❌ Failed to create test email log:', data);
+                      setNotice(`Failed to create test email: ${data.error} - ${data.message || ''}`);
                     }
                   } catch (error) {
                     console.error('❌ Test email log error:', error);
+                    setNotice(`Test email error: ${error instanceof Error ? error.message : 'Unknown error'}`);
                   }
                 }}
                 className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"

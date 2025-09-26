@@ -16,17 +16,45 @@ export async function POST() {
   try {
     console.log('🧪 Creating test email log entry...');
 
+    // Check environment variables first
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    console.log('Environment check:', {
+      supabaseUrl: supabaseUrl ? '✅ Present' : '❌ Missing',
+      supabaseServiceKey: supabaseServiceKey ? '✅ Present' : '❌ Missing'
+    });
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'Supabase configuration missing',
+        details: {
+          supabaseUrl: supabaseUrl ? 'Present' : 'Missing',
+          supabaseServiceKey: supabaseServiceKey ? 'Present' : 'Missing'
+        }
+      }, { status: 500 });
+    }
+
     const supabase = getSupabaseClient();
 
-    // Create a test email log entry
+    // First, let's check if the table exists and what its structure is
+    console.log('🔍 Checking email_logs table structure...');
+
+    const { data: tableCheck, error: tableError } = await supabase
+      .from('email_logs')
+      .select('*')
+      .limit(1);
+
+    console.log('Table check result:', { tableCheck, tableError });
+
+    // Create a simplified test email log entry
     const testEmailLog = {
-      id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       template_id: 'call-outcome-interested-construction',
       subject: 'Great speaking with you - Construction AI Solutions',
       status: 'sent',
       sent_at: new Date().toISOString(),
       delivered_at: new Date().toISOString(),
-      error_message: null,
       metadata: {
         fromEmail: 'contact@coldsolutions.ca',
         toEmail: 'test@example.com',
@@ -40,13 +68,10 @@ export async function POST() {
           text: 'Hi John,\n\nGreat speaking with you today - I could tell you understand how costly missed calls and slow follow-up are in construction.',
           html: '<p>Hi John,</p><p>Great speaking with you today - I could tell you understand how costly missed calls and slow follow-up are in construction.</p>'
         }
-      },
-      lead_id: null,
-      campaign_id: null,
-      sequence_id: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      }
     };
+
+    console.log('📝 Inserting test email log:', testEmailLog);
 
     const { data, error } = await supabase
       .from('email_logs')
@@ -58,7 +83,9 @@ export async function POST() {
       return NextResponse.json({
         success: false,
         error: 'Failed to create test email log',
-        details: error
+        details: error,
+        sqlError: error.message,
+        hint: error.hint
       }, { status: 500 });
     }
 
@@ -75,7 +102,8 @@ export async function POST() {
     return NextResponse.json({
       success: false,
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }
