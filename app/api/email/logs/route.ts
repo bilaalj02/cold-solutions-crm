@@ -4,9 +4,16 @@ import { createClient } from '@supabase/supabase-js';
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return null; // Return null if not configured
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,41 +22,45 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
 
     // Try to fetch real email logs from Supabase
-    let query = supabase
-      .from('email_logs')
-      .select('*')
-      .order('sent_at', { ascending: false })
-      .limit(limit);
+    const supabase = getSupabaseClient();
 
-    if (status && status !== 'all') {
-      query = query.eq('status', status);
-    }
+    if (supabase) {
+      let query = supabase
+        .from('email_logs')
+        .select('*')
+        .order('sent_at', { ascending: false })
+        .limit(limit);
 
-    const { data: realLogs, error } = await query;
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
 
-    // If we have real logs, use them; otherwise fall back to mock data
-    if (!error && realLogs && realLogs.length > 0) {
-      const logs = realLogs.map(log => ({
-        id: log.id,
-        templateId: log.template_id,
-        subject: log.subject,
-        status: log.status,
-        sentAt: log.sent_at,
-        deliveredAt: log.delivered_at,
-        openedAt: log.opened_at,
-        clickedAt: log.clicked_at,
-        repliedAt: log.replied_at,
-        errorMessage: log.error_message,
-        metadata: log.metadata,
-        content: log.metadata?.content // Extract content from metadata
-      }));
+      const { data: realLogs, error } = await query;
 
-      return NextResponse.json({
-        success: true,
-        logs,
-        total: logs.length,
-        source: 'database',
-      });
+      // If we have real logs, use them; otherwise fall back to mock data
+      if (!error && realLogs && realLogs.length > 0) {
+        const logs = realLogs.map(log => ({
+          id: log.id,
+          templateId: log.template_id,
+          subject: log.subject,
+          status: log.status,
+          sentAt: log.sent_at,
+          deliveredAt: log.delivered_at,
+          openedAt: log.opened_at,
+          clickedAt: log.clicked_at,
+          repliedAt: log.replied_at,
+          errorMessage: log.error_message,
+          metadata: log.metadata,
+          content: log.metadata?.content // Extract content from metadata
+        }));
+
+        return NextResponse.json({
+          success: true,
+          logs,
+          total: logs.length,
+          source: 'database',
+        });
+      }
     }
 
     // Mock email logs data for demonstration

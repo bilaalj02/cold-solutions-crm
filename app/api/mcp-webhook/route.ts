@@ -29,13 +29,21 @@ interface MCPEmailLog {
   }
 }
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// Function to get Supabase client
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Supabase configuration missing. Please check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.')
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey)
+}
 
 // Function to store email log in Supabase
 async function storeEmailLog(emailLog: MCPEmailLog) {
+  const supabase = getSupabaseClient()
   const { error } = await supabase
     .from('email_logs')
     .insert({
@@ -221,6 +229,10 @@ export async function POST(request: NextRequest) {
           console.log('✅ Email log stored successfully')
         } catch (error) {
           console.error('❌ Failed to store email log:', error)
+          // Don't fail the entire webhook if email log storage fails
+          if (error instanceof Error && error.message.includes('Supabase configuration missing')) {
+            console.warn('⚠️ Supabase not configured - email log will not be stored')
+          }
         }
         break
 
