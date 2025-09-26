@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       let query = supabase
         .from('email_logs')
         .select('*')
-        .order('sent_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(limit);
 
       if (status && status !== 'all') {
@@ -46,6 +46,15 @@ export async function GET(request: NextRequest) {
       } else {
         console.log(`✅ Supabase query successful. Found ${realLogs?.length || 0} records`);
         console.log('📧 Email logs sample:', realLogs?.slice(0, 2));
+
+        // Also try a simple count query to verify data exists
+        const { count, error: countError } = await supabase
+          .from('email_logs')
+          .select('*', { count: 'exact', head: true });
+
+        if (!countError) {
+          console.log(`📊 Total records in email_logs table: ${count}`);
+        }
       }
 
       // If we have real logs (even if empty), use the database response
