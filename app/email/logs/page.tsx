@@ -43,9 +43,15 @@ export default function EmailLogsPage() {
   }, []);
 
   const fetchEmailLogs = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/email/logs');
+      console.log('📡 Fetching email logs...');
+
+      // Add cache busting to ensure fresh data
+      const response = await fetch(`/api/email/logs?t=${Date.now()}`);
       const data = await response.json();
+
+      console.log('📧 Email logs response:', data);
 
       if (data.success) {
         setLogs(data.logs.map((log: any) => ({
@@ -54,9 +60,14 @@ export default function EmailLogsPage() {
         })));
         setDataSource(data.source || 'unknown');
         setNotice(data.notice || '');
+        console.log(`✅ Loaded ${data.logs.length} email logs from ${data.source}`);
+      } else {
+        console.error('❌ Failed to fetch email logs:', data.error);
+        setNotice('Failed to load email logs: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Failed to fetch email logs:', error);
+      console.error('❌ Failed to fetch email logs:', error);
+      setNotice('Network error while fetching email logs');
     } finally {
       setLoading(false);
     }
@@ -173,6 +184,29 @@ export default function EmailLogsPage() {
                 </div>
               </div>
               <button
+                onClick={async () => {
+                  try {
+                    console.log('🧪 Creating test email log...');
+                    const response = await fetch('/api/email/test-log', { method: 'POST' });
+                    const data = await response.json();
+
+                    if (data.success) {
+                      console.log('✅ Test email log created successfully');
+                      await fetchEmailLogs(); // Refresh the logs
+                    } else {
+                      console.error('❌ Failed to create test email log:', data.error);
+                    }
+                  } catch (error) {
+                    console.error('❌ Test email log error:', error);
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
+                style={{backgroundColor: '#10b981'}}
+              >
+                <span className="material-symbols-outlined text-base">science</span>
+                Create Test Email
+              </button>
+              <button
                 onClick={fetchEmailLogs}
                 className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
                 style={{backgroundColor: '#3dbff2'}}
@@ -235,10 +269,19 @@ export default function EmailLogsPage() {
               )}
             </div>
 
-            {notice && dataSource === 'mock' && (
-              <div className="px-6 py-3 bg-blue-50 border-b">
-                <p className="text-sm text-blue-700">
-                  ℹ️ {notice}
+            {notice && (
+              <div className={`px-6 py-3 border-b ${
+                dataSource === 'mock' ? 'bg-blue-50' :
+                notice.includes('error') || notice.includes('Failed') ? 'bg-red-50' :
+                'bg-green-50'
+              }`}>
+                <p className={`text-sm ${
+                  dataSource === 'mock' ? 'text-blue-700' :
+                  notice.includes('error') || notice.includes('Failed') ? 'text-red-700' :
+                  'text-green-700'
+                }`}>
+                  {dataSource === 'mock' ? 'ℹ️' :
+                   notice.includes('error') || notice.includes('Failed') ? '❌' : '✅'} {notice}
                 </p>
               </div>
             )}

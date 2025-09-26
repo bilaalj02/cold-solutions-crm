@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseClient();
 
     if (supabase) {
+      console.log('🔍 Attempting to fetch email logs from Supabase...');
+
       let query = supabase
         .from('email_logs')
         .select('*')
@@ -33,12 +35,21 @@ export async function GET(request: NextRequest) {
 
       if (status && status !== 'all') {
         query = query.eq('status', status);
+        console.log(`🔍 Filtering by status: ${status}`);
       }
 
       const { data: realLogs, error } = await query;
 
-      // If we have real logs, use them; otherwise fall back to mock data
-      if (!error && realLogs && realLogs.length > 0) {
+      if (error) {
+        console.error('❌ Supabase query error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+      } else {
+        console.log(`✅ Supabase query successful. Found ${realLogs?.length || 0} records`);
+        console.log('📧 Email logs sample:', realLogs?.slice(0, 2));
+      }
+
+      // If we have real logs (even if empty), use the database response
+      if (!error && realLogs !== null) {
         const logs = realLogs.map(log => ({
           id: log.id,
           templateId: log.template_id,
@@ -59,8 +70,13 @@ export async function GET(request: NextRequest) {
           logs,
           total: logs.length,
           source: 'database',
+          notice: logs.length === 0 ? 'No emails found in database. Send some emails from the MCP server to see them here.' : undefined
         });
+      } else {
+        console.warn('⚠️ Falling back to mock data due to database error');
       }
+    } else {
+      console.warn('⚠️ Supabase client not available (missing environment variables)');
     }
 
     // Mock email logs data for demonstration
