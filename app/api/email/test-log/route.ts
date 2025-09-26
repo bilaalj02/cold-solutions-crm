@@ -48,9 +48,8 @@ export async function POST() {
 
     console.log('Table check result:', { tableCheck, tableError });
 
-    // Create a simplified test email log entry
+    // Create a simplified test email log entry with minimal required fields
     const testEmailLog = {
-      template_id: 'call-outcome-interested-construction',
       subject: 'Great speaking with you - Construction AI Solutions',
       status: 'sent',
       sent_at: new Date().toISOString(),
@@ -59,6 +58,7 @@ export async function POST() {
         fromEmail: 'contact@coldsolutions.ca',
         toEmail: 'test@example.com',
         messageId: `<test_${Date.now()}@coldsolutions.ca>`,
+        template_id: 'call-outcome-interested-construction',
         variables: {
           contact_first_name: 'John',
           company_name: 'Test Construction Co'

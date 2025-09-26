@@ -47,8 +47,6 @@ async function storeEmailLog(emailLog: MCPEmailLog) {
   const { error } = await supabase
     .from('email_logs')
     .insert({
-      id: `mcp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      template_id: emailLog.template,
       subject: emailLog.subject,
       status: emailLog.status === 'SUCCESS' ? 'sent' : 'bounced',
       sent_at: emailLog.timestamp,
@@ -58,15 +56,11 @@ async function storeEmailLog(emailLog: MCPEmailLog) {
         fromEmail: emailLog.from,
         toEmail: emailLog.to,
         messageId: emailLog.messageId,
+        template_id: emailLog.template,
         variables: emailLog.variables,
         source: 'mcp_server',
         content: emailLog.content
-      },
-      lead_id: null, // Will be linked later if needed
-      campaign_id: null,
-      sequence_id: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      }
     })
 
   if (error) {

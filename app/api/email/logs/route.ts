@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       if (!error && realLogs !== null) {
         const logs = realLogs.map(log => ({
           id: log.id,
-          templateId: log.template_id,
+          templateId: log.metadata?.template_id || log.template_id || 'unknown',
           subject: log.subject,
           status: log.status,
           sentAt: log.sent_at,
