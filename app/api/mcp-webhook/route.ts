@@ -23,6 +23,10 @@ interface MCPEmailLog {
   template: string
   variables: Record<string, any>
   error?: string
+  content?: {
+    text: string
+    html: string
+  }
 }
 
 // Initialize Supabase client
@@ -47,7 +51,8 @@ async function storeEmailLog(emailLog: MCPEmailLog) {
         toEmail: emailLog.to,
         messageId: emailLog.messageId,
         variables: emailLog.variables,
-        source: 'mcp_server'
+        source: 'mcp_server',
+        content: emailLog.content
       },
       lead_id: null, // Will be linked later if needed
       campaign_id: null,

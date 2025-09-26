@@ -22,6 +22,10 @@ interface EmailLog {
     toEmail: string;
     messageId?: string;
   };
+  content?: {
+    text: string;
+    html: string;
+  };
 }
 
 export default function EmailLogsPage() {
@@ -31,6 +35,8 @@ export default function EmailLogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dataSource, setDataSource] = useState<string>('');
   const [notice, setNotice] = useState<string>('');
+  const [selectedEmail, setSelectedEmail] = useState<EmailLog | null>(null);
+  const [showContentModal, setShowContentModal] = useState(false);
 
   useEffect(() => {
     fetchEmailLogs();
@@ -91,6 +97,16 @@ export default function EmailLogsPage() {
 
     return matchesStatus && matchesSearch;
   });
+
+  const viewEmailContent = (emailLog: EmailLog) => {
+    setSelectedEmail(emailLog);
+    setShowContentModal(true);
+  };
+
+  const closeContentModal = () => {
+    setSelectedEmail(null);
+    setShowContentModal(false);
+  };
 
   return (
     <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
@@ -248,6 +264,7 @@ export default function EmailLogsPage() {
                       <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
                       <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Sent</th>
                       <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                      <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -297,6 +314,20 @@ export default function EmailLogsPage() {
                             )}
                           </div>
                         </td>
+                        <td className="px-6 py-4">
+                          {log.content ? (
+                            <button
+                              onClick={() => viewEmailContent(log)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md hover:opacity-90 transition-opacity"
+                              style={{backgroundColor: '#3dbff2', color: 'white'}}
+                            >
+                              <span className="material-symbols-outlined text-sm">visibility</span>
+                              View Content
+                            </button>
+                          ) : (
+                            <span className="text-xs text-gray-400">No content</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -306,6 +337,100 @@ export default function EmailLogsPage() {
           </div>
         </div>
       </main>
+
+      {/* Email Content Modal */}
+      {showContentModal && selectedEmail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold" style={{color: '#0a2240'}}>Email Content</h2>
+              <button
+                onClick={closeContentModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Email Details */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">Subject:</span>
+                    <p className="mt-1">{selectedEmail.subject}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Status:</span>
+                    <span className={`ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedEmail.status)}`}>
+                      <span className="material-symbols-outlined text-xs">{getStatusIcon(selectedEmail.status)}</span>
+                      {selectedEmail.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">From:</span>
+                    <p className="mt-1">{selectedEmail.metadata.fromEmail}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">To:</span>
+                    <p className="mt-1">{selectedEmail.metadata.toEmail}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Sent At:</span>
+                    <p className="mt-1">{new Date(selectedEmail.sentAt).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Template:</span>
+                    <p className="mt-1">{selectedEmail.templateId}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Content Tabs */}
+              {selectedEmail.content && (
+                <div>
+                  <div className="border-b border-gray-200 mb-4">
+                    <nav className="-mb-px flex space-x-8">
+                      <button
+                        className="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm"
+                        style={{borderColor: '#3dbff2', color: '#3dbff2'}}
+                      >
+                        HTML View
+                      </button>
+                    </nav>
+                  </div>
+
+                  {/* HTML Content */}
+                  <div className="bg-white border rounded-lg">
+                    <div className="p-4">
+                      <iframe
+                        srcDoc={selectedEmail.content.html}
+                        className="w-full h-96 border rounded"
+                        title="Email HTML Content"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Text Content (Hidden by default, can be toggled) */}
+                  {selectedEmail.content.text && (
+                    <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">Plain Text Version:</h4>
+                      <pre className="text-sm whitespace-pre-wrap text-gray-600">{selectedEmail.content.text}</pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!selectedEmail.content && (
+                <div className="text-center py-8">
+                  <span className="material-symbols-outlined text-gray-400 text-6xl">mail</span>
+                  <p className="text-gray-500 mt-4">No email content available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

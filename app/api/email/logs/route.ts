@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
         clickedAt: log.clicked_at,
         repliedAt: log.replied_at,
         errorMessage: log.error_message,
-        metadata: log.metadata
+        metadata: log.metadata,
+        content: log.metadata?.content // Extract content from metadata
       }));
 
       return NextResponse.json({
