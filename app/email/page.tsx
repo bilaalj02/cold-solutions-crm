@@ -139,12 +139,12 @@ export default function EmailManagementPage() {
 
     try {
       // MCP templates from cold-solutions-mcp-server/email-templates.json
-      const mcpTemplates = [
+      const mcpTemplates: Array<Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt' | 'stats'>> = [
         {
           name: "Follow-up: Lead Interested",
           subject: "Great speaking with you!",
           content: "Hi {{name}},\n\nGreat speaking with you! Here's some more information on our key services:\n\nAI Voice Agent – Handles calls 24/7, including after hours, books consultations, answers FAQs, and instantly follows up with new leads. It can even handle up to 20 calls at once, so you never miss an opportunity.\n\nAI Chatbot – Engages website visitors in real time, books appointments, provides quotes, and captures leads directly from your site or social media.\n\nAI Lead Gen – Contacts leads the moment they come in from ads or web forms, reducing response time and improving conversion rates.\n\nFree AI Audit – We'll review your current process, highlight missed opportunities, and show exactly where AI can help increase revenue and client retention.\n\nTo see it in action, you can call our AI Receptionist at this number: [+1(778)401-8733] to hear how it answers questions and explains our services. You can also request a brief AI Audit on that call — our AI Virtual Assistant will then call you back at the time you choose.\n\nWould you like me to send over more info on how we could tailor these solutions for your business, or set you up with a quick demo?\n\nBest,\nPaul-Elvis Roberts\ncontact@coldsolutions.ca\nWebsite: coldsolutions.ca",
-          type: "follow-up",
+          type: "follow-up" as const,
           leadStage: "",
           industry: "",
           isActive: true,
@@ -155,7 +155,7 @@ export default function EmailManagementPage() {
           name: "Follow-up: Lead Interested (V3 - Simple & Direct)",
           subject: "Great talking with you!",
           content: "Hi {{contact_first_name}},\n\nGreat talking with you! Here's what we do:\n\nAI Voice Agent – Like having a receptionist who never sleeps. Answers calls 24/7 (even at 2 AM), books appointments, and handles 20 calls at once. You'll never miss another job.\n\nAI Chatbot – Lives on your website and chats with visitors while you're on a job. Books appointments and catches leads before they go to your competitors.\n\nAI Lead Gen – Contacts new leads the second they come in. Fast response = more jobs booked.\n\nFree AI Audit – We'll show you exactly where you're losing money or missing opportunities. No charge.\n\nWant to hear it yourself?\n📞 Call our AI Receptionist: +1(778)401-8733\nAsk it anything about our services or request a free audit. It'll schedule a callback whenever works for you.\n\nShould I send more details or set up a quick demo?\n\nTalk soon,\nPaul-Elvis Roberts\n📧 contact@coldsolutions.ca\n🌐 coldsolutions.ca",
-          type: "follow-up",
+          type: "follow-up" as const,
           leadStage: "",
           industry: "",
           isActive: true,
@@ -166,7 +166,7 @@ export default function EmailManagementPage() {
           name: "Follow-up: Construction Lead Interested",
           subject: "Great speaking with you - Construction AI Solutions",
           content: "Hi {{contact_first_name}},\n\nGreat speaking with you today - I could tell you understand how costly missed calls and slow follow-up are in construction.\n\n**The Pain Points You're Facing:**\n• **Missed Calls = Lost Jobs**: 79% of construction leads call a competitor within 5 minutes if you don't answer\n• **Speed to Lead Crisis**: The first contractor to respond wins 87% of projects\n• **After-Hours Losses**: Weekend/evening calls often go straight to voicemail while competitors capture them\n\n**Our Complete AI Solution:**\n🤖 **AI Voice Agent** - Answers every call instantly, even when you're on job sites. Qualifies leads, schedules estimates, handles emergencies 24/7.\n\n💬 **AI Website Chatbot** - Captures leads browsing your website after-hours. Provides instant quotes for common projects, books estimates automatically.\n\n🔧 **Full AI Infrastructure** - Connects everything: your CRM, scheduling system, and marketing. Creates one seamless operation that works while you focus on building.\n\n**Real Result**: One Construction company we worked with in Sacramento California went from missing 23 calls weekly to capturing 97% of all inquiries. Added $270K in booked projects their first year with our system.\n\nReady to stop losing jobs to missed calls? Let's schedule a 15-minute demo: https://calendly.com/coldsolutions\n\nOr call our AI system right now to experience it: (778) 401-8733\n\n— Paul-Elvis Roberts\nCold Solutions\n📧 contact@coldsolutions.ca\n🌐 coldsolutions.ca\n📞 +1(778)401-8733\n\nP.S. Want to see exactly how much revenue you're losing to missed calls? I can run a free analysis - just reply with your monthly call volume.",
-          type: "follow-up",
+          type: "follow-up" as const,
           leadStage: "",
           industry: "construction",
           isActive: true,
@@ -177,7 +177,7 @@ export default function EmailManagementPage() {
           name: "Follow-up: Home Service/HVAC Lead Interested",
           subject: "Losing service calls to voicemail?",
           content: "Hi {{contact_first_name}},\n\nThanks for your interest earlier - I know how costly it can be when emergency service calls go unanswered.\n\n**The Problem**: Home service businesses lose 67% of after-hours calls to competitors who answer first. That's $8,000+ in monthly revenue walking away.\n\n**Our Solution**:\n✅ **24/7 Emergency Dispatch** - Our AI Receptionist captures urgent HVAC, plumbing & electrical calls instantly\n✅ **Automatic Scheduling** - books routine maintenance directly into your calendar\n✅ **Lead Qualification** - knows the difference between emergencies and estimates\n✅ **Multi-Trade Handling** - routes calls to the right technician automatically\n\n**Real Example**: Alpha Heating & Air Conditioning was missing 13 emergency calls weekly. Our AI system helped them capture those calls, adding $47K in additional revenue over 6 months - all from calls they were previously losing.\n\nReady to stop losing service calls? Book a quick demo here: https://calendly.com/coldsolutions\n\nOr test our AI system right now - call (778) 401-8733 to hear how it handles service inquiries.\n\n— Paul-Elvis Roberts\nCold Solutions\n📧 contact@coldsolutions.ca\n🌐 coldsolutions.ca\n📞 +1(778)401-8733",
-          type: "follow-up",
+          type: "follow-up" as const,
           leadStage: "",
           industry: "hvac",
           isActive: true,
