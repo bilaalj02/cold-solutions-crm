@@ -6,7 +6,7 @@ import { LeadManager } from "../../lib/leads";
 import { EmailManager } from "../../lib/email-system";
 
 type TimePeriod = 'last7days' | 'last30days' | 'last90days' | 'last6months' | 'last12months';
-type ChartType = 'overview' | 'revenue' | 'conversion' | 'territories' | 'channels' | 'forecasting' | 'automation';
+type ChartType = 'overview' | 'revenue' | 'conversion' | 'territories' | 'channels' | 'forecasting' | 'automation' | 'email';
 
 export default function AdvancedAnalyticsPage() {
   const [activeTab, setActiveTab] = useState<ChartType>('overview');
@@ -21,6 +21,11 @@ export default function AdvancedAnalyticsPage() {
   const [makeStats, setMakeStats] = useState<MakeAutomationStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredChart, setHoveredChart] = useState<string | null>(null);
+
+  // Email analytics state
+  const [emailStats, setEmailStats] = useState<any>(null);
+  const [emailSends, setEmailSends] = useState<any[]>([]);
+  const [templateStats, setTemplateStats] = useState<any[]>([]);
 
   useEffect(() => {
     loadAnalyticsData();
@@ -41,10 +46,67 @@ export default function AdvancedAnalyticsPage() {
       setForecastData(AdvancedAnalytics.getRevenueForecast());
       setAutomationMetrics(AdvancedAnalytics.getAutomationMetrics());
       setMakeStats(AdvancedAnalytics.getMakeAutomationStats());
+
+      // Load email analytics
+      await loadEmailAnalytics();
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadEmailAnalytics = async () => {
+    try {
+      // Fetch email sends from API
+      const response = await fetch('/api/email/track?limit=50');
+      if (response.ok) {
+        const data = await response.json();
+        setEmailSends(data.data || []);
+
+        // Calculate stats from email sends
+        const sends = data.data || [];
+        const totalSent = sends.length;
+        const delivered = sends.filter((s: any) => s.status === 'delivered').length;
+        const failed = sends.filter((s: any) => s.status === 'failed').length;
+        const deliveryRate = totalSent > 0 ? ((delivered / totalSent) * 100).toFixed(1) : '0';
+
+        // Group by industry
+        const byIndustry = sends.reduce((acc: any, send: any) => {
+          const industry = send.industry || 'general';
+          if (!acc[industry]) {
+            acc[industry] = { sent: 0, delivered: 0, failed: 0 };
+          }
+          acc[industry].sent++;
+          if (send.status === 'delivered') acc[industry].delivered++;
+          if (send.status === 'failed') acc[industry].failed++;
+          return acc;
+        }, {});
+
+        // Group by template
+        const byTemplate = sends.reduce((acc: any, send: any) => {
+          const template = send.template_name;
+          if (!acc[template]) {
+            acc[template] = { name: template, sent: 0, delivered: 0, failed: 0 };
+          }
+          acc[template].sent++;
+          if (send.status === 'delivered') acc[template].delivered++;
+          if (send.status === 'failed') acc[template].failed++;
+          return acc;
+        }, {});
+
+        setEmailStats({
+          totalSent,
+          delivered,
+          failed,
+          deliveryRate,
+          byIndustry
+        });
+
+        setTemplateStats(Object.values(byTemplate));
+      }
+    } catch (error) {
+      console.error('Error loading email analytics:', error);
     }
   };
 
@@ -231,6 +293,7 @@ export default function AdvancedAnalyticsPage() {
             <nav className="flex space-x-8">
               {[
                 { key: 'overview', label: 'Overview', icon: 'dashboard' },
+                { key: 'email', label: 'Email Performance', icon: 'email' },
                 { key: 'revenue', label: 'Revenue', icon: 'trending_up' },
                 { key: 'conversion', label: 'Funnel Chart', icon: 'funnel_chart' },
                 { key: 'territories', label: 'Territories', icon: 'map' },
@@ -398,6 +461,212 @@ export default function AdvancedAnalyticsPage() {
                             </div>
                           ))}
                         </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Email Performance Tab */}
+              {activeTab === 'email' && (
+                <div className="space-y-8">
+                  {/* Email Stats Overview */}
+                  {emailStats && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600">Total Emails Sent</p>
+                            <p className="text-3xl font-bold mt-1" style={{color: '#0a2240'}}>{emailStats.totalSent}</p>
+                          </div>
+                          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-blue-600">send</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600">Delivered</p>
+                            <p className="text-3xl font-bold mt-1" style={{color: '#10b981'}}>{emailStats.delivered}</p>
+                          </div>
+                          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-green-600">check_circle</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600">Failed</p>
+                            <p className="text-3xl font-bold mt-1" style={{color: '#ef4444'}}>{emailStats.failed}</p>
+                          </div>
+                          <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-red-600">error</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600">Delivery Rate</p>
+                            <p className="text-3xl font-bold mt-1" style={{color: '#3dbff2'}}>{emailStats.deliveryRate}%</p>
+                          </div>
+                          <div className="w-12 h-12 rounded-lg bg-cyan-100 flex items-center justify-center">
+                            <span className="material-symbols-outlined text-cyan-600">analytics</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Template Performance */}
+                  <div className="bg-white rounded-lg shadow-sm border">
+                    <div className="px-6 py-4 border-b">
+                      <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Template Performance</h3>
+                      <p className="text-sm text-gray-600">Email delivery stats by template</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      {templateStats.length === 0 ? (
+                        <div className="p-6">{renderEmptyState('Template Performance')}</div>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Template</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Sent</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Delivered</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Failed</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Delivery Rate</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {templateStats.map((template: any) => {
+                              const deliveryRate = template.sent > 0 ? ((template.delivered / template.sent) * 100).toFixed(1) : '0';
+                              return (
+                                <tr key={template.name} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 font-medium" style={{color: '#0a2240'}}>{template.name}</td>
+                                  <td className="px-6 py-4">{template.sent}</td>
+                                  <td className="px-6 py-4 text-green-600">{template.delivered}</td>
+                                  <td className="px-6 py-4 text-red-600">{template.failed}</td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-20 bg-gray-200 rounded-full h-2">
+                                        <div
+                                          className={`h-2 rounded-full ${parseFloat(deliveryRate) >= 90 ? 'bg-green-500' : parseFloat(deliveryRate) >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                          style={{width: `${deliveryRate}%`}}
+                                        ></div>
+                                      </div>
+                                      <span className="font-medium">{deliveryRate}%</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Industry Breakdown */}
+                  {emailStats && emailStats.byIndustry && Object.keys(emailStats.byIndustry).length > 0 && (
+                    <div className="bg-white rounded-lg shadow-sm border">
+                      <div className="px-6 py-4 border-b">
+                        <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Performance by Industry</h3>
+                      </div>
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {Object.entries(emailStats.byIndustry).map(([industry, stats]: [string, any]) => {
+                            const deliveryRate = stats.sent > 0 ? ((stats.delivered / stats.sent) * 100).toFixed(1) : '0';
+                            return (
+                              <div key={industry} className="p-4 bg-gray-50 rounded-lg">
+                                <h4 className="font-semibold capitalize mb-2" style={{color: '#0a2240'}}>{industry}</h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Sent:</span>
+                                    <span className="font-medium">{stats.sent}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Delivered:</span>
+                                    <span className="font-medium text-green-600">{stats.delivered}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Failed:</span>
+                                    <span className="font-medium text-red-600">{stats.failed}</span>
+                                  </div>
+                                  <div className="mt-2">
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                      <div
+                                        className="h-2 rounded-full bg-[#3dbff2]"
+                                        style={{width: `${deliveryRate}%`}}
+                                      ></div>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">{deliveryRate}% delivery rate</p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recent Email Sends */}
+                  <div className="bg-white rounded-lg shadow-sm border">
+                    <div className="px-6 py-4 border-b">
+                      <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Recent Email Sends</h3>
+                      <p className="text-sm text-gray-600">Last 50 emails sent from the system</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      {emailSends.length === 0 ? (
+                        <div className="p-6">{renderEmptyState('Recent Sends')}</div>
+                      ) : (
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50 border-b">
+                            <tr>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Recipient</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Template</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Industry</th>
+                              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {emailSends.map((send: any) => (
+                              <tr key={send.id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 text-gray-600">
+                                  {new Date(send.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div>
+                                    <div className="font-medium" style={{color: '#0a2240'}}>{send.recipient_name || 'Unknown'}</div>
+                                    <div className="text-xs text-gray-500">{send.recipient_email}</div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-gray-600">{send.template_name}</td>
+                                <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{send.subject}</td>
+                                <td className="px-6 py-4">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
+                                    {send.industry}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                    send.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {send.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       )}
                     </div>
                   </div>
