@@ -297,4 +297,120 @@ export class SupabaseEmailManager {
       'caseStudyLink'
     ];
   }
+
+  // Sequence CRUD operations
+  static async getSequences(): Promise<EmailSequence[]> {
+    try {
+      const { data, error } = await supabase
+        .from('email_sequences')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching sequences:', error);
+        return [];
+      }
+
+      return data?.map(this.mapSupabaseSequence) || [];
+    } catch (error) {
+      console.error('Error in getSequences:', error);
+      return [];
+    }
+  }
+
+  static async createSequence(sequence: Omit<EmailSequence, 'id' | 'createdAt' | 'updatedAt' | 'stats'>): Promise<EmailSequence | null> {
+    try {
+      const sequenceData = {
+        name: sequence.name,
+        description: sequence.description,
+        trigger: sequence.trigger,
+        trigger_conditions: sequence.triggerConditions,
+        steps: sequence.steps,
+        is_active: sequence.isActive,
+        stats: { enrolled: 0, completed: 0, dropOffRate: 0 }
+      };
+
+      const { data, error } = await supabase
+        .from('email_sequences')
+        .insert([sequenceData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating sequence:', error);
+        return null;
+      }
+
+      return this.mapSupabaseSequence(data);
+    } catch (error) {
+      console.error('Error in createSequence:', error);
+      return null;
+    }
+  }
+
+  static async updateSequence(id: string, updates: Partial<EmailSequence>): Promise<EmailSequence | null> {
+    try {
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (updates.name) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.trigger) updateData.trigger = updates.trigger;
+      if (updates.triggerConditions) updateData.trigger_conditions = updates.triggerConditions;
+      if (updates.steps) updateData.steps = updates.steps;
+      if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+
+      const { data, error } = await supabase
+        .from('email_sequences')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating sequence:', error);
+        return null;
+      }
+
+      return this.mapSupabaseSequence(data);
+    } catch (error) {
+      console.error('Error in updateSequence:', error);
+      return null;
+    }
+  }
+
+  static async deleteSequence(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('email_sequences')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting sequence:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteSequence:', error);
+      return false;
+    }
+  }
+
+  private static mapSupabaseSequence(data: any): EmailSequence {
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      trigger: data.trigger,
+      triggerConditions: data.trigger_conditions || {},
+      steps: data.steps || [],
+      isActive: data.is_active,
+      stats: data.stats || { enrolled: 0, completed: 0, dropOffRate: 0 },
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+  }
 }

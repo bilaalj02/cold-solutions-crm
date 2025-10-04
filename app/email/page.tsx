@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { EmailTemplate, EmailCampaign, EmailSequence } from "../../lib/email-system";
 import { SupabaseEmailManager } from "../../lib/supabase-email";
 import TemplateModal from "../../components/TemplateModal";
+import SequenceModal from "../../components/SequenceModal";
 
 export default function EmailManagementPage() {
   const [activeTab, setActiveTab] = useState<'templates' | 'campaigns' | 'sequences' | 'analytics'>('templates');
@@ -17,6 +18,7 @@ export default function EmailManagementPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showSequenceModal, setShowSequenceModal] = useState(false);
+  const [editingSequence, setEditingSequence] = useState<EmailSequence | null>(null);
 
   useEffect(() => {
     loadData();
@@ -24,15 +26,15 @@ export default function EmailManagementPage() {
 
   const loadData = async () => {
     try {
-      const [templatesData, campaignsData] = await Promise.all([
+      const [templatesData, campaignsData, sequencesData] = await Promise.all([
         SupabaseEmailManager.getTemplates(),
-        SupabaseEmailManager.getCampaigns()
+        SupabaseEmailManager.getCampaigns(),
+        SupabaseEmailManager.getSequences()
       ]);
 
       setTemplates(templatesData);
       setCampaigns(campaignsData);
-      // setSequences will be implemented later
-      setSequences([]);
+      setSequences(sequencesData);
     } catch (error) {
       console.error('Error loading email data:', error);
     }
@@ -78,7 +80,58 @@ export default function EmailManagementPage() {
   };
 
   const handleCreateSequence = () => {
+    setEditingSequence(null);
     setShowSequenceModal(true);
+  };
+
+  const handleEditSequence = (sequence: EmailSequence) => {
+    setEditingSequence(sequence);
+    setShowSequenceModal(true);
+  };
+
+  const handleSaveSequence = async (sequenceData: any) => {
+    try {
+      if (editingSequence) {
+        // Update existing sequence
+        const updatedSequence = await SupabaseEmailManager.updateSequence(editingSequence.id, sequenceData);
+        if (updatedSequence) {
+          await loadData();
+        } else {
+          alert('Failed to update sequence');
+        }
+      } else {
+        // Create new sequence
+        const newSequence = await SupabaseEmailManager.createSequence(sequenceData);
+        if (newSequence) {
+          await loadData();
+        } else {
+          alert('Failed to create sequence');
+        }
+      }
+      setShowSequenceModal(false);
+      setEditingSequence(null);
+    } catch (error) {
+      console.error('Error saving sequence:', error);
+      alert('Error saving sequence');
+    }
+  };
+
+  const handleDeleteSequence = async (sequenceId: string) => {
+    if (!confirm('Are you sure you want to delete this sequence? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const success = await SupabaseEmailManager.deleteSequence(sequenceId);
+      if (success) {
+        await loadData();
+      } else {
+        alert('Failed to delete sequence');
+      }
+    } catch (error) {
+      console.error('Error deleting sequence:', error);
+      alert('Error deleting sequence');
+    }
   };
 
   const handleEditTemplate = (template: EmailTemplate) => {
@@ -686,9 +739,22 @@ export default function EmailManagementPage() {
                           <div className="text-gray-500">Drop-off</div>
                         </div>
                       </div>
-                      <button className="text-[#3dbff2] hover:underline">
-                        View Details
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEditSequence(sequence)}
+                          className="text-gray-400 hover:text-gray-600"
+                          title="Edit sequence"
+                        >
+                          <span className="material-symbols-outlined text-base">edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSequence(sequence.id)}
+                          className="text-gray-400 hover:text-red-600"
+                          title="Delete sequence"
+                        >
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -925,26 +991,17 @@ export default function EmailManagementPage() {
         </div>
       )}
 
-      {/* Sequence Modal (Placeholder) */}
+      {/* Sequence Modal */}
       {showSequenceModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Create New Sequence</h3>
-              <p className="text-gray-600 mb-6">
-                Email sequence creation feature is coming soon! This will allow you to create automated email sequences.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowSequenceModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SequenceModal
+          sequence={editingSequence}
+          templates={templates.filter(t => t.isActive)}
+          onSave={handleSaveSequence}
+          onClose={() => {
+            setShowSequenceModal(false);
+            setEditingSequence(null);
+          }}
+        />
       )}
     </div>
   );
