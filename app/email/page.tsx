@@ -185,6 +185,155 @@ export default function EmailManagementPage() {
     }
   };
 
+  const handleImportMCPSequences = async () => {
+    if (!confirm('This will import 3 follow-up sequences (HVAC, Plumbing, General) from the MCP server. Each sequence has 4 steps. Continue?')) {
+      return;
+    }
+
+    try {
+      // First, get all templates to find the IDs we need
+      const allTemplates = await SupabaseEmailManager.getTemplates();
+
+      // Define the MCP follow-up sequences
+      const mcpSequences = [
+        {
+          name: "HVAC Follow-up Sequence (Interested/More Info)",
+          description: "Automated 4-email sequence for HVAC leads who are interested or requested more info. Sends emails on Day 2, 6, 10, and 17.",
+          trigger: 'manual' as const,
+          triggerConditions: { industry: 'hvac', outcomes: ['interested', 'more_info'] },
+          isActive: true,
+          steps: [
+            {
+              id: `step-${Date.now()}-1`,
+              order: 1,
+              templateId: 'hvac-day2',
+              delay: { value: 2, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-2`,
+              order: 2,
+              templateId: 'hvac-day6',
+              delay: { value: 4, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-3`,
+              order: 3,
+              templateId: 'hvac-day10',
+              delay: { value: 4, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-4`,
+              order: 4,
+              templateId: 'hvac-day17',
+              delay: { value: 7, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            }
+          ]
+        },
+        {
+          name: "Plumbing Follow-up Sequence (Interested/More Info)",
+          description: "Automated 4-email sequence for Plumbing leads who are interested or requested more info. Sends emails on Day 2, 6, 10, and 17.",
+          trigger: 'manual' as const,
+          triggerConditions: { industry: 'plumbing', outcomes: ['interested', 'more_info'] },
+          isActive: true,
+          steps: [
+            {
+              id: `step-${Date.now()}-5`,
+              order: 1,
+              templateId: 'plumbing-day2',
+              delay: { value: 2, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-6`,
+              order: 2,
+              templateId: 'plumbing-day6',
+              delay: { value: 4, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-7`,
+              order: 3,
+              templateId: 'plumbing-day10',
+              delay: { value: 4, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-8`,
+              order: 4,
+              templateId: 'plumbing-day17',
+              delay: { value: 7, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            }
+          ]
+        },
+        {
+          name: "General Home Service Follow-up Sequence (Interested/More Info)",
+          description: "Automated 4-email sequence for general home service leads who are interested or requested more info. Sends emails on Day 2, 6, 10, and 17.",
+          trigger: 'manual' as const,
+          triggerConditions: { industry: 'general', outcomes: ['interested', 'more_info'] },
+          isActive: true,
+          steps: [
+            {
+              id: `step-${Date.now()}-9`,
+              order: 1,
+              templateId: 'general-day2',
+              delay: { value: 2, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-10`,
+              order: 2,
+              templateId: 'general-day6',
+              delay: { value: 4, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-11`,
+              order: 3,
+              templateId: 'general-day10',
+              delay: { value: 4, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            },
+            {
+              id: `step-${Date.now()}-12`,
+              order: 4,
+              templateId: 'general-day17',
+              delay: { value: 7, unit: 'days' as const },
+              stats: { sent: 0, opened: 0, clicked: 0, replied: 0 }
+            }
+          ]
+        }
+      ];
+
+      let imported = 0;
+      let skipped = 0;
+
+      for (const mcpSequence of mcpSequences) {
+        // Check if sequence already exists
+        const exists = sequences.some(s => s.name === mcpSequence.name);
+        if (exists) {
+          skipped++;
+          continue;
+        }
+
+        const newSequence = await SupabaseEmailManager.createSequence(mcpSequence);
+        if (newSequence) {
+          imported++;
+        }
+      }
+
+      await loadData();
+      alert(`Import complete!\nImported: ${imported} sequences\nSkipped (already exist): ${skipped} sequences\n\nNote: These sequences reference template IDs that need to match your email templates.`);
+    } catch (error) {
+      console.error('Error importing MCP sequences:', error);
+      alert('Error importing sequences');
+    }
+  };
+
   const handleImportMCPTemplates = async () => {
     if (!confirm('This will import ALL 11 email templates from the MCP server. Continue?')) {
       return;
@@ -492,14 +641,24 @@ export default function EmailManagementPage() {
                 </button>
               )}
               {activeTab === 'sequences' && (
-                <button
-                  onClick={handleCreateSequence}
-                  className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
-                  style={{backgroundColor: '#3dbff2'}}
-                >
-                  <span className="material-symbols-outlined text-base">add</span>
-                  New Sequence
-                </button>
+                <>
+                  <button
+                    onClick={handleImportMCPSequences}
+                    className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
+                    style={{backgroundColor: '#0a2240'}}
+                  >
+                    <span className="material-symbols-outlined text-base">download</span>
+                    Import MCP Sequences
+                  </button>
+                  <button
+                    onClick={handleCreateSequence}
+                    className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
+                    style={{backgroundColor: '#3dbff2'}}
+                  >
+                    <span className="material-symbols-outlined text-base">add</span>
+                    New Sequence
+                  </button>
+                </>
               )}
             </div>
           </div>
