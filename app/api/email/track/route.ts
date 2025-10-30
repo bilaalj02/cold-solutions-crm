@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert email send record
+    // Insert to email_sends table (for analytics)
     const { data, error } = await supabase
       .from('email_sends')
       .insert([
@@ -56,6 +56,33 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to track email send', details: error.message },
         { status: 500 }
       );
+    }
+
+    // ALSO insert to email_logs table (for Email Logs page UI)
+    const emailLogRecord = {
+      template_id: template_id || template_name,
+      subject,
+      status: status === 'delivered' ? 'sent' : status,
+      sent_at: new Date().toISOString(),
+      delivered_at: status === 'delivered' ? new Date().toISOString() : null,
+      metadata: {
+        template_id: template_id || template_name,
+        fromEmail: 'contact@coldsolutions.ca',
+        toEmail: recipient_email,
+        messageId: metadata?.messageId || `<${Date.now()}@coldsolutions.ca>`,
+        content: metadata?.content || null
+      }
+    };
+
+    const { error: logError } = await supabase
+      .from('email_logs')
+      .insert([emailLogRecord]);
+
+    if (logError) {
+      console.error('Error inserting to email_logs:', logError);
+      // Don't fail the request if email_logs insert fails
+    } else {
+      console.log('✅ Email logged to both email_sends and email_logs tables');
     }
 
     return NextResponse.json(
