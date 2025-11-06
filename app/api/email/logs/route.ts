@@ -74,13 +74,20 @@ export async function GET(request: NextRequest) {
           content: log.metadata?.content // Extract content from metadata
         }));
 
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           logs,
           total: logs.length,
           source: 'database',
           notice: logs.length === 0 ? 'No emails found in database. Send some emails from the MCP server to see them here.' : undefined
         });
+
+        // Prevent caching to ensure fresh data
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        response.headers.set('Pragma', 'no-cache');
+        response.headers.set('Expires', '0');
+
+        return response;
       } else {
         console.warn('⚠️ Falling back to mock data due to database error');
       }
