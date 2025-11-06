@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
+// Updated: 2025-11-06 - Environment variables updated
 
 function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
