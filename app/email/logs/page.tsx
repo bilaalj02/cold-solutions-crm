@@ -294,6 +294,13 @@ export default function EmailLogsPage() {
             </div>
           </div>
 
+          {/* DEBUG BANNER */}
+          <div className="bg-red-600 text-white p-4 rounded mb-4 font-bold">
+            🐛 DEBUG: Rendering {filteredLogs.length} logs. Loading: {loading ? 'YES' : 'NO'}.
+            Total in state: {logs.length}.
+            {filteredLogs.length > 0 && `First email: ${filteredLogs[0].subject}`}
+          </div>
+
           {/* Email Logs Table */}
           <div className="bg-white rounded-lg shadow-sm border">
             <div className="px-6 py-4 border-b flex items-center justify-between">
@@ -354,10 +361,11 @@ export default function EmailLogsPage() {
                     </tr>
                   </thead>
                   <tbody key={`tbody-${logs.length}-${filteredLogs.length}`} className="divide-y divide-gray-200">
-                    {filteredLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
+                    {filteredLogs.map((log, index) => (
+                      <tr key={log.id} className="hover:bg-gray-50" style={{backgroundColor: index % 2 === 0 ? '#f9fafb' : 'white'}}>
                         <td className="px-6 py-4">
                           <div>
+                            <div className="font-bold text-red-600">ROW #{index + 1}</div>
                             <div className="font-medium" style={{color: '#0a2240'}}>{log.subject}</div>
                             <div className="text-xs text-gray-500 mt-1">
                               {log.metadata?.messageId && `ID: ${log.metadata.messageId.substring(0, 20)}...`}
