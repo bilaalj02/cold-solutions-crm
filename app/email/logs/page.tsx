@@ -100,9 +100,9 @@ export default function EmailLogsPage() {
   const filteredLogs = logs.filter(log => {
     const matchesStatus = filterStatus === 'all' || log.status === filterStatus;
     const matchesSearch = !searchTerm ||
-      log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.metadata.toEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.metadata.fromEmail.toLowerCase().includes(searchTerm.toLowerCase());
+      log.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.metadata?.toEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.metadata?.fromEmail?.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
@@ -362,8 +362,8 @@ export default function EmailLogsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div>
-                            <div className="font-medium">{log.metadata.toEmail}</div>
-                            <div className="text-xs text-gray-500">From: {log.metadata.fromEmail}</div>
+                            <div className="font-medium">{log.metadata?.toEmail || 'Unknown'}</div>
+                            <div className="text-xs text-gray-500">From: {log.metadata?.fromEmail || 'Unknown'}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
