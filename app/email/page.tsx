@@ -19,10 +19,18 @@ export default function EmailManagementPage() {
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showSequenceModal, setShowSequenceModal] = useState(false);
   const [editingSequence, setEditingSequence] = useState<EmailSequence | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      loadAnalytics();
+    }
+  }, [activeTab]);
 
   const loadData = async () => {
     try {
@@ -37,6 +45,24 @@ export default function EmailManagementPage() {
       setSequences(sequencesData);
     } catch (error) {
       console.error('Error loading email data:', error);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      setAnalyticsLoading(true);
+      const response = await fetch('/api/email/analytics');
+      const data = await response.json();
+
+      if (data.success) {
+        setAnalyticsData(data);
+      } else {
+        console.error('Failed to load analytics:', data.error);
+      }
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
@@ -955,120 +981,131 @@ export default function EmailManagementPage() {
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
             <div className="space-y-6">
-              {/* Overall Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                  <div className="flex items-center">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600">Total Emails Sent</p>
-                      <p className="text-2xl font-bold" style={{color: '#0a2240'}}>
-                        {templates.reduce((acc, t) => acc + t.stats.sent, 0).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-blue-100">
-                      <span className="material-symbols-outlined text-blue-600">send</span>
-                    </div>
+              {analyticsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading analytics...</p>
                   </div>
                 </div>
+              ) : analyticsData ? (
+                <>
+                  {/* Data Source Indicator */}
+                  {analyticsData.source === 'empty' && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-yellow-600">info</span>
+                        <p className="text-sm text-yellow-800">
+                          No email data found. Send emails from the MCP server to see analytics here.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                  <div className="flex items-center">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600">Average Open Rate</p>
-                      <p className="text-2xl font-bold" style={{color: '#3dbff2'}}>
-                        {(() => {
-                          const totalSent = templates.reduce((acc, t) => acc + t.stats.sent, 0);
-                          const totalOpened = templates.reduce((acc, t) => acc + t.stats.opened, 0);
-                          return totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : '0.0';
-                        })()}%
-                      </p>
+                  {/* Overall Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                      <div className="flex items-center">
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-600">Total Emails Sent</p>
+                          <p className="text-2xl font-bold" style={{color: '#0a2240'}}>
+                            {analyticsData.overall.total_sent.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-blue-100">
+                          <span className="material-symbols-outlined text-blue-600">send</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-cyan-100">
-                      <span className="material-symbols-outlined text-cyan-600">visibility</span>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                  <div className="flex items-center">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600">Average Click Rate</p>
-                      <p className="text-2xl font-bold" style={{color: '#10b981'}}>
-                        {(() => {
-                          const totalSent = templates.reduce((acc, t) => acc + t.stats.sent, 0);
-                          const totalClicked = templates.reduce((acc, t) => acc + t.stats.clicked, 0);
-                          return totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : '0.0';
-                        })()}%
-                      </p>
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                      <div className="flex items-center">
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-600">Average Open Rate</p>
+                          <p className="text-2xl font-bold" style={{color: '#3dbff2'}}>
+                            {analyticsData.overall.open_rate.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-cyan-100">
+                          <span className="material-symbols-outlined text-cyan-600">visibility</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100">
-                      <span className="material-symbols-outlined text-green-600">mouse</span>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="bg-white p-6 rounded-lg border shadow-sm">
-                  <div className="flex items-center">
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-600">Total Replies</p>
-                      <p className="text-2xl font-bold" style={{color: '#f59e0b'}}>
-                        {templates.reduce((acc, t) => acc + t.stats.replied, 0).toLocaleString()}
-                      </p>
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                      <div className="flex items-center">
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-600">Average Click Rate</p>
+                          <p className="text-2xl font-bold" style={{color: '#10b981'}}>
+                            {analyticsData.overall.click_rate.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100">
+                          <span className="material-symbols-outlined text-green-600">mouse</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-yellow-100">
-                      <span className="material-symbols-outlined text-yellow-600">reply</span>
+
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                      <div className="flex items-center">
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-600">Total Replies</p>
+                          <p className="text-2xl font-bold" style={{color: '#f59e0b'}}>
+                            {analyticsData.overall.total_replied.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-yellow-100">
+                          <span className="material-symbols-outlined text-yellow-600">reply</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                </>
+              ) : (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm text-red-800">Failed to load analytics. Please try again.</p>
                 </div>
-              </div>
+              )}
 
               {/* Performance by Template Type */}
-              <div className="bg-white rounded-lg shadow-sm border">
-                <div className="px-6 py-4 border-b">
-                  <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
-                    Performance by Template Type
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {Array.from(new Set(templates.map(t => t.type))).map(type => {
-                      const typeTemplates = templates.filter(t => t.type === type);
-                      const totalSent = typeTemplates.reduce((acc, t) => acc + t.stats.sent, 0);
-                      const totalOpened = typeTemplates.reduce((acc, t) => acc + t.stats.opened, 0);
-                      const totalClicked = typeTemplates.reduce((acc, t) => acc + t.stats.clicked, 0);
-                      const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : '0.0';
-                      const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : '0.0';
-                      
-                      return (
-                        <div key={type} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-4">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(type)}`}>
-                              {type}
-                            </span>
-                            <div className="text-sm text-gray-600">
-                              {typeTemplates.length} template{typeTemplates.length !== 1 ? 's' : ''}
+              {analyticsData && analyticsData.by_type && analyticsData.by_type.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border">
+                  <div className="px-6 py-4 border-b">
+                    <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
+                      Performance by Template Type
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {analyticsData.by_type.map((typeData: any) => {
+                        return (
+                          <div key={typeData.type} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(typeData.type)}`}>
+                                {typeData.type}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-6 text-sm">
+                              <div>
+                                <div className="font-medium">{typeData.sent.toLocaleString()}</div>
+                                <div className="text-gray-500">Sent</div>
+                              </div>
+                              <div>
+                                <div className="font-medium">{typeData.open_rate.toFixed(1)}%</div>
+                                <div className="text-gray-500">Open Rate</div>
+                              </div>
+                              <div>
+                                <div className="font-medium">{typeData.click_rate.toFixed(1)}%</div>
+                                <div className="text-gray-500">Click Rate</div>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-6 text-sm">
-                            <div>
-                              <div className="font-medium">{totalSent.toLocaleString()}</div>
-                              <div className="text-gray-500">Sent</div>
-                            </div>
-                            <div>
-                              <div className="font-medium">{openRate}%</div>
-                              <div className="text-gray-500">Open Rate</div>
-                            </div>
-                            <div>
-                              <div className="font-medium">{clickRate}%</div>
-                              <div className="text-gray-500">Click Rate</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
