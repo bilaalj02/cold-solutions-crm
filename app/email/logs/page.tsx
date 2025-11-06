@@ -124,6 +124,12 @@ export default function EmailLogsPage() {
     setShowContentModal(false);
   };
 
+  // Debug: Log what we're about to render
+  console.log(`🎨 RENDERING: ${filteredLogs.length} filtered logs, loading=${loading}`);
+  if (filteredLogs.length > 0) {
+    console.log(`📝 First 3 subjects:`, filteredLogs.slice(0, 3).map(l => l.subject));
+  }
+
   return (
     <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
       {/* Sidebar */}
@@ -347,7 +353,7 @@ export default function EmailLogsPage() {
                       <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody key={`tbody-${logs.length}-${filteredLogs.length}`} className="divide-y divide-gray-200">
                     {filteredLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
