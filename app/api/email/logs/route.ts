@@ -18,7 +18,7 @@ function getSupabaseClient() {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limit = parseInt(searchParams.get('limit') || '500'); // Increased default from 100 to 500
     const status = searchParams.get('status');
 
     // Try to fetch real email logs from Supabase

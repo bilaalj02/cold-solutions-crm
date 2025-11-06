@@ -47,8 +47,8 @@ export default function EmailLogsPage() {
     try {
       console.log('📡 Fetching email logs...');
 
-      // Add cache busting to ensure fresh data
-      const response = await fetch(`/api/email/logs?t=${Date.now()}`);
+      // Add cache busting to ensure fresh data - v2
+      const response = await fetch(`/api/email/logs?limit=500&t=${Date.now()}`);
       const data = await response.json();
 
       console.log('📧 Email logs response:', data);
