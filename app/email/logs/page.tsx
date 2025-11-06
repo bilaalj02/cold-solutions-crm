@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 interface EmailLog {
@@ -97,18 +97,22 @@ export default function EmailLogsPage() {
     }
   };
 
-  const filteredLogs = logs.filter(log => {
-    const matchesStatus = filterStatus === 'all' || log.status === filterStatus;
-    const matchesSearch = !searchTerm ||
-      log.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.metadata?.toEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.metadata?.fromEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredLogs = useMemo(() => {
+    const filtered = logs.filter(log => {
+      const matchesStatus = filterStatus === 'all' || log.status === filterStatus;
+      const matchesSearch = !searchTerm ||
+        log.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.metadata?.toEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.metadata?.fromEmail?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesStatus && matchesSearch;
-  });
+      return matchesStatus && matchesSearch;
+    });
 
-  // Debug logging
-  console.log(`🔍 Filter debug: Total logs: ${logs.length}, Filtered logs: ${filteredLogs.length}, Status filter: ${filterStatus}, Search term: "${searchTerm}"`);
+    // Debug logging
+    console.log(`🔍 Filter debug: Total logs: ${logs.length}, Filtered logs: ${filtered.length}, Status filter: ${filterStatus}, Search term: "${searchTerm}"`);
+
+    return filtered;
+  }, [logs, filterStatus, searchTerm]);
 
   const viewEmailContent = (emailLog: EmailLog) => {
     setSelectedEmail(emailLog);
