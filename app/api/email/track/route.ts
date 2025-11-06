@@ -67,20 +67,28 @@ export async function POST(request: NextRequest) {
     }
 
     // ALSO insert to email_logs table (for Email Logs page UI)
-    const emailLogRecord = {
-      template_id: template_id || template_name,
+    // template_id in email_logs might be UUID type, so only include if valid UUID
+    const emailLogRecord: any = {
       subject,
       status: status === 'delivered' ? 'sent' : status,
       sent_at: new Date().toISOString(),
       delivered_at: status === 'delivered' ? new Date().toISOString() : null,
       metadata: {
         template_id: template_id || template_name,
+        template_name: template_name,
         fromEmail: 'contact@coldsolutions.ca',
         toEmail: recipient_email,
         messageId: metadata?.messageId || `<${Date.now()}@coldsolutions.ca>`,
-        content: metadata?.content || null
+        content: metadata?.content || null,
+        original_lead_id: lead_id
       }
     };
+
+    // Only add template_id if it's a valid UUID, otherwise store in metadata only
+    const isValidTemplateUUID = template_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(template_id);
+    if (isValidTemplateUUID) {
+      emailLogRecord.template_id = template_id;
+    }
 
     const { error: logError } = await supabase
       .from('email_logs')
