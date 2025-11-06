@@ -107,6 +107,9 @@ export default function EmailLogsPage() {
     return matchesStatus && matchesSearch;
   });
 
+  // Debug logging
+  console.log(`🔍 Filter debug: Total logs: ${logs.length}, Filtered logs: ${filteredLogs.length}, Status filter: ${filterStatus}, Search term: "${searchTerm}"`);
+
   const viewEmailContent = (emailLog: EmailLog) => {
     setSelectedEmail(emailLog);
     setShowContentModal(true);
@@ -347,7 +350,7 @@ export default function EmailLogsPage() {
                           <div>
                             <div className="font-medium" style={{color: '#0a2240'}}>{log.subject}</div>
                             <div className="text-xs text-gray-500 mt-1">
-                              {log.metadata.messageId && `ID: ${log.metadata.messageId.substring(0, 20)}...`}
+                              {log.metadata?.messageId && `ID: ${log.metadata.messageId.substring(0, 20)}...`}
                             </div>
                             {log.errorMessage && (
                               <div className="text-xs text-red-600 mt-1">Error: {log.errorMessage}</div>
