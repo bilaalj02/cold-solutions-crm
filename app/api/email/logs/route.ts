@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Force dynamic rendering for this route
 export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Never cache, always fresh data
 // Updated: 2025-11-06 - Environment variables updated
 
 function getSupabaseClient() {
