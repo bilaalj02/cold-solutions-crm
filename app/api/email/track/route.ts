@@ -31,31 +31,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert to email_sends table (for analytics)
+    // Only include lead_id if it's a valid UUID format
+    const isValidUUID = lead_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lead_id);
+
+    const emailSendRecord: any = {
+      template_id,
+      template_name,
+      recipient_email,
+      recipient_name,
+      subject,
+      status,
+      industry,
+      metadata: {
+        ...metadata,
+        original_lead_id: lead_id // Store original lead_id (Notion ID) in metadata
+      },
+      sent_at: new Date().toISOString()
+    };
+
+    // Only add lead_id if it's a valid UUID
+    if (isValidUUID) {
+      emailSendRecord.lead_id = lead_id;
+    }
+
     const { data, error } = await supabase
       .from('email_sends')
-      .insert([
-        {
-          template_id,
-          template_name,
-          recipient_email,
-          recipient_name,
-          subject,
-          status,
-          industry,
-          lead_id,
-          metadata,
-          sent_at: new Date().toISOString()
-        }
-      ])
+      .insert([emailSendRecord])
       .select()
       .single();
 
     if (error) {
       console.error('Error tracking email send:', error);
-      return NextResponse.json(
-        { error: 'Failed to track email send', details: error.message },
-        { status: 500 }
-      );
+      // Don't fail the request - email_logs is more important
+      console.warn('Continuing despite email_sends error...');
     }
 
     // ALSO insert to email_logs table (for Email Logs page UI)
