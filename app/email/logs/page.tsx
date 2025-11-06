@@ -1,5 +1,5 @@
 'use client'
-// v1.1.0 - Fixed email logs display and duplicates
+// v1.2.0 - Aggressive cache busting to fix stale data
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -48,8 +48,14 @@ export default function EmailLogsPage() {
     try {
       console.log('📡 Fetching email logs...');
 
-      // Add cache busting to ensure fresh data - v2
-      const response = await fetch(`/api/email/logs?limit=500&t=${Date.now()}`);
+      // Add cache busting to ensure fresh data - v3 with no-store
+      const response = await fetch(`/api/email/logs?limit=500&t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
 
       console.log('📧 Email logs response:', data);
