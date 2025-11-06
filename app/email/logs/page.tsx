@@ -54,10 +54,8 @@ export default function EmailLogsPage() {
       console.log('📧 Email logs response:', data);
 
       if (data.success) {
-        setLogs(data.logs.map((log: any) => ({
-          ...log,
-          sentAt: new Date(log.sentAt)
-        })));
+        console.log('📋 Raw logs data:', data.logs.slice(0, 2)); // Debug: show first 2 logs
+        setLogs(data.logs);
         setDataSource(data.source || 'unknown');
         setNotice(data.notice || '');
         console.log(`✅ Loaded ${data.logs.length} email logs from ${data.source}`);
