@@ -8,6 +8,8 @@ function getSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  console.log('🔍 Supabase URL:', supabaseUrl?.substring(0, 30) + '...');
+
   if (!supabaseUrl || !supabaseKey) {
     return null; // Return null if not configured
   }
@@ -46,6 +48,10 @@ export async function GET(request: NextRequest) {
       } else {
         console.log(`✅ Supabase query successful. Found ${realLogs?.length || 0} records`);
         console.log('📧 Email logs sample:', realLogs?.slice(0, 2));
+        console.log('🔍 FIRST 5 FROM DATABASE (before mapping):');
+        realLogs?.slice(0, 5).forEach((log, i) => {
+          console.log(`  ${i + 1}. ${log.sent_at} - ${log.subject} - ${log.metadata?.toEmail || 'NULL'}`);
+        });
 
         // Also try a simple count query to verify data exists
         const { count, error: countError } = await supabase
@@ -73,6 +79,12 @@ export async function GET(request: NextRequest) {
           metadata: log.metadata,
           content: log.metadata?.content // Extract content from metadata
         }));
+
+        // Server-side debug logging
+        console.log(`🔍 API returning ${logs.length} logs. First 3:`);
+        logs.slice(0, 3).forEach((log, i) => {
+          console.log(`  ${i + 1}. ${log.sentAt} - ${log.subject} - ${log.metadata?.toEmail || 'NULL'}`);
+        });
 
         const response = NextResponse.json({
           success: true,
