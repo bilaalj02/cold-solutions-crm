@@ -15,7 +15,20 @@ function getSupabaseClient() {
     return null; // Return null if not configured
   }
 
-  return createClient(supabaseUrl, supabaseKey);
+  // Create client with cache disabled
+  return createClient(supabaseUrl, supabaseKey, {
+    db: {
+      schema: 'public',
+    },
+    auth: {
+      persistSession: false,
+    },
+    global: {
+      headers: {
+        'cache-control': 'no-cache',
+      },
+    },
+  });
 }
 
 export async function GET(request: NextRequest) {
