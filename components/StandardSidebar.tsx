@@ -10,6 +10,8 @@ interface StandardSidebarProps {
 
 export default function StandardSidebar({ className = '' }: StandardSidebarProps) {
   const [leadsDropdownOpen, setLeadsDropdownOpen] = useState(false);
+  const [emailDropdownOpen, setEmailDropdownOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -20,173 +22,229 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
     return pathname.startsWith(path);
   };
 
-  const getActiveStyle = (path: string) => {
-    return isActive(path)
-      ? { backgroundColor: '#3dbff2' }
-      : {};
-  };
-
   const getActiveClass = (path: string) => {
     return isActive(path)
-      ? 'text-white'
-      : 'text-white hover:bg-opacity-20 hover:bg-white';
+      ? 'glass-button text-white shadow-lg'
+      : 'text-gray-200 hover:glass-button';
   };
 
+  // Define navigation items in a fixed order
+  const navigationItems = [
+    {
+      path: '/',
+      icon: 'dashboard',
+      label: 'Dashboard',
+      type: 'link'
+    },
+    {
+      path: '/leads',
+      icon: 'groups',
+      label: 'Leads Database',
+      type: 'dropdown',
+      subItems: [
+        { path: '/leads', icon: 'database', label: 'All Leads' },
+        { path: '/database/website-leads', icon: 'language', label: 'Cold Solutions Website' },
+        { path: '/database/inbound', icon: 'call_received', label: 'Inbound Leads' },
+        { path: '/database/ai-audit-pre-call', icon: 'psychology', label: 'AI Audit (Pre-Call)' },
+        { path: '/database/ai-audit-post-call', icon: 'psychology_alt', label: 'AI Audit (Post-Call)' },
+        { path: '/database/new-lead-database', icon: 'phone_in_talk', label: 'CRM Database' }
+      ]
+    },
+    {
+      path: '/email',
+      icon: 'mail',
+      label: 'Email Management',
+      type: 'dropdown',
+      subItems: [
+        { path: '/email', icon: 'dashboard', label: 'Overview' },
+        { path: '/email/inbox', icon: 'inbox', label: 'Inbox' },
+        { path: '/email/logs', icon: 'receipt_long', label: 'Email Logs' },
+        { path: '/email/settings', icon: 'settings', label: 'Settings' }
+      ]
+    },
+    {
+      path: '/automation',
+      icon: 'precision_manufacturing',
+      label: 'Automation Hub',
+      type: 'link'
+    },
+    {
+      path: '/analytics',
+      icon: 'insights',
+      label: 'Performance Analytics',
+      type: 'link'
+    },
+    {
+      path: '/operations',
+      icon: 'monitor_heart',
+      label: 'Operations Console',
+      type: 'link'
+    },
+    {
+      path: '/calls',
+      icon: 'call',
+      label: 'Calls Database',
+      type: 'link'
+    }
+  ];
+
   return (
-    <div className={`flex min-h-screen w-72 flex-col justify-between text-white p-4 ${className}`} style={{backgroundColor: '#0a2240'}}>
+    <div
+      className={`flex min-h-screen flex-col justify-between text-white p-4 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-72'} ${className}`}
+      style={{
+        position: 'relative',
+        zIndex: 50,
+        background: 'rgba(10, 34, 64, 0.98)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: '4px 0 24px 0 rgba(0, 0, 0, 0.2)'
+      }}
+    >
+      {/* Collapse Toggle Button */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-8 glass-button rounded-full p-2 text-white hover:scale-110 transition-transform z-20"
+        style={{
+          background: 'rgba(61, 191, 242, 0.9)',
+          backdropFilter: 'blur(10px)',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 4px 12px rgba(61, 191, 242, 0.3)'
+        }}
+      >
+        <span className="material-symbols-outlined text-lg">
+          {isCollapsed ? 'chevron_right' : 'chevron_left'}
+        </span>
+      </button>
+
       <div className="flex flex-col gap-8">
+        {/* Logo Section */}
         <div className="flex flex-col p-4">
-          <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
-          <p className="text-sm font-normal leading-normal" style={{color: '#a0a0a0'}}>Your Business, Streamlined</p>
+          {!isCollapsed ? (
+            <>
+              <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
+              <p className="text-sm font-normal leading-normal text-gray-300">Your Business, Streamlined</p>
+            </>
+          ) : (
+            <div className="flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">CS</span>
+            </div>
+          )}
         </div>
 
+        {/* Navigation */}
         <nav className="flex flex-col gap-2">
-          {/* Dashboard */}
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${getActiveClass('/')}`}
-            style={getActiveStyle('/')}
-            href="/"
-          >
-            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dashboard</span>
-            <span className="text-sm font-medium leading-normal">Dashboard</span>
-          </a>
+          {navigationItems.map((item) => (
+            <div key={item.path} className="flex flex-col">
+              {item.type === 'link' ? (
+                <a
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${getActiveClass(item.path)}`}
+                  href={item.path}
+                  title={isCollapsed ? item.label : ''}
+                >
+                  <span className="material-symbols-outlined" style={{fontSize: '20px'}}>
+                    {item.icon}
+                  </span>
+                  {!isCollapsed && (
+                    <span className="text-sm font-medium leading-normal">{item.label}</span>
+                  )}
+                </a>
+              ) : (
+                <>
+                  <button
+                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl w-full text-left transition-all ${getActiveClass(item.path)}`}
+                    onClick={() => {
+                      if (!isCollapsed) {
+                        if (item.path === '/leads') {
+                          setLeadsDropdownOpen(!leadsDropdownOpen);
+                        } else if (item.path === '/email') {
+                          setEmailDropdownOpen(!emailDropdownOpen);
+                        }
+                      }
+                    }}
+                    title={isCollapsed ? item.label : ''}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined" style={{fontSize: '20px'}}>
+                        {item.icon}
+                      </span>
+                      {!isCollapsed && (
+                        <span className="text-sm font-medium leading-normal">{item.label}</span>
+                      )}
+                    </div>
+                    {!isCollapsed && (
+                      <span
+                        className={`material-symbols-outlined transition-transform duration-300 ${
+                          (item.path === '/leads' && leadsDropdownOpen) || (item.path === '/email' && emailDropdownOpen) ? 'rotate-180' : ''
+                        }`}
+                        style={{fontSize: '16px'}}
+                      >
+                        expand_more
+                      </span>
+                    )}
+                  </button>
 
-          {/* Leads Database Dropdown */}
-          <div className="flex flex-col">
-            <button
-              className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg w-full text-left transition-colors ${getActiveClass('/leads')}`}
-              style={getActiveStyle('/leads')}
-              onClick={() => setLeadsDropdownOpen(!leadsDropdownOpen)}
-            >
-              <div className="flex items-center gap-3">
-                <span className="material-symbols-outlined" style={{fontSize: '20px'}}>group</span>
-                <span className="text-sm font-medium leading-normal">Leads Database</span>
-              </div>
-              <span className={`material-symbols-outlined transition-transform ${leadsDropdownOpen ? 'rotate-180' : ''}`} style={{fontSize: '16px'}}>
-                expand_more
-              </span>
-            </button>
-
-            <div
-              className={`overflow-hidden transition-all duration-300 ${leadsDropdownOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-            >
-              <div className="ml-4 mt-2 flex flex-col gap-1">
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>database</span>
-                  <span className="text-sm leading-normal">All Leads</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/inbound">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>call_received</span>
-                  <span className="text-sm leading-normal">Inbound Leads</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/website-leads">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>language</span>
-                  <span className="text-sm leading-normal">Website Leads</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/ai-audit-pre-call">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>psychology</span>
-                  <span className="text-sm leading-normal">AI Audit (Pre-Call)</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/ai-audit-post-call">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>psychology_alt</span>
-                  <span className="text-sm leading-normal">AI Audit (Post-Call)</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/whatsapp-followup">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>chat</span>
-                  <span className="text-sm leading-normal">WhatsApp Follow-up</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/whatsapp-bot">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>smart_toy</span>
-                  <span className="text-sm leading-normal">WhatsApp Bot Leads</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/database/new-lead-database">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>phone_in_talk</span>
-                  <span className="text-sm leading-normal">Cold Caller Leads</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads/management">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>settings</span>
-                  <span className="text-sm leading-normal">Advanced Management</span>
-                </a>
-                <a className="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-opacity-20 hover:bg-white text-white text-sm transition-colors" href="/leads/duplicates">
-                  <span className="material-symbols-outlined" style={{fontSize: '16px'}}>content_copy</span>
-                  <span className="text-sm leading-normal">Duplicates</span>
-                </a>
-              </div>
+                  {!isCollapsed && (
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ${
+                        ((item.path === '/leads' && leadsDropdownOpen) || (item.path === '/email' && emailDropdownOpen)) ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0'
+                      }`}
+                    >
+                      <div className="ml-4 flex flex-col gap-1">
+                        {item.subItems?.map((subItem) => (
+                          <a
+                            key={subItem.path}
+                            className="flex items-center gap-3 px-4 py-2 rounded-lg hover:glass-button text-gray-200 text-sm transition-all"
+                            href={subItem.path}
+                          >
+                            <span className="material-symbols-outlined" style={{fontSize: '16px'}}>
+                              {subItem.icon}
+                            </span>
+                            <span className="text-sm leading-normal">{subItem.label}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-
-          {/* Email Management */}
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${getActiveClass('/email')}`}
-            style={getActiveStyle('/email')}
-            href="/email"
-          >
-            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>email</span>
-            <span className="text-sm font-medium leading-normal">Email Management</span>
-          </a>
-
-          {/* Automation Hub */}
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${getActiveClass('/automation')}`}
-            style={getActiveStyle('/automation')}
-            href="/automation"
-          >
-            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>smart_toy</span>
-            <span className="text-sm font-medium leading-normal">Automation Hub</span>
-          </a>
-
-          {/* Performance Analytics */}
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${getActiveClass('/analytics')}`}
-            style={getActiveStyle('/analytics')}
-            href="/analytics"
-          >
-            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>analytics</span>
-            <span className="text-sm font-medium leading-normal">Performance Analytics</span>
-          </a>
-
-          {/* Operations Console */}
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${getActiveClass('/operations')}`}
-            style={getActiveStyle('/operations')}
-            href="/operations"
-          >
-            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dvr</span>
-            <span className="text-sm font-medium leading-normal">Operations Console</span>
-          </a>
-
-          {/* Calls Database */}
-          <a
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${getActiveClass('/calls')}`}
-            style={getActiveStyle('/calls')}
-            href="/calls"
-          >
-            <span className="material-symbols-outlined" style={{fontSize: '20px'}}>phone_in_talk</span>
-            <span className="text-sm font-medium leading-normal">Calls Database</span>
-          </a>
+          ))}
         </nav>
       </div>
 
+      {/* Bottom Section */}
       <div className="flex flex-col gap-2">
-        {user && (
-          <div className="px-4 py-3 rounded-lg bg-opacity-10 bg-white">
-            <p className="text-xs font-medium" style={{color: '#a0a0a0'}}>SIGNED IN AS</p>
+        {user && !isCollapsed && (
+          <div className="px-4 py-3 rounded-xl glass-button">
+            <p className="text-xs font-medium text-gray-400">SIGNED IN AS</p>
             <p className="text-sm font-medium text-white">{user.name}</p>
-            <p className="text-xs" style={{color: '#a0a0a0'}}>{user.email}</p>
-            <p className="text-xs mt-1" style={{color: '#a0a0a0'}}>{user.role}</p>
+            <p className="text-xs text-gray-300">{user.email}</p>
+            <p className="text-xs mt-1 text-gray-400">{user.role}</p>
           </div>
         )}
-        <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors" href="/settings">
+
+        <a
+          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:glass-button text-gray-200 transition-all"
+          href="/settings"
+          title={isCollapsed ? 'Settings' : ''}
+        >
           <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
-          <span className="text-sm font-medium leading-normal">Settings</span>
+          {!isCollapsed && (
+            <span className="text-sm font-medium leading-normal">Settings</span>
+          )}
         </a>
+
         {user && (
           <button
             onClick={logout}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white transition-colors"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:glass-button text-gray-200 transition-all"
+            title={isCollapsed ? 'Sign Out' : ''}
           >
             <span className="material-symbols-outlined" style={{fontSize: '20px'}}>logout</span>
-            <span className="text-sm font-medium leading-normal">Sign Out</span>
+            {!isCollapsed && (
+              <span className="text-sm font-medium leading-normal">Sign Out</span>
+            )}
           </button>
         )}
       </div>

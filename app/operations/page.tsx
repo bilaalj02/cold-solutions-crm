@@ -1,8 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from "react";
+import StandardSidebar from "../../components/StandardSidebar";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
-export default function OperationsConsole() {
+function OperationsConsolePage() {
   const [operationalStats, setOperationalStats] = useState<any>(null);
   const [agents, setAgents] = useState<any[]>([]);
   const [systemLogs, setSystemLogs] = useState<any[]>([]);
@@ -52,16 +54,6 @@ export default function OperationsConsole() {
     return () => clearInterval(interval);
   }, []);
 
-  // Determine system status color
-  const getSystemStatusColor = (status: string) => {
-    switch (status) {
-      case 'operational': return { bg: 'bg-green-100', text: 'text-green-600', icon: 'check_circle' };
-      case 'degraded': return { bg: 'bg-yellow-100', text: 'text-yellow-600', icon: 'warning' };
-      case 'down': return { bg: 'bg-red-100', text: 'text-red-600', icon: 'error' };
-      default: return { bg: 'bg-gray-100', text: 'text-gray-600', icon: 'help' };
-    }
-  };
-
   // Get agent status badge color
   const getAgentStatusColor = (status: string) => {
     switch (status) {
@@ -73,237 +65,158 @@ export default function OperationsConsole() {
     }
   };
 
-  // Get log severity color
-  const getLogSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'success': return 'bg-green-500';
-      case 'warning': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      case 'info': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const systemStatus = getSystemStatusColor(operationalStats?.system_status || 'operational');
-
   return (
-    <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Sidebar */}
-      <aside className="w-64 flex flex-col text-white" style={{backgroundColor: '#0a2240'}}>
-        <div className="flex items-center gap-3 p-6 border-b border-white/10">
-          <div className="w-8 h-8 flex items-center justify-center rounded-md text-white" style={{backgroundColor: '#3dbff2', color: '#0a2240'}}>
-            <span className="material-symbols-outlined">dvr</span>
-          </div>
-          <h1 className="text-xl font-bold">Cold Solutions</h1>
-        </div>
-        
-        <nav className="flex-1 p-4">
-          <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md hover:bg-white/10" href="/">
-            <span className="material-symbols-outlined">dashboard</span>
-            Dashboard
-          </a>
-          <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md hover:bg-white/10 mt-1" href="/leads">
-            <span className="material-symbols-outlined">group</span>
-            Leads Database
-          </a>
-          <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md hover:bg-white/10 mt-1" href="/calls">
-            <span className="material-symbols-outlined">call</span>
-            Calls Database
-          </a>
-          <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md hover:bg-white/10 mt-1" href="/analytics">
-            <span className="material-symbols-outlined">analytics</span>
-            Performance Analytics
-          </a>
-          <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md mt-1 text-white" style={{backgroundColor: '#3dbff2', color: '#0a2240'}} href="/operations">
-            <span className="material-symbols-outlined">dvr</span>
-            Operations Console
-          </a>
-        </nav>
-        
-        <div className="p-4 border-t border-white/10">
-          <a className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md hover:bg-white/10" href="#">
-            <span className="material-symbols-outlined">settings</span>
-            Settings
-          </a>
-        </div>
-      </aside>
+    <div className="flex min-h-screen w-full overflow-x-hidden" style={{fontFamily: 'Inter, "Noto Sans", sans-serif', position: 'relative'}}>
+      <StandardSidebar />
 
       {/* Main Content */}
-      <main className="flex-1">
+      <div className="flex flex-col flex-1 min-h-screen" style={{ position: 'relative', zIndex: 1 }}>
         {/* Header */}
-        <header className="flex items-center justify-between border-b px-8 py-4">
-          <h2 className="text-2xl font-bold" style={{color: '#0a2240'}}>Operations Console</h2>
-          <div className="flex items-center gap-4">
-            <button className="relative hover:text-gray-900" style={{color: '#0a2240'}}>
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white" style={{backgroundColor: '#3dbff2'}}></span>
-            </button>
+        <header className="glass-card border-0 p-6 m-4 mb-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Operations Console</h1>
+              <p className="text-gray-600 mt-1">Monitor and manage your AI voice agents and system operations</p>
+            </div>
             <div className="flex items-center gap-4">
               {lastRefresh && (
-                <span className="text-sm text-gray-600">
-                  Last updated: {lastRefresh.toLocaleTimeString()}
-                </span>
+                <div className="text-xs text-gray-500">
+                  Last update: {lastRefresh.toLocaleTimeString()}
+                </div>
               )}
               <button
                 onClick={fetchOperationalData}
                 disabled={isLoading}
-                className="flex items-center gap-2 rounded-md border py-1.5 px-3 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{color: '#0a2240'}}
+                className="flex items-center gap-2 px-4 py-2 glass-card hover:scale-105 transition-all disabled:opacity-50"
               >
                 <span className={`material-symbols-outlined ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
-                {isLoading ? 'Refreshing...' : 'Refresh'}
+                <span className="text-sm font-medium text-gray-700">{isLoading ? 'Refreshing...' : 'Refresh'}</span>
               </button>
             </div>
           </div>
         </header>
 
-        {/* Content */}
-        <div className="p-8 bg-gray-50/50">
-          {/* System Status */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">System Status</p>
-                  <p className={`text-lg font-semibold mt-1 ${systemStatus.text}`}>
-                    {operationalStats?.system_status === 'operational' ? 'All Systems Operational' :
-                     operationalStats?.system_status === 'degraded' ? 'Performance Degraded' :
-                     operationalStats?.system_status === 'down' ? 'System Issues Detected' : 'Unknown Status'}
-                  </p>
-                </div>
-                <div className={`p-3 rounded-full ${systemStatus.bg}`}>
-                  <span className={`material-symbols-outlined ${systemStatus.text}`}>{systemStatus.icon}</span>
-                </div>
+        <main className="flex flex-col gap-8 p-6">
+          {/* System Status Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-green-600">check_circle</span>
+                <p className="text-gray-600 text-base font-medium">System Status</p>
               </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Active AI Agents</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#0a2240'}}>
-                    {isLoading ? '...' : operationalStats?.active_agents || 0}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full" style={{backgroundColor: '#e1f5fe'}}>
-                  <span className="material-symbols-outlined" style={{color: '#3dbff2'}}>psychology</span>
-                </div>
-              </div>
+              <p className="text-3xl font-bold text-green-600">
+                {operationalStats?.system_status === 'operational' ? 'Operational' :
+                 operationalStats?.system_status === 'degraded' ? 'Degraded' :
+                 operationalStats?.system_status === 'down' ? 'Down' : 'Unknown'}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">All systems running normally</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Queue Depth</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#0a2240'}}>
-                    {isLoading ? '...' : operationalStats?.queue_depth || 0}
-                  </p>
-                </div>
-                <div className="p-3 rounded-full" style={{backgroundColor: '#e1f5fe'}}>
-                  <span className="material-symbols-outlined" style={{color: '#3dbff2'}}>queue</span>
-                </div>
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-blue-600">psychology</span>
+                <p className="text-gray-600 text-base font-medium">Active AI Agents</p>
               </div>
+              <p className="text-3xl font-bold text-blue-600">
+                {isLoading ? '...' : operationalStats?.active_agents || 0}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Voice agents online</p>
+            </div>
+
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-purple-600">queue</span>
+                <p className="text-gray-600 text-base font-medium">Queue Depth</p>
+              </div>
+              <p className="text-3xl font-bold text-purple-600">
+                {isLoading ? '...' : operationalStats?.queue_depth || 0}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Calls in queue</p>
             </div>
           </div>
 
           {/* Call Analytics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Voice Agent Calls</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#10b981'}}>
-                    {isLoading ? '...' : operationalStats?.voice_agent_calls_today || 0}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Today</p>
-                </div>
-                <div className="p-3 rounded-full bg-green-100">
-                  <span className="material-symbols-outlined text-green-600">record_voice_over</span>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-green-600">call</span>
+                <p className="text-gray-600 text-base font-medium">Voice Calls</p>
               </div>
+              <p className="text-3xl font-bold" style={{color: '#10b981'}}>
+                {isLoading ? '...' : operationalStats?.voice_agent_calls_today || 0}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Today</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Avg Call Duration</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#f59e0b'}}>
-                    {isLoading ? '...' : `${operationalStats?.average_call_duration || 0}s`}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Today</p>
-                </div>
-                <div className="p-3 rounded-full bg-yellow-100">
-                  <span className="material-symbols-outlined text-yellow-600">timer</span>
-                </div>
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-amber-600">timer</span>
+                <p className="text-gray-600 text-base font-medium">Avg Duration</p>
               </div>
+              <p className="text-3xl font-bold" style={{color: '#f59e0b'}}>
+                {isLoading ? '...' : `${operationalStats?.average_call_duration || 0}s`}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Per call</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Call Minutes</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#8b5cf6'}}>
-                    {isLoading ? '...' : operationalStats?.total_call_minutes_today || 0}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">Today</p>
-                </div>
-                <div className="p-3 rounded-full bg-purple-100">
-                  <span className="material-symbols-outlined text-purple-600">schedule</span>
-                </div>
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-purple-600">schedule</span>
+                <p className="text-gray-600 text-base font-medium">Total Minutes</p>
               </div>
+              <p className="text-3xl font-bold" style={{color: '#8b5cf6'}}>
+                {isLoading ? '...' : operationalStats?.total_call_minutes_today || 0}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">Today</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Published Agents</p>
-                  <p className="text-2xl font-bold mt-1" style={{color: '#3dbff2'}}>
-                    {isLoading ? '...' : operationalStats?.published_agents || 0}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    of {operationalStats?.active_agents || 0} total
-                  </p>
-                </div>
-                <div className="p-3 rounded-full" style={{backgroundColor: '#e1f5fe'}}>
-                  <span className="material-symbols-outlined" style={{color: '#3dbff2'}}>verified</span>
-                </div>
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-2xl text-blue-600">verified</span>
+                <p className="text-gray-600 text-base font-medium">Published</p>
               </div>
+              <p className="text-3xl font-bold" style={{color: '#3dbff2'}}>
+                {isLoading ? '...' : operationalStats?.published_agents || 0}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                of {operationalStats?.active_agents || 0} agents
+              </p>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+          {/* Quick Actions and System Health */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="glass-card p-6">
               <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Quick Actions</h3>
               <div className="grid grid-cols-2 gap-4">
-                <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="material-symbols-outlined text-2xl" style={{color: '#3dbff2'}}>play_arrow</span>
-                  <span className="text-sm font-medium">Start Agent</span>
+                <button className="flex flex-col items-center gap-3 p-4 glass-card hover:scale-105 transition-all border-0">
+                  <span className="material-symbols-outlined text-3xl text-green-600">play_circle</span>
+                  <span className="text-sm font-medium text-gray-700">Start Agent</span>
                 </button>
-                <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="material-symbols-outlined text-2xl" style={{color: '#3dbff2'}}>pause</span>
-                  <span className="text-sm font-medium">Pause Agent</span>
+                <button className="flex flex-col items-center gap-3 p-4 glass-card hover:scale-105 transition-all border-0">
+                  <span className="material-symbols-outlined text-3xl text-amber-600">pause_circle</span>
+                  <span className="text-sm font-medium text-gray-700">Pause Agent</span>
                 </button>
-                <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="material-symbols-outlined text-2xl" style={{color: '#3dbff2'}}>sync</span>
-                  <span className="text-sm font-medium">Sync KB</span>
+                <button className="flex flex-col items-center gap-3 p-4 glass-card hover:scale-105 transition-all border-0">
+                  <span className="material-symbols-outlined text-3xl text-blue-600">sync</span>
+                  <span className="text-sm font-medium text-gray-700">Sync KB</span>
                 </button>
-                <button className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="material-symbols-outlined text-2xl" style={{color: '#3dbff2'}}>restart_alt</span>
-                  <span className="text-sm font-medium">Restart</span>
+                <button className="flex flex-col items-center gap-3 p-4 glass-card hover:scale-105 transition-all border-0">
+                  <span className="material-symbols-outlined text-3xl text-red-600">restart_alt</span>
+                  <span className="text-sm font-medium text-gray-700">Restart</span>
                 </button>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="glass-card p-6">
               <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>System Health</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">API Response Time</span>
+                  <span className="text-sm text-gray-600">API Response Time</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${
+                        className={`h-2 rounded-full transition-all ${
                           (operationalStats?.api_response_time || 0) > 200 ? 'bg-red-500' :
                           (operationalStats?.api_response_time || 0) > 150 ? 'bg-yellow-500' : 'bg-green-500'
                         }`}
@@ -319,11 +232,11 @@ export default function OperationsConsole() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Memory Usage</span>
+                  <span className="text-sm text-gray-600">Memory Usage</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${
+                        className={`h-2 rounded-full transition-all ${
                           (operationalStats?.memory_usage || 0) > 85 ? 'bg-red-500' :
                           (operationalStats?.memory_usage || 0) > 70 ? 'bg-yellow-500' : 'bg-blue-500'
                         }`}
@@ -339,11 +252,11 @@ export default function OperationsConsole() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Error Rate</span>
+                  <span className="text-sm text-gray-600">Error Rate</span>
                   <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${
+                        className={`h-2 rounded-full transition-all ${
                           (operationalStats?.error_rate || 0) > 5 ? 'bg-red-500' :
                           (operationalStats?.error_rate || 0) > 2 ? 'bg-yellow-500' : 'bg-green-500'
                         }`}
@@ -362,20 +275,20 @@ export default function OperationsConsole() {
             </div>
           </div>
 
-          {/* Agent Management */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-8">
-            <div className="px-6 py-4 border-b">
+          {/* Agent Management Table */}
+          <div className="glass-card">
+            <div className="px-6 py-4 border-b border-white border-opacity-30">
               <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>AI Agent Management</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-gray-500 bg-gray-50">
+                <thead className="border-b border-white border-opacity-30" style={{background: 'rgba(249, 250, 251, 0.5)'}}>
                   <tr>
-                    <th className="px-6 py-3 font-medium">Agent ID</th>
-                    <th className="px-6 py-3 font-medium">Status</th>
-                    <th className="px-6 py-3 font-medium">Last Active</th>
-                    <th className="px-6 py-3 font-medium">Version</th>
-                    <th className="px-6 py-3 font-medium">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Agent ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Last Active</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Version</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -407,7 +320,7 @@ export default function OperationsConsole() {
                       };
 
                       return (
-                        <tr key={agent.id}>
+                        <tr key={agent.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4 font-medium" style={{color: '#0a2240'}}>
                             {agent.name}
                           </td>
@@ -428,25 +341,25 @@ export default function OperationsConsole() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
                               <button
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-blue-600 hover:scale-110 transition-transform"
                                 title="View Agent Details"
                                 onClick={() => console.log('View agent:', agent.id)}
                               >
-                                <span className="material-symbols-outlined text-base">visibility</span>
+                                <span className="material-symbols-outlined text-xl">visibility</span>
                               </button>
                               <button
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-gray-600 hover:scale-110 transition-transform"
                                 title="Agent Settings"
                                 onClick={() => console.log('Settings for:', agent.id)}
                               >
-                                <span className="material-symbols-outlined text-base">settings</span>
+                                <span className="material-symbols-outlined text-xl">settings</span>
                               </button>
                               <button
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-green-600 hover:scale-110 transition-transform"
                                 title="Test Agent"
                                 onClick={() => console.log('Test agent:', agent.id)}
                               >
-                                <span className="material-symbols-outlined text-base">play_arrow</span>
+                                <span className="material-symbols-outlined text-xl">play_circle</span>
                               </button>
                             </div>
                           </td>
@@ -459,11 +372,11 @@ export default function OperationsConsole() {
             </div>
           </div>
 
-          {/* Recent Logs */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="px-6 py-4 border-b flex items-center justify-between">
+          {/* Recent System Logs */}
+          <div className="glass-card">
+            <div className="px-6 py-4 border-b border-white border-opacity-30 flex items-center justify-between">
               <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Recent System Logs</h3>
-              <button className="text-sm text-gray-600 hover:text-gray-900">View All</button>
+              <button className="text-sm text-blue-600 hover:underline">View All</button>
             </div>
             <div className="p-6">
               {isLoading ? (
@@ -481,21 +394,53 @@ export default function OperationsConsole() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {systemLogs.map((log, index) => (
-                    <div key={log.id} className="flex items-start gap-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${getLogSeverityColor(log.severity)}`}></div>
-                      <div className="flex-1">
-                        <p className="text-sm">{log.message}</p>
-                        <p className="text-xs text-gray-500">{log.timestamp}</p>
+                  {systemLogs.map((log, index) => {
+                    const getSeverityColor = (severity: string) => {
+                      switch (severity) {
+                        case 'success': return 'text-green-600';
+                        case 'warning': return 'text-yellow-600';
+                        case 'error': return 'text-red-600';
+                        case 'info': return 'text-blue-600';
+                        default: return 'text-gray-600';
+                      }
+                    };
+
+                    const getSeverityIcon = (severity: string) => {
+                      switch (severity) {
+                        case 'success': return 'check_circle';
+                        case 'warning': return 'warning';
+                        case 'error': return 'error';
+                        case 'info': return 'info';
+                        default: return 'circle';
+                      }
+                    };
+
+                    return (
+                      <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl hover:glass-button transition-all">
+                        <span className={`material-symbols-outlined text-xl ${getSeverityColor(log.severity)}`}>
+                          {getSeverityIcon(log.severity)}
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-800">{log.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">{log.timestamp}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
+  );
+}
+
+export default function ProtectedOperationsConsole() {
+  return (
+    <ProtectedRoute>
+      <OperationsConsolePage />
+    </ProtectedRoute>
   );
 }

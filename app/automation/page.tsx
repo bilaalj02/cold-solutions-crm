@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { AutomationEngine, Task, Notification, LeadRoutingRule, AutomationLog } from "../../lib/automation-engine";
 import { MakeIntegration } from "../../components/MakeIntegration";
+import StandardSidebar from "../../components/StandardSidebar";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 export default function AutomationPage() {
   const [activeTab, setActiveTab] = useState<'tasks' | 'notifications' | 'routing' | 'logs' | 'analytics' | 'make'>('make');
@@ -82,73 +84,43 @@ export default function AutomationPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Sidebar */}
-      <aside className="min-h-screen w-72 flex flex-col justify-between text-white p-4" style={{backgroundColor: '#0a2240'}}>
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col p-4">
-            <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
-            <p className="text-sm font-normal leading-normal" style={{color: '#a0a0a0'}}>Automation Hub</p>
-          </div>
-          <nav className="flex flex-col gap-2">
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>dashboard</span>
-              <p className="text-sm font-medium leading-normal">Dashboard</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/leads">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>group</span>
-              <p className="text-sm font-medium leading-normal">Leads Database</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>email</span>
-              <p className="text-sm font-medium leading-normal">Email Management</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-white" style={{backgroundColor: '#3dbff2'}} href="/automation">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>smart_toy</span>
-              <p className="text-sm font-medium leading-normal">Automation Hub</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/analytics">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>analytics</span>
-              <p className="text-sm font-medium leading-normal">Performance Analytics</p>
-            </a>
-          </nav>
-        </div>
-      </aside>
+    <ProtectedRoute>
+      <div className="flex min-h-screen w-full overflow-x-hidden">
+        <StandardSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
-        {/* Header */}
-        <header className="p-6 bg-white border-b">
+        <div className="flex flex-col flex-1 min-h-screen">
+          {/* Header */}
+          <header className="glass-card border-0 p-6 m-4 mb-0">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Automation Hub</h1>
               <p className="text-sm text-gray-600 mt-1">Manage workflows, tasks, and intelligent automation</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="bg-white rounded-lg border p-4">
+              <div className="glass-card border-0 p-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold" style={{color: '#0a2240'}}>
+                  <div className="text-2xl font-bold text-gray-900">
                     {automationStats.totalExecutions || 0}
                   </div>
-                  <div className="text-xs text-gray-500">Total Executions</div>
+                  <div className="text-xs text-gray-500 mt-1">Total Executions</div>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border p-4">
+              <div className="glass-card border-0 p-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold" style={{color: '#3dbff2'}}>
                     {tasks.filter(t => t.status !== 'Completed').length}
                   </div>
-                  <div className="text-xs text-gray-500">Active Tasks</div>
+                  <div className="text-xs text-gray-500 mt-1">Active Tasks</div>
                 </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Tab Navigation */}
-        <div className="bg-white border-b">
-          <div className="px-6">
-            <nav className="flex space-x-8">
+          {/* Tab Navigation */}
+          <div className="glass-card border-0 mb-6 m-4">
+            <div className="px-6">
+              <nav className="flex space-x-8">
               {[
                 { key: 'make', label: 'Make.com', icon: 'integration_instructions' },
                 { key: 'tasks', label: 'Tasks', icon: 'task' },
@@ -179,8 +151,7 @@ export default function AutomationPage() {
           </div>
         </div>
 
-        {/* Search and Actions */}
-        <div className="p-6">
+          <main className="flex-1 p-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="relative flex-1 max-w-md">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -613,9 +584,9 @@ export default function AutomationPage() {
 
             </div>
           )}
+        </main>
         </div>
-      </main>
-
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

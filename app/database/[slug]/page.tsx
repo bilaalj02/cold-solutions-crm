@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { getDatabaseBySlug, NotionDatabase } from "../../../lib/notion-databases";
 import { LeadManager, Lead } from "../../../lib/leads";
 import { notionAPI } from "../../../lib/notion-api";
+import StandardSidebar from "../../../components/StandardSidebar";
+import ProtectedRoute from "../../../components/ProtectedRoute";
 
 export default function NotionDatabasePage() {
   const params = useParams();
@@ -175,102 +177,99 @@ export default function NotionDatabasePage() {
 
   if (loading || !database) {
     return (
-      <div className="flex min-h-screen flex-col bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderColor: '#3dbff2'}}></div>
-            <p className="text-gray-600">Loading {database?.name || 'database'}...</p>
+      <ProtectedRoute>
+        <div className="flex min-h-screen w-full overflow-x-hidden">
+          <StandardSidebar />
+          <div className="flex flex-col flex-1 min-h-screen">
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderColor: '#3dbff2'}}></div>
+                <p className="text-gray-600">Loading {database?.name || 'database'}...</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Header */}
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-8">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#3dbff2]"
-          >
-            <span className="material-symbols-outlined">arrow_back</span>
-            Back to Dashboard
-          </button>
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-              style={{backgroundColor: getDatabaseColor(database.color)}}
-            >
-              <span className="material-symbols-outlined">{database.icon}</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold" style={{color: '#0a2240'}}>{database.name}</h1>
-              <p className="text-sm text-gray-600">{database.description}</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500">Notion Database ID:</span>
-            <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">{database.id}</code>
-          </div>
-        </div>
-      </header>
+    <ProtectedRoute>
+      <div className="flex min-h-screen w-full overflow-x-hidden">
+        <StandardSidebar />
 
-      {/* Main Content */}
-      <main className="flex-grow bg-gray-50 p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col flex-1 min-h-screen">
+          {/* Header */}
+          <header className="glass-card border-0 p-6 m-4 mb-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => router.push('/')}
+                  className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#3dbff2] transition-colors"
+                >
+                  <span className="material-symbols-outlined">arrow_back</span>
+                  Back to Dashboard
+                </button>
+                <div className="h-8 w-px bg-gray-300"></div>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-3xl" style={{color: getDatabaseColor(database.color)}}>
+                    {database.icon}
+                  </span>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">{database.name}</h1>
+                    <p className="text-sm text-gray-600">{database.description}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500">Notion Database ID:</span>
+                <code className="bg-gray-100 px-2 py-1 rounded text-xs font-mono">{database.id}</code>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-grow p-6">
         <div className="mx-auto max-w-7xl">
           
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Total Records</p>
-                  <p className="text-2xl font-bold" style={{color: '#0a2240'}}>{leads.length}</p>
-                </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{backgroundColor: getDatabaseColor(database.color) + '20'}}>
-                  <span className="material-symbols-outlined" style={{color: getDatabaseColor(database.color)}}>{database.icon}</span>
-                </div>
+            <div className="glass-card p-6 border-0">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-2xl" style={{color: getDatabaseColor(database.color)}}>
+                  {database.icon}
+                </span>
+                <p className="text-gray-600 text-base font-medium">Total Records</p>
               </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Last Synced</p>
-                  <p className="text-lg font-semibold text-green-600">Just now</p>
-                </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100">
-                  <span className="material-symbols-outlined text-green-600">sync</span>
-                </div>
-              </div>
+              <p className="text-4xl font-bold" style={{color: getDatabaseColor(database.color)}}>{leads.length}</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Connection Status</p>
-                  <p className="text-lg font-semibold text-green-600">Connected</p>
-                </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100">
-                  <span className="material-symbols-outlined text-green-600">link</span>
-                </div>
+            <div className="glass-card p-6 border-0">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-2xl text-green-600">sync</span>
+                <p className="text-gray-600 text-base font-medium">Last Synced</p>
               </div>
+              <p className="text-2xl font-bold text-green-600">Just now</p>
+            </div>
+
+            <div className="glass-card p-6 border-0">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="material-symbols-outlined text-2xl text-green-600">link</span>
+                <p className="text-gray-600 text-base font-medium">Connection Status</p>
+              </div>
+              <p className="text-2xl font-bold text-green-600">Connected</p>
             </div>
           </div>
 
           {/* Search and Actions */}
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
+          <div className="mb-6 flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex items-center gap-4 flex-1 w-full">
               <div className="relative flex-1 max-w-md">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <span className="material-symbols-outlined text-gray-400">search</span>
+                  <span className="material-symbols-outlined text-gray-400 text-lg">search</span>
                 </div>
                 <input
-                  className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2] sm:text-sm"
+                  className="glass-input block w-full rounded-xl pl-10 py-2.5 text-sm border-0"
                   placeholder="Search records..."
                   type="search"
                   value={searchTerm}
@@ -281,7 +280,7 @@ export default function NotionDatabasePage() {
                 <label className="text-sm font-medium text-gray-700" htmlFor="sort-select">Sort by:</label>
                 <select
                   id="sort-select"
-                  className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-[#3dbff2] focus:outline-none focus:ring-[#3dbff2] sm:text-sm"
+                  className="glass-input rounded-xl py-2 pl-3 pr-10 text-sm border-0"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
@@ -302,14 +301,14 @@ export default function NotionDatabasePage() {
               <button
                 onClick={handleSyncFromNotion}
                 disabled={syncing}
-                className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 glass-card rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 border-0 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className={`material-symbols-outlined text-base ${syncing ? 'animate-spin' : ''}`}>sync</span>
                 {syncing ? 'Syncing...' : 'Sync from Notion'}
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white hover:scale-105 transition-all"
                 style={{backgroundColor: getDatabaseColor(database.color)}}
               >
                 <span className="material-symbols-outlined text-base">add</span>
@@ -319,31 +318,31 @@ export default function NotionDatabasePage() {
           </div>
 
           {/* Data Table */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="px-6 py-4 border-b flex items-center justify-between">
-              <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>
+          <div className="glass-card border-0">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
                 {database.name} Records ({filteredLeads.length})
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-gray-50/50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Source</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Contact</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Company</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Phone</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Source</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Status</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Score</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-600 uppercase tracking-wider text-xs">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200/50">
                   {filteredLeads.map((lead) => (
-                    <tr key={lead.id} className="hover:bg-gray-50">
+                    <tr key={lead.id} className="hover:bg-white/50 transition-colors">
                       <td className="px-6 py-4">
                         <div>
-                          <div className="font-medium" style={{color: '#0a2240'}}>{lead.name}</div>
+                          <div className="font-medium text-gray-900">{lead.name}</div>
                           <div className="text-xs text-gray-500">{lead.email}</div>
                           {lead.position && (
                             <div className="text-xs text-gray-400">{lead.position}</div>
@@ -352,9 +351,9 @@ export default function NotionDatabasePage() {
                       </td>
                       <td className="px-6 py-4 text-gray-600">{lead.company || 'N/A'}</td>
                       <td className="px-6 py-4">
-                        <a 
-                          href={`tel:${lead.phone}`} 
-                          className="text-[#3dbff2] hover:underline"
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="text-blue-600 hover:underline"
                         >
                           {lead.phone}
                         </a>
@@ -368,10 +367,10 @@ export default function NotionDatabasePage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="w-12 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="h-2 rounded-full" 
+                            <div
+                              className="h-2 rounded-full"
                               style={{
-                                width: `${lead.score}%`, 
+                                width: `${lead.score}%`,
                                 backgroundColor: lead.score >= 80 ? '#10b981' : lead.score >= 60 ? '#3dbff2' : '#f59e0b'
                               }}
                             ></div>
@@ -383,11 +382,11 @@ export default function NotionDatabasePage() {
                         <div className="flex items-center gap-2">
                           <a
                             href={`/leads/${lead.id}`}
-                            className="text-[#3dbff2] hover:underline text-xs"
+                            className="text-blue-600 hover:underline text-xs font-medium"
                           >
                             View
                           </a>
-                          <button className="text-gray-400 hover:text-gray-600">
+                          <button className="text-gray-400 hover:text-gray-600 transition-colors">
                             <span className="material-symbols-outlined text-base">more_horiz</span>
                           </button>
                         </div>
@@ -399,31 +398,33 @@ export default function NotionDatabasePage() {
             </div>
           </div>
 
-        </div>
-      </main>
-
-      {/* Add Lead Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold" style={{color: '#0a2240'}}>Add New Lead</h3>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <AddLeadForm
-              database={database}
-              onSubmit={handleAddLead}
-              onCancel={() => setShowAddForm(false)}
-            />
           </div>
-        </div>
-      )}
+        </main>
+
+        {/* Add Lead Modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="glass-card border-0 p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Add New Lead</h3>
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <AddLeadForm
+                database={database}
+                onSubmit={handleAddLead}
+                onCancel={() => setShowAddForm(false)}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
+    </ProtectedRoute>
   );
 }
 
@@ -462,7 +463,7 @@ function AddLeadForm({
           required
           value={formData.name}
           onChange={(e) => setFormData({...formData, name: e.target.value})}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+          className="glass-input w-full rounded-xl border-0 py-2.5"
         />
       </div>
 
@@ -473,7 +474,7 @@ function AddLeadForm({
           required
           value={formData.email}
           onChange={(e) => setFormData({...formData, email: e.target.value})}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+          className="glass-input w-full rounded-xl border-0 py-2.5"
         />
       </div>
 
@@ -483,7 +484,7 @@ function AddLeadForm({
           type="tel"
           value={formData.phone}
           onChange={(e) => setFormData({...formData, phone: e.target.value})}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+          className="glass-input w-full rounded-xl border-0 py-2.5"
         />
       </div>
 
@@ -493,7 +494,7 @@ function AddLeadForm({
           type="text"
           value={formData.company}
           onChange={(e) => setFormData({...formData, company: e.target.value})}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+          className="glass-input w-full rounded-xl border-0 py-2.5"
         />
       </div>
 
@@ -503,7 +504,7 @@ function AddLeadForm({
           type="text"
           value={formData.position}
           onChange={(e) => setFormData({...formData, position: e.target.value})}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+          className="glass-input w-full rounded-xl border-0 py-2.5"
         />
       </div>
 
@@ -513,21 +514,21 @@ function AddLeadForm({
           value={formData.notes}
           onChange={(e) => setFormData({...formData, notes: e.target.value})}
           rows={3}
-          className="w-full rounded-md border-gray-300 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2]"
+          className="glass-input w-full rounded-xl border-0 py-2.5"
         />
       </div>
 
       <div className="flex items-center gap-3 pt-4">
         <button
           type="submit"
-          className="flex-1 bg-[#3dbff2] text-white px-4 py-2 rounded-md hover:opacity-90"
+          className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:scale-105 transition-all font-medium"
         >
           Add Lead
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50"
+          className="flex-1 glass-card border-0 text-gray-700 px-4 py-2.5 rounded-xl hover:scale-105 transition-all font-medium"
         >
           Cancel
         </button>

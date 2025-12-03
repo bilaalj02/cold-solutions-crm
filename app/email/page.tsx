@@ -5,6 +5,8 @@ import { EmailTemplate, EmailCampaign, EmailSequence } from "../../lib/email-sys
 import { SupabaseEmailManager } from "../../lib/supabase-email";
 import TemplateModal from "../../components/TemplateModal";
 import SequenceModal from "../../components/SequenceModal";
+import StandardSidebar from "../../components/StandardSidebar";
+import ProtectedRoute from "../../components/ProtectedRoute";
 
 export default function EmailManagementPage() {
   const [activeTab, setActiveTab] = useState<'templates' | 'campaigns' | 'sequences' | 'analytics'>('templates');
@@ -557,75 +559,43 @@ export default function EmailManagementPage() {
   );
 
   return (
-    <div className="flex min-h-screen bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Sidebar */}
-      <aside className="min-h-screen w-72 flex flex-col justify-between text-white p-4" style={{backgroundColor: '#0a2240'}}>
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col p-4">
-            <h1 className="text-xl font-bold leading-normal text-white">Cold Solutions</h1>
-            <p className="text-sm font-normal leading-normal" style={{color: '#a0a0a0'}}>Email Management</p>
-          </div>
-          <nav className="flex flex-col gap-2">
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg text-white" style={{backgroundColor: '#3dbff2'}} href="/email">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>email</span>
-              <p className="text-sm font-medium leading-normal">Email Management</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/inbox">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>inbox</span>
-              <p className="text-sm font-medium leading-normal">Inbox</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/composer">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>edit</span>
-              <p className="text-sm font-medium leading-normal">Email Composer</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/settings">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>settings</span>
-              <p className="text-sm font-medium leading-normal">Email Settings</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/email/logs">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>history</span>
-              <p className="text-sm font-medium leading-normal">Email Logs</p>
-            </a>
-            <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-opacity-20 hover:bg-white text-white" href="/">
-              <span className="material-symbols-outlined" style={{fontSize: '20px'}}>arrow_back</span>
-              <p className="text-sm font-medium leading-normal">Back to Dashboard</p>
-            </a>
-          </nav>
-        </div>
-      </aside>
+    <ProtectedRoute>
+      <div className="flex min-h-screen w-full overflow-x-hidden">
+        <StandardSidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
-        {/* Header */}
-        <header className="p-6 bg-white border-b">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Email Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage templates, campaigns, and automated sequences</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-white rounded-lg border p-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold" style={{color: '#0a2240'}}>
-                    {templates.reduce((acc, t) => acc + t.stats.sent, 0).toLocaleString()}
+        <div className="flex flex-col flex-1 min-h-screen">
+          {/* Header */}
+          <header className="glass-card border-0 p-6 m-4 mb-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Email Management</h1>
+                <p className="text-sm text-gray-600 mt-1">Manage templates, campaigns, and automated sequences</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="glass-card p-4 border-0">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">
+                      {templates.reduce((acc, t) => acc + t.stats.sent, 0).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Total Sent</div>
                   </div>
-                  <div className="text-xs text-gray-500">Total Sent</div>
+                </div>
+                <div className="glass-card p-4 border-0">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {campaigns.filter(c => c.status === 'active').length}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Active Campaigns</div>
+                  </div>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border p-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold" style={{color: '#3dbff2'}}>
-                    {campaigns.filter(c => c.status === 'active').length}
-                  </div>
-                  <div className="text-xs text-gray-500">Active Campaigns</div>
-                </div>
-              </div>
             </div>
-          </div>
-        </header>
+          </header>
+
+          <main className="flex-1 p-6">
 
         {/* Tab Navigation */}
-        <div className="bg-white border-b">
+        <div className="glass-card border-0 mb-6">
           <div className="px-6">
             <nav className="flex space-x-8">
               {[
@@ -637,9 +607,9 @@ export default function EmailManagementPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
-                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                  className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-all ${
                     activeTab === tab.key
-                      ? 'border-[#3dbff2] text-[#3dbff2]'
+                      ? 'border-blue-600 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -652,37 +622,34 @@ export default function EmailManagementPage() {
         </div>
 
         {/* Search and Actions */}
-        <div className="p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <span className="material-symbols-outlined text-gray-400">search</span>
-              </div>
-              <input 
-                className="block w-full rounded-md border-gray-300 pl-10 shadow-sm focus:border-[#3dbff2] focus:ring-[#3dbff2] sm:text-sm" 
-                placeholder="Search..." 
-                type="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        <div className="mb-6 flex items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+              <span className="material-symbols-outlined text-gray-400 text-lg">search</span>
             </div>
-            <div className="flex items-center gap-3">
-              {activeTab === 'templates' && (
-                <>
-                  <button
-                    onClick={handleImportMCPTemplates}
-                    className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
-                    style={{backgroundColor: '#0a2240'}}
-                  >
-                    <span className="material-symbols-outlined text-base">download</span>
-                    Import MCP Templates
-                  </button>
-                  <button
-                    onClick={handleCreateTemplate}
-                    className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90"
-                    style={{backgroundColor: '#3dbff2'}}
-                  >
-                    <span className="material-symbols-outlined text-base">add</span>
+            <input
+              className="glass-input block w-full rounded-xl pl-10 py-2.5 text-sm border-0"
+              placeholder="Search..."
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            {activeTab === 'templates' && (
+              <>
+                <button
+                  onClick={handleImportMCPTemplates}
+                  className="inline-flex items-center gap-2 glass-card rounded-xl px-4 py-2.5 text-sm font-medium text-gray-700 border-0 hover:scale-105 transition-all"
+                >
+                  <span className="material-symbols-outlined text-base">download</span>
+                  Import MCP Templates
+                </button>
+                <button
+                  onClick={handleCreateTemplate}
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:scale-105 transition-all"
+                >
+                  <span className="material-symbols-outlined text-base">add</span>
                     New Template
                   </button>
                 </>
@@ -1108,8 +1075,6 @@ export default function EmailManagementPage() {
               )}
             </div>
           )}
-        </div>
-      </main>
 
       {/* Template Preview Modal */}
       {selectedTemplate && (
@@ -1218,18 +1183,21 @@ export default function EmailManagementPage() {
         </div>
       )}
 
-      {/* Sequence Modal */}
-      {showSequenceModal && (
-        <SequenceModal
-          sequence={editingSequence}
-          templates={templates.filter(t => t.isActive)}
-          onSave={handleSaveSequence}
-          onClose={() => {
-            setShowSequenceModal(false);
-            setEditingSequence(null);
-          }}
-        />
-      )}
+          {/* Sequence Modal */}
+          {showSequenceModal && (
+            <SequenceModal
+              sequence={editingSequence}
+              templates={templates.filter(t => t.isActive)}
+              onSave={handleSaveSequence}
+              onClose={() => {
+                setShowSequenceModal(false);
+                setEditingSequence(null);
+              }}
+            />
+          )}
+        </main>
+      </div>
     </div>
+    </ProtectedRoute>
   );
 }

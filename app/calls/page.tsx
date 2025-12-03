@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import StandardSidebar from "../../components/StandardSidebar";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import { motion } from 'framer-motion';
 
 interface CallLog {
@@ -110,46 +111,45 @@ export default function CallsDatabase() {
   const totalPages = Math.ceil(totalCalls / callsPerPage);
 
   return (
-    <div className="flex min-h-screen w-full group/design-root overflow-x-hidden bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
-      {/* Standardized Sidebar */}
-      <StandardSidebar />
+    <ProtectedRoute>
+      <div className="flex min-h-screen w-full overflow-x-hidden">
+        <StandardSidebar />
 
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
-        <header className="bg-white border-b border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Call Logs</h1>
-              <p className="text-gray-600 mt-1">Track and manage all call activities from your sales team.</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-blue-600">call</span>
-                  <span className="text-sm font-medium text-blue-700">
-                    {callStats?.today.totalCalls || 0} calls today
-                  </span>
-                </div>
+        <div className="flex flex-col flex-1 min-h-screen">
+          <header className="glass-card border-0 p-6 m-4 mb-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Call Logs</h1>
+                <p className="text-gray-600 mt-1">Track and manage all call activities from your sales team.</p>
               </div>
-              <button
-                onClick={fetchCallData}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <span className="material-symbols-outlined text-gray-600">refresh</span>
-                <span className="text-sm font-medium text-gray-700">Refresh</span>
-              </button>
+              <div className="flex items-center gap-4">
+                <div className="glass-card border-0 px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-blue-600">call</span>
+                    <span className="text-sm font-medium text-blue-700">
+                      {callStats?.today.totalCalls || 0} calls today
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={fetchCallData}
+                  className="glass-card border-0 flex items-center gap-2 px-4 py-2 rounded-xl hover:scale-105 transition-all"
+                >
+                  <span className="material-symbols-outlined text-gray-600">refresh</span>
+                  <span className="text-sm font-medium text-gray-700">Refresh</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <main className="flex-1 p-6">
+          <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Calls Chart */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="lg:col-span-2 glass-card border-0 p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-gray-500">Calls This Week</p>
-                  <p className="text-3xl font-bold mt-1" style={{color: '#0a2240'}}>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">
                     {isLoading ? (
                       <div className="animate-pulse h-9 bg-gray-200 rounded w-20"></div>
                     ) : (
@@ -197,7 +197,7 @@ export default function CallsDatabase() {
             </div>
 
             {/* Call Outcomes */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+            <div className="glass-card border-0 p-6">
               <h3 className="text-sm text-gray-500 mb-4">Today's Call Outcomes</h3>
               <div className="space-y-4">
                 {isLoading ? (
@@ -237,9 +237,9 @@ export default function CallsDatabase() {
           </div>
 
           {/* Recent Calls Table */}
-          <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="mt-8 glass-card border-0">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold" style={{color: '#0a2240'}}>Recent Calls</h3>
+              <h3 className="text-lg font-bold text-gray-900">Recent Calls</h3>
             </div>
             <div className="overflow-x-auto">
               {isLoading ? (
@@ -248,18 +248,18 @@ export default function CallsDatabase() {
                 </div>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="text-left text-gray-500 bg-gray-50">
+                  <thead className="text-left text-gray-600 bg-gray-50/50">
                     <tr>
-                      <th className="px-6 py-3 font-medium">Lead</th>
-                      <th className="px-6 py-3 font-medium">Company</th>
-                      <th className="px-6 py-3 font-medium">Caller</th>
-                      <th className="px-6 py-3 font-medium">Date & Time</th>
-                      <th className="px-6 py-3 font-medium">Duration</th>
-                      <th className="px-6 py-3 font-medium text-center">Outcome</th>
-                      <th className="px-6 py-3 font-medium">Notes</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider">Lead</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider">Company</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider">Caller</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider">Date & Time</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider">Duration</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider text-center">Outcome</th>
+                      <th className="px-6 py-3 font-medium text-xs uppercase tracking-wider">Notes</th>
                     </tr>
                   </thead>
-                  <tbody style={{color: '#0a2240'}}>
+                  <tbody className="text-gray-900">
                     {callLogs.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
@@ -277,7 +277,7 @@ export default function CallsDatabase() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="border-t border-gray-100 hover:bg-gray-50"
+                          className="border-t border-gray-200/50 hover:bg-white/50 transition-colors"
                         >
                           <td className="px-6 py-4">
                             <div>
@@ -348,5 +348,6 @@ export default function CallsDatabase() {
         </main>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

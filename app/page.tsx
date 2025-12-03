@@ -238,20 +238,20 @@ function ColdSolutionsDashboard() {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full group/design-root overflow-x-hidden bg-white" style={{fontFamily: 'Inter, "Noto Sans", sans-serif'}}>
+    <div className="flex min-h-screen w-full group/design-root overflow-x-hidden" style={{fontFamily: 'Inter, "Noto Sans", sans-serif', position: 'relative'}}>
       {/* Standardized Sidebar */}
       <StandardSidebar />
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1 min-h-screen" style={{backgroundColor: '#f9fafb'}}>
-          <header className="bg-white border-b border-gray-200 p-6">
+      <div className="flex flex-col flex-1 min-h-screen" style={{ position: 'relative', zIndex: 1 }}>
+          <header className="glass-card border-0 p-6 m-4 mb-0">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold" style={{color: '#0a2240'}}>Dashboard</h1>
                 <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your business today.</p>
               </div>
               <div className="flex items-center gap-4">
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                <div className="glass-card border-green-200 px-4 py-2" style={{background: 'rgba(16, 185, 129, 0.1)'}}>
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${isAutoRefreshing ? 'bg-blue-500 animate-spin' : 'bg-green-500 animate-pulse'}`}></div>
                     <span className="text-sm font-medium text-green-700">
@@ -266,7 +266,7 @@ function ColdSolutionsDashboard() {
                 )}
                 <button
                   onClick={() => fetchRealCallData()}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 glass-card hover:scale-105 transition-all"
                 >
                   <span className="material-symbols-outlined text-gray-600">refresh</span>
                   <span className="text-sm font-medium text-gray-700">Refresh Data</span>
@@ -288,7 +288,7 @@ function ColdSolutionsDashboard() {
                   <select
                     value={timePeriod}
                     onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
-                    className="pl-3 pr-8 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3dbff2] focus:border-transparent"
+                    className="glass-input pl-3 pr-8 py-2 rounded-xl text-sm transition-all"
                   >
                     <option value="day">Today</option>
                     <option value="week">This Week</option>
@@ -339,7 +339,7 @@ function ColdSolutionsDashboard() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="relative overflow-hidden rounded-lg p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group"
+                  className="relative overflow-hidden glass-card p-6 cursor-pointer group"
                   onMouseEnter={() => setHoveredMetric(metric.label)}
                   onMouseLeave={() => setHoveredMetric(null)}
                   onClick={() => console.log(`Clicked ${metric.label}`)}
@@ -353,9 +353,14 @@ function ColdSolutionsDashboard() {
                     <>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="text-gray-600 text-base font-medium">{metric.label}</p>
-                          <p className="text-3xl font-bold mt-1" style={{color: metric.color}}>{metric.value}</p>
-                          <div className="flex items-center gap-1 mt-2">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="material-symbols-outlined text-2xl transition-all group-hover:scale-110" style={{color: metric.color}}>
+                              {metric.icon}
+                            </span>
+                            <p className="text-gray-600 text-base font-medium">{metric.label}</p>
+                          </div>
+                          <p className="text-4xl font-bold" style={{color: metric.color}}>{metric.value}</p>
+                          <div className="flex items-center gap-1 mt-3">
                             <span className={`material-symbols-outlined text-sm ${
                               metric.trendUp ? 'text-green-600' : 'text-red-600'
                             }`}>
@@ -368,11 +373,6 @@ function ColdSolutionsDashboard() {
                             </span>
                           </div>
                         </div>
-                        <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{backgroundColor: `${metric.color}20`}}>
-                          <span className="material-symbols-outlined" style={{color: metric.color}}>
-                            {metric.icon}
-                          </span>
-                        </div>
                       </div>
 
                       {/* Hover tooltip */}
@@ -382,7 +382,7 @@ function ColdSolutionsDashboard() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="absolute inset-0 bg-black bg-opacity-90 text-white p-4 rounded-lg flex items-center justify-center"
+                            className="absolute inset-0 glass-dark text-white p-4 rounded-2xl flex items-center justify-center"
                           >
                             <div className="text-center">
                               <p className="text-sm font-medium">Click for detailed analysis</p>
@@ -398,8 +398,8 @@ function ColdSolutionsDashboard() {
             </div>
 
             {/* Interactive Charts Navigation */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <div className="border-b border-gray-200">
+            <div className="glass-card">
+              <div className="border-b border-white border-opacity-30">
                 <nav className="flex space-x-8 px-6">
                   {[
                     { key: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -410,7 +410,7 @@ function ColdSolutionsDashboard() {
                     <button
                       key={tab.key}
                       onClick={() => setActiveChart(tab.key as ChartType)}
-                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-all ${
                         activeChart === tab.key
                           ? 'border-[#3dbff2] text-[#3dbff2]'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -565,7 +565,7 @@ function ColdSolutionsDashboard() {
                           return (
                             <div
                               key={method.method}
-                              className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                              className="glass-card p-4 hover:scale-105 transition-all cursor-pointer"
                               onClick={() => console.log(`Clicked ${method.method}`)}
                             >
                               <h4 className="font-medium" style={{color: '#0a2240'}}>{method.method}</h4>
@@ -645,33 +645,27 @@ function ColdSolutionsDashboard() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-blue-50 rounded-lg p-4">
+                        <div className="glass-card p-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-blue-600">call</span>
-                            </div>
+                            <span className="material-symbols-outlined text-3xl text-blue-600">call</span>
                             <div>
                               <p className="text-sm text-gray-600">Total Calls Today</p>
                               <p className="text-2xl font-bold text-blue-600">287</p>
                             </div>
                           </div>
                         </div>
-                        <div className="bg-green-50 rounded-lg p-4">
+                        <div className="glass-card p-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-green-600">check_circle</span>
-                            </div>
+                            <span className="material-symbols-outlined text-3xl text-green-600">check_circle</span>
                             <div>
                               <p className="text-sm text-gray-600">Connection Rate</p>
                               <p className="text-2xl font-bold text-green-600">64%</p>
                             </div>
                           </div>
                         </div>
-                        <div className="bg-purple-50 rounded-lg p-4">
+                        <div className="glass-card p-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                              <span className="material-symbols-outlined text-purple-600">event</span>
-                            </div>
+                            <span className="material-symbols-outlined text-3xl text-purple-600">event</span>
                             <div>
                               <p className="text-sm text-gray-600">Meetings Booked</p>
                               <p className="text-2xl font-bold text-purple-600">58</p>
@@ -706,7 +700,7 @@ function ColdSolutionsDashboard() {
                               initial={{ opacity: 0, x: -20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: index * 0.1 }}
-                              className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                              className="flex items-center gap-4 p-4 glass-card hover:scale-105 transition-all cursor-pointer"
                               onClick={() => console.log(`Clicked ${stage.stage}`)}
                             >
                               <div className="w-4 h-4 rounded-full" style={{backgroundColor: stage.color}}></div>
@@ -752,11 +746,11 @@ function ColdSolutionsDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Calls Table */}
-                <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="lg:col-span-2 glass-card">
                 <h3 className="text-lg font-semibold p-6" style={{color: '#0a2240'}}>Recent Calls</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-200">
+                    <thead className="border-b border-white border-opacity-30" style={{background: 'rgba(249, 250, 251, 0.5)'}}>
                       <tr>
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Lead Name</th>
                         <th className="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider">Company</th>
@@ -853,7 +847,7 @@ function ColdSolutionsDashboard() {
                   </table>
                 </div>
                 {callLogs.length > 0 && (
-                  <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                  <div className="px-6 py-3 border-t border-white border-opacity-30" style={{background: 'rgba(249, 250, 251, 0.5)'}}>
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-700">
                         Showing {Math.min(10, callLogs.length)} of {callLogs.length} recent calls
@@ -869,43 +863,37 @@ function ColdSolutionsDashboard() {
                 {/* Quick Actions & Activity */}
                 <div className="lg:col-span-1 space-y-6">
                   {/* Quick Actions */}
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                  <div className="glass-card p-6">
                     <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Quick Actions</h3>
                     <div className="space-y-3">
-                      <button className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all group">
+                      <button className="w-full flex items-center justify-between p-4 glass-card hover:scale-105 transition-all group border-0">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-white text-sm">add</span>
-                          </div>
-                          <span className="font-medium text-blue-700">Add New Lead</span>
+                          <span className="material-symbols-outlined text-2xl text-blue-600 group-hover:scale-110 transition-transform">add_circle</span>
+                          <span className="font-medium text-gray-700">Add New Lead</span>
                         </div>
-                        <span className="material-symbols-outlined text-blue-500 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                        <span className="material-symbols-outlined text-gray-400 group-hover:translate-x-1 transition-transform">arrow_forward</span>
                       </button>
 
-                      <button className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg hover:from-green-100 hover:to-green-200 transition-all group">
+                      <button className="w-full flex items-center justify-between p-4 glass-card hover:scale-105 transition-all group border-0">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-white text-sm">campaign</span>
-                          </div>
-                          <span className="font-medium text-green-700">Start Campaign</span>
+                          <span className="material-symbols-outlined text-2xl text-green-600 group-hover:scale-110 transition-transform">rocket_launch</span>
+                          <span className="font-medium text-gray-700">Start Campaign</span>
                         </div>
-                        <span className="material-symbols-outlined text-green-500 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                        <span className="material-symbols-outlined text-gray-400 group-hover:translate-x-1 transition-transform">arrow_forward</span>
                       </button>
 
-                      <button className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-all group">
+                      <button className="w-full flex items-center justify-between p-4 glass-card hover:scale-105 transition-all group border-0">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-white text-sm">analytics</span>
-                          </div>
-                          <span className="font-medium text-purple-700">View Reports</span>
+                          <span className="material-symbols-outlined text-2xl text-purple-600 group-hover:scale-110 transition-transform">bar_chart</span>
+                          <span className="font-medium text-gray-700">View Reports</span>
                         </div>
-                        <span className="material-symbols-outlined text-purple-500 group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                        <span className="material-symbols-outlined text-gray-400 group-hover:translate-x-1 transition-transform">arrow_forward</span>
                       </button>
                     </div>
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                  <div className="glass-card p-6">
                     <h3 className="text-lg font-semibold mb-4" style={{color: '#0a2240'}}>Live Activity Feed</h3>
                     {callLogs.length === 0 ? (
                       <div className="text-center py-8">
@@ -969,14 +957,12 @@ function ColdSolutionsDashboard() {
                               initial={{ opacity: 0, x: -20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: index * 0.1 }}
-                              className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                              className="flex items-start gap-3 p-3 rounded-xl hover:glass-button transition-all cursor-pointer"
                               onClick={() => console.log(`Clicked call:`, call)}
                             >
-                              <div className="rounded-full p-2 mt-0.5" style={{backgroundColor: `${activityColor}20`}}>
-                                <span className="material-symbols-outlined text-sm" style={{color: activityColor}}>
-                                  {getActivityIcon(call.callOutcome)}
-                                </span>
-                              </div>
+                              <span className="material-symbols-outlined text-xl" style={{color: activityColor}}>
+                                {getActivityIcon(call.callOutcome)}
+                              </span>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-800 text-sm truncate">
                                   {call.callerName} called {call.leadName}
@@ -987,7 +973,6 @@ function ColdSolutionsDashboard() {
                                 </p>
                                 <p className="text-xs text-gray-400">{getRelativeTime(call.timestamp)}</p>
                               </div>
-                              <div className="w-2 h-2 rounded-full mt-2" style={{backgroundColor: activityColor}}></div>
                             </motion.div>
                           );
                         })}
