@@ -11,6 +11,7 @@ interface StandardSidebarProps {
 export default function StandardSidebar({ className = '' }: StandardSidebarProps) {
   const [leadsDropdownOpen, setLeadsDropdownOpen] = useState(false);
   const [emailDropdownOpen, setEmailDropdownOpen] = useState(false);
+  const [voiceAIDropdownOpen, setVoiceAIDropdownOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -85,6 +86,20 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
       icon: 'call',
       label: 'Calls Database',
       type: 'link'
+    },
+    {
+      path: '/voice-ai',
+      icon: 'robot',
+      label: 'Voice AI Caller',
+      type: 'dropdown',
+      subItems: [
+        { path: '/voice-ai/leads', icon: 'contact_page', label: 'Leads' },
+        { path: '/voice-ai/campaigns', icon: 'campaign', label: 'Campaigns' },
+        { path: '/voice-ai/queue', icon: 'list_alt', label: 'Call Queue' },
+        { path: '/voice-ai/call-logs', icon: 'history', label: 'Call Logs' },
+        { path: '/voice-ai/analytics', icon: 'analytics', label: 'Analytics' },
+        { path: '/voice-ai/settings', icon: 'tune', label: 'Settings' }
+      ]
     }
   ];
 
@@ -159,6 +174,8 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                           setLeadsDropdownOpen(!leadsDropdownOpen);
                         } else if (item.path === '/email') {
                           setEmailDropdownOpen(!emailDropdownOpen);
+                        } else if (item.path === '/voice-ai') {
+                          setVoiceAIDropdownOpen(!voiceAIDropdownOpen);
                         }
                       }
                     }}
@@ -175,7 +192,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                     {!isCollapsed && (
                       <span
                         className={`material-symbols-outlined transition-transform duration-300 ${
-                          (item.path === '/leads' && leadsDropdownOpen) || (item.path === '/email' && emailDropdownOpen) ? 'rotate-180' : ''
+                          (item.path === '/leads' && leadsDropdownOpen) || (item.path === '/email' && emailDropdownOpen) || (item.path === '/voice-ai' && voiceAIDropdownOpen) ? 'rotate-180' : ''
                         }`}
                         style={{fontSize: '16px'}}
                       >
@@ -187,7 +204,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                   {!isCollapsed && (
                     <div
                       className={`overflow-hidden transition-all duration-300 ${
-                        ((item.path === '/leads' && leadsDropdownOpen) || (item.path === '/email' && emailDropdownOpen)) ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0'
+                        ((item.path === '/leads' && leadsDropdownOpen) || (item.path === '/email' && emailDropdownOpen) || (item.path === '/voice-ai' && voiceAIDropdownOpen)) ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0'
                       }`}
                     >
                       <div className="ml-4 flex flex-col gap-1">
