@@ -27,7 +27,7 @@
     "imap-simple": "^5.1.0",
     "lucide-react": "^0.395.0",
     "mailparser": "^3.7.4",
-    "next": "14.2.4",
+    "next": "14.2.35",
     "nodemailer": "^7.0.6",
     "postcss": "^8.4.39",
     "react": "^18.3.1",
