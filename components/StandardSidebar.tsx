@@ -44,6 +44,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
       type: 'dropdown',
       subItems: [
         { path: '/leads', icon: 'database', label: 'All Leads' },
+        { path: '/leads/intelligence', icon: 'psychology', label: 'Business Intelligence' },
         { path: '/database/website-leads', icon: 'language', label: 'Cold Solutions Website' },
         { path: '/database/inbound', icon: 'call_received', label: 'Inbound Leads' },
         { path: '/database/ai-audit-pre-call', icon: 'psychology', label: 'AI Audit (Pre-Call)' },
