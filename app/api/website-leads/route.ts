@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       tags.push(service);
     }
 
-    // Create the lead object
+    // Create the lead object (let Supabase auto-generate id, created_at, updated_at)
     const newLead = {
       name,
       email,
@@ -57,9 +57,7 @@ export async function POST(request: NextRequest) {
         serviceInterest: service,
         formMessage: message,
         ...additionalFields
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      }
     };
 
     // Insert into leads table
@@ -79,12 +77,11 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Lead created successfully: ${insertedLead.id}`);
 
-    // Log activity
+    // Log activity (let Supabase auto-generate created_at)
     await supabase.from('lead_activities').insert({
       lead_id: insertedLead.id,
       type: 'Note',
       description: `Lead submitted via website form: ${service || 'General Contact'}`,
-      created_at: new Date().toISOString(),
       created_by: 'system'
     });
 
