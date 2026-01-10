@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { randomUUID } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,8 +40,9 @@ export async function POST(request: NextRequest) {
       tags.push(service);
     }
 
-    // Create the lead object (let Supabase auto-generate id, created_at, updated_at)
+    // Create the lead object with generated UUID
     const newLead = {
+      id: randomUUID(),
       name,
       email,
       phone: phone || '',
