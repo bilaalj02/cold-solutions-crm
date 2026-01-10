@@ -90,6 +90,36 @@ export class NotionService {
     console.log(`🚀 getLeadsByDatabase called for "${String(databaseType)}"`);
 
     try {
+      // For website-leads, fetch from Supabase instead of Notion
+      if (String(databaseType) === 'website-leads') {
+        console.log('📊 Fetching website leads from Supabase...');
+        const { supabaseServer } = await import('@/lib/supabase-server');
+        const { data: leads, error } = await supabaseServer
+          .from('leads')
+          .select('*')
+          .eq('source', 'Website')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) {
+          console.error('Error fetching website leads from Supabase:', error);
+          return [];
+        }
+
+        return (leads || []).map((lead: any) => ({
+          id: lead.id,
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone || '',
+          source: 'website-leads',
+          status: lead.status || 'New',
+          created_time: lead.created_at,
+          service_interest: lead.custom_fields?.serviceInterest || '',
+          company: lead.company || '',
+          notes: lead.notes || '',
+        }));
+      }
+
       // Check if Notion is properly configured
       if (!process.env.NOTION_API_KEY || process.env.NOTION_API_KEY === 'your_notion_api_key_here') {
         console.warn(`Notion API not configured for database: ${String(databaseType)}`);
