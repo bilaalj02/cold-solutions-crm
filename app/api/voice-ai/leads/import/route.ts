@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       'zip code': 'postal_code'
     };
 
-    const headers = rawHeaders.map(h => headerMap[h] || h.replace(/\s+/g, '_'));
+    const headers = rawHeaders.map((h: string) => headerMap[h] || h.replace(/\s+/g, '_'));
     console.log('Normalized headers:', headers);
 
     // Required fields
