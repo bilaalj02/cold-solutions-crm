@@ -68,8 +68,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Ensure we have valid IDs
+    if (!finalLeadListId || !finalLeadListName) {
+      return NextResponse.json(
+        { error: 'Failed to determine lead list' },
+        { status: 500 }
+      );
+    }
+
     result.leadListId = finalLeadListId;
-    result.leadListName = finalLeadListName!;
+    result.leadListName = finalLeadListName;
 
     console.log(`📋 Using lead list: ${finalLeadListName} (${finalLeadListId})`);
 
