@@ -260,7 +260,7 @@ export default function BusinessIntelligencePage() {
           <Button
             onClick={handleDelete}
             disabled={selectedLeads.length === 0}
-            variant="destructive"
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             🗑️ Delete ({selectedLeads.length})
           </Button>
