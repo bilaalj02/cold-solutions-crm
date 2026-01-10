@@ -154,7 +154,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
           {navigationItems.map((item) => (
             <div key={item.path} className="flex flex-col">
               {item.type === 'link' ? (
-                <a
+                <Link
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${getActiveClass(item.path)}`}
                   href={item.path}
                   title={isCollapsed ? item.label : ''}
@@ -165,7 +165,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                   {!isCollapsed && (
                     <span className="text-sm font-medium leading-normal">{item.label}</span>
                   )}
-                </a>
+                </Link>
               ) : (
                 <>
                   <button
@@ -243,7 +243,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
           </div>
         )}
 
-        <a
+        <Link
           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:glass-button text-gray-200 transition-all"
           href="/settings"
           title={isCollapsed ? 'Settings' : ''}
@@ -252,7 +252,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
           {!isCollapsed && (
             <span className="text-sm font-medium leading-normal">Settings</span>
           )}
-        </a>
+        </Link>
 
         {user && (
           <button
