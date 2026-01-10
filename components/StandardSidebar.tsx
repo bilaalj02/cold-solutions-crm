@@ -46,11 +46,11 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
       subItems: [
         { path: '/leads', icon: 'database', label: 'All Leads' },
         { path: '/leads/intelligence', icon: 'psychology', label: 'Business Intelligence' },
-        { path: '/leads/database/website-leads', icon: 'language', label: 'Cold Solutions Website' },
-        { path: '/leads/database/inbound', icon: 'call_received', label: 'Inbound Leads' },
-        { path: '/leads/database/ai-audit-pre-call', icon: 'psychology', label: 'AI Audit (Pre-Call)' },
-        { path: '/leads/database/ai-audit-post-call', icon: 'psychology_alt', label: 'AI Audit (Post-Call)' },
-        { path: '/leads/database/new-lead-database', icon: 'phone_in_talk', label: 'CRM Database' }
+        { path: '/database/website-leads', icon: 'language', label: 'Cold Solutions Website' },
+        { path: '/database/inbound', icon: 'call_received', label: 'Inbound Leads' },
+        { path: '/database/ai-audit-pre-call', icon: 'psychology', label: 'AI Audit (Pre-Call)' },
+        { path: '/database/ai-audit-post-call', icon: 'psychology_alt', label: 'AI Audit (Post-Call)' },
+        { path: '/database/new-lead-database', icon: 'phone_in_talk', label: 'CRM Database' }
       ]
     },
     {
