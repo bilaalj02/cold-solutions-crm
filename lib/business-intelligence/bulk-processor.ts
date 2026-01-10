@@ -1,7 +1,7 @@
 // Bulk Lead Processor
 // Ported from cold-solutions-mcp-server/src/bulk-lead-processor.ts
 
-import { createClient } from '@/lib/supabase/server';
+import { supabaseServer } from '@/lib/supabase-server';
 import { BusinessAnalyzerService, BusinessData, BusinessAnalysisResult } from './business-analyzer';
 import { AIAnalysisService, AIAnalysisOutput } from './ai-analysis-service';
 import { BusinessIntelligenceLead } from '@/types/business-intelligence';
@@ -202,7 +202,7 @@ export class BulkLeadProcessor {
    * Fetch unanalyzed leads from database
    */
   private async fetchUnanalyzedLeads(leadIds?: string[], limit: number = 100): Promise<BusinessIntelligenceLead[]> {
-    const supabase = createClient();
+    const supabase = supabaseServer;
 
     let query = supabase
       .from('business_intelligence_leads')
@@ -229,7 +229,7 @@ export class BulkLeadProcessor {
    * Update lead statuses to "In Progress"
    */
   private async updateLeadsStatus(leadIds: string[], status: string): Promise<void> {
-    const supabase = createClient();
+    const supabase = supabaseServer;
 
     await supabase
       .from('business_intelligence_leads')
@@ -241,7 +241,7 @@ export class BulkLeadProcessor {
    * Update single lead status with error
    */
   private async updateLeadStatus(leadId: string, status: string, errorMessage?: string): Promise<void> {
-    const supabase = createClient();
+    const supabase = supabaseServer;
 
     await supabase
       .from('business_intelligence_leads')
@@ -260,7 +260,7 @@ export class BulkLeadProcessor {
     analysis: AIAnalysisOutput,
     businessResult: BusinessAnalysisResult
   ): Promise<void> {
-    const supabase = createClient();
+    const supabase = supabaseServer;
 
     // First, update the lead status
     await supabase
