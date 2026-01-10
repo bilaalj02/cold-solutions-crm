@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = supabaseServer;
     const { leadIds } = await request.json();
 
     if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
