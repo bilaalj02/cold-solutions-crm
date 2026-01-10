@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '../lib/auth';
 
 interface StandardSidebarProps {
@@ -210,7 +211,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                     >
                       <div className="ml-4 flex flex-col gap-1">
                         {item.subItems?.map((subItem) => (
-                          <a
+                          <Link
                             key={subItem.path}
                             className="flex items-center gap-3 px-4 py-2 rounded-lg hover:glass-button text-gray-200 text-sm transition-all"
                             href={subItem.path}
@@ -219,7 +220,7 @@ export default function StandardSidebar({ className = '' }: StandardSidebarProps
                               {subItem.icon}
                             </span>
                             <span className="text-sm leading-normal">{subItem.label}</span>
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     </div>
