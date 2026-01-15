@@ -28,19 +28,34 @@ export async function POST(request: NextRequest) {
     // Parse CSV with column normalization
     const records = parse(fileContent, {
       columns: (header) => {
+        console.log('📋 Original CSV headers:', header);
+
         // Normalize column names to lowercase with underscores
-        return header.map((col: string) =>
-          col.toLowerCase()
+        const normalizedHeaders = header.map((col: string) => {
+          const normalized = col.toLowerCase()
             .trim()
             .replace(/\s+/g, '_')
-            .replace(/[^\w_]/g, '')
-        );
+            .replace(/[^\w_]/g, '');
+
+          // Map common phone column variations to 'phone'
+          if (normalized.includes('phone')) {
+            return 'phone';
+          }
+
+          return normalized;
+        });
+
+        console.log('✅ Normalized headers:', normalizedHeaders);
+        return normalizedHeaders;
       },
       skip_empty_lines: true,
       trim: true,
     }) as CSVImportRow[];
 
     console.log(`📊 Parsed ${records.length} rows from CSV`);
+    if (records.length > 0) {
+      console.log('📝 Sample first row:', records[0]);
+    }
 
     // Validate and prepare data
     const validationResults: ImportValidationResult[] = records.map((row, index) =>
