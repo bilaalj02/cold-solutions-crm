@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
       if (existingList) {
         finalLeadListId = existingList.id;
       } else {
-        const { data: newList, error: listError } = await supabase
+        // Try to insert with tracking columns first
+        let { data: newList, error: listError } = await supabase
           .from('lead_lists')
           .insert({
             name: finalLeadListName,
@@ -57,9 +58,29 @@ export async function POST(request: NextRequest) {
           .select()
           .single();
 
+        // If error mentions missing columns, try fallback without tracking columns
+        if (listError && (listError.message.includes('contacted') || listError.message.includes('schema cache'))) {
+          console.log('⚠️ Tracking columns not found, trying fallback insert...');
+          const fallbackResult = await supabase
+            .from('lead_lists')
+            .insert({
+              name: finalLeadListName,
+              description: `Business Intelligence leads imported on ${today}`,
+              lead_count: 0
+            })
+            .select()
+            .single();
+
+          newList = fallbackResult.data;
+          listError = fallbackResult.error;
+        }
+
         if (listError || !newList) {
           return NextResponse.json(
-            { error: 'Failed to create lead list: ' + (listError?.message || 'Unknown error') },
+            {
+              error: 'Failed to create lead list: ' + (listError?.message || 'Unknown error'),
+              hint: 'You may need to run the database migration. See RUN_MIGRATION_FOR_CRM_PUSH.md in the cold-caller-app folder.'
+            },
             { status: 500 }
           );
         }
@@ -119,7 +140,9 @@ export async function POST(request: NextRequest) {
         phone: lead.phone || undefined,
         company: lead.business_name,
         position: '',
-        source: 'Business Intelligence',
+        source: 'Other', // Cold Caller DB constraint requires: Website, Referral, Social Media, Email Campaign, Cold Call, Event, CSV Import, Other
+        lead_source: 'Business Intelligence', // Store the actual source here
+        original_source: 'CRM Business Intelligence System',
         status: 'New',
         priority,
         industry: lead.industry || '',
