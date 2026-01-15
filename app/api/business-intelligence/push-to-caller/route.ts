@@ -44,10 +44,14 @@ export async function POST(request: NextRequest) {
       if (existingList) {
         finalLeadListId = existingList.id;
       } else {
+        // Generate a unique ID for the lead list
+        const newListId = `bi-list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
         // Try to insert with tracking columns first
         let { data: newList, error: listError } = await supabase
           .from('lead_lists')
           .insert({
+            id: newListId,
             name: finalLeadListName,
             description: `Business Intelligence leads imported on ${today}`,
             total_leads: 0,
@@ -64,6 +68,7 @@ export async function POST(request: NextRequest) {
           const fallbackResult = await supabase
             .from('lead_lists')
             .insert({
+              id: newListId,
               name: finalLeadListName,
               description: `Business Intelligence leads imported on ${today}`,
               lead_count: 0
